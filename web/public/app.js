@@ -18,9 +18,14 @@ const debug = createDebugLogger({ search: window.location.search, storage: windo
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 const seedInput      = document.getElementById('seed-input');
 const loadBtn        = document.getElementById('load-btn');
+const saveFavoriteBtn = document.getElementById('save-favorite-btn');
 const resultsEl      = document.getElementById('results');
 const errorBox       = document.getElementById('error-box');
 const loadingBox     = document.getElementById('loading-box');
+const recentSeedsEl  = document.getElementById('recent-seeds');
+const favoriteSeedsEl = document.getElementById('favorite-seeds');
+const noRecentEl     = document.getElementById('no-recent');
+const noFavoritesEl  = document.getElementById('no-favorites');
 const previewContent = document.getElementById('preview-content');
 const rawBox         = document.getElementById('raw-box');
 const discordModeToggle = document.getElementById('discord-mode-toggle');
@@ -56,6 +61,7 @@ const aidCardEl      = document.getElementById('aid-card');
 const aidDownloadBtn = document.getElementById('aid-download-btn');
 const aidCopyImgBtn  = document.getElementById('aid-copy-img-btn');
 let discordMode      = 'preview';
+let seedHistory = { recentSeeds: [], favorites: [] };
 
 // ─── Toast notifications ──────────────────────────────────────────────────────
 function showToast(message, type = 'success', duration = 2500) {
@@ -74,6 +80,8 @@ function showToast(message, type = 'success', duration = 2500) {
 
 // ─── localStorage persistence ─────────────────────────────────────────────────
 const STORAGE_KEY = 'sctmg.prefs';
+const SEED_HISTORY_KEY = 'sctmg.seedHistory';
+const MAX_RECENT_SEEDS = 10;
 
 function savePrefs() {
   try {
@@ -156,6 +164,104 @@ function setDiscordMode(mode, { save = true } = {}) {
   rawBox.style.display = isRaw ? 'block' : 'none';
   discordModeToggle.checked = isRaw;
   if (save) savePrefs();
+}
+
+function sanitizeSeed(seed) {
+  return String(seed || '').trim().toUpperCase();
+}
+
+function saveSeedHistory() {
+  try {
+    localStorage.setItem(SEED_HISTORY_KEY, JSON.stringify(seedHistory));
+  } catch (_) { /* storage unavailable */ }
+}
+
+function loadSeedHistory() {
+  try {
+    const raw = localStorage.getItem(SEED_HISTORY_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const recentSeeds = Array.isArray(parsed.recentSeeds) ? parsed.recentSeeds : [];
+    const favorites = Array.isArray(parsed.favorites) ? parsed.favorites : [];
+    seedHistory = {
+      recentSeeds: recentSeeds.map(sanitizeSeed).filter(Boolean),
+      favorites: favorites
+        .filter(f => f && typeof f === 'object')
+        .map(f => ({
+          name: String(f.name || '').trim(),
+          seed: sanitizeSeed(f.seed),
+        }))
+        .filter(f => f.name && f.seed),
+    };
+  } catch (_) { /* corrupt storage — ignore */ }
+}
+
+function renderSeedHistory() {
+  recentSeedsEl.innerHTML = '';
+  favoriteSeedsEl.innerHTML = '';
+
+  const recent = seedHistory.recentSeeds;
+  const favorites = seedHistory.favorites;
+
+  noRecentEl.style.display = recent.length ? 'none' : '';
+  noFavoritesEl.style.display = favorites.length ? 'none' : '';
+
+  for (const seed of recent) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'seed-pill';
+    btn.dataset.seed = seed;
+    btn.textContent = seed;
+    recentSeedsEl.appendChild(btn);
+  }
+
+  for (const fav of favorites) {
+    const row = document.createElement('div');
+    row.className = 'favorite-item';
+    row.innerHTML = `
+      <div class="favorite-meta">
+        <div class="favorite-name">${escapeHtml(fav.name)}</div>
+        <div class="favorite-seed">${escapeHtml(fav.seed)}</div>
+      </div>
+      <div class="favorite-actions">
+        <button type="button" class="btn ghost sm" data-favorite-load="${escapeHtml(fav.seed)}">Load</button>
+        <button type="button" class="btn ghost sm" data-favorite-remove="${escapeHtml(fav.seed)}">Remove</button>
+      </div>`;
+    favoriteSeedsEl.appendChild(row);
+  }
+}
+
+function addRecentSeed(seed) {
+  const normalized = sanitizeSeed(seed);
+  if (!normalized) return;
+  seedHistory.recentSeeds = [
+    normalized,
+    ...seedHistory.recentSeeds.filter(s => s !== normalized),
+  ].slice(0, MAX_RECENT_SEEDS);
+  saveSeedHistory();
+  renderSeedHistory();
+}
+
+function saveFavoriteSeed(seed, name) {
+  const normalizedSeed = sanitizeSeed(seed);
+  const normalizedName = String(name || '').trim();
+  if (!normalizedSeed || !normalizedName) return false;
+  const existingIdx = seedHistory.favorites.findIndex(f => f.seed === normalizedSeed);
+  if (existingIdx >= 0) {
+    seedHistory.favorites[existingIdx].name = normalizedName;
+  } else {
+    seedHistory.favorites.unshift({ name: normalizedName, seed: normalizedSeed });
+  }
+  saveSeedHistory();
+  renderSeedHistory();
+  return true;
+}
+
+function removeFavoriteSeed(seed) {
+  const normalized = sanitizeSeed(seed);
+  seedHistory.favorites = seedHistory.favorites.filter(f => f.seed !== normalized);
+  saveSeedHistory();
+  renderSeedHistory();
 }
 
 // ─── ANSI → HTML renderer ─────────────────────────────────────────────────────
@@ -582,6 +688,7 @@ async function loadRoster() {
     const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
     currentRoster = parseRoster(flat, { tacticalCards });
     refreshOutput();
+    addRecentSeed(seed);
     savePrefs();
     loadingBox.style.display = 'none';
     resultsEl.style.display  = 'block';
@@ -668,6 +775,49 @@ function copyText(text) {
 }
 document.getElementById('copy-preview-btn').addEventListener('click', () => copyText(currentFormatted));
 discordModeToggle.addEventListener('change', () => setDiscordMode(discordModeToggle.checked ? 'raw' : 'preview'));
+saveFavoriteBtn.addEventListener('click', () => {
+  const seed = sanitizeSeed(seedInput.value);
+  if (!seed) {
+    showToast('Enter a seed before saving a favorite.', 'error', 1800);
+    seedInput.focus();
+    return;
+  }
+  const existing = seedHistory.favorites.find(f => f.seed === seed);
+  const suggested = existing?.name || seed;
+  const name = window.prompt('Favorite name:', suggested);
+  if (name === null) return;
+  if (!String(name).trim()) {
+    showToast('Favorite name cannot be empty.', 'error', 1800);
+    return;
+  }
+  saveFavoriteSeed(seed, name);
+  showToast(`Saved favorite: ${name.trim()}`);
+});
+
+recentSeedsEl.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-seed]');
+  if (!btn) return;
+  const seed = sanitizeSeed(btn.dataset.seed);
+  seedInput.value = seed;
+  loadRoster();
+});
+
+favoriteSeedsEl.addEventListener('click', e => {
+  const loadBtnEl = e.target.closest('button[data-favorite-load]');
+  if (loadBtnEl) {
+    const seed = sanitizeSeed(loadBtnEl.dataset.favoriteLoad);
+    seedInput.value = seed;
+    loadRoster();
+    return;
+  }
+  const removeBtnEl = e.target.closest('button[data-favorite-remove]');
+  if (removeBtnEl) {
+    const seed = sanitizeSeed(removeBtnEl.dataset.favoriteRemove);
+    removeFavoriteSeed(seed);
+    showToast(`Removed favorite ${seed}`);
+  }
+});
+
 document.getElementById('copy-json-btn').addEventListener('click',    () => {
   if (!currentRoster) {
     showToast('Load a roster first.', 'error', 1600);
@@ -698,3 +848,5 @@ function refreshAndSave() { refreshOutput(); savePrefs(); }
 
 // Restore persisted preferences (must come after all event listeners are wired up)
 loadPrefs();
+loadSeedHistory();
+renderSeedHistory();
