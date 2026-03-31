@@ -6,10 +6,14 @@
 import { fetchRoster, fetchTacticalCards } from './lib/firestoreClient.js';
 import { parseRoster }           from './lib/rosterParser.js';
 import { formatCompact, formatJson } from './lib/formatter.js';
+import { createDebugLogger, getUserFacingError } from './appUtils.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let currentRoster    = null;
 let currentFormatted = '';
+let isLoadingRoster  = false;
+
+const debug = createDebugLogger({ search: window.location.search, storage: window.localStorage });
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 const seedInput      = document.getElementById('seed-input');
@@ -347,41 +351,58 @@ async function captureCanvas(el) {
   return window.html2canvas(el, { backgroundColor: '#161b22', scale: 2, useCORS: true, logging: false });
 }
 
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (!blob) {
+        reject(new Error('Could not serialize image data.'));
+        return;
+      }
+      resolve(blob);
+    }, 'image/png');
+  });
+}
+
 async function downloadImage(el, filename, btn) {
+  if (btn.disabled) return;
   btn.disabled = true;
+  debug.log('image.download.start', { filename });
   try {
     const canvas = await captureCanvas(el);
-    canvas.toBlob(blob => {
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement('a');
-      a.href     = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Image downloaded!');
-      btn.disabled = false;
-    }, 'image/png');
+    const blob = await canvasToBlob(canvas);
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Image downloaded!');
+    debug.log('image.download.ok', { filename, bytes: blob.size });
   } catch (err) {
-    showToast(`Download failed: ${err.message}`, 'error');
+    showToast(getUserFacingError('Download', err), 'error');
+    debug.error('image.download.error', err, { filename });
+  } finally {
     btn.disabled = false;
   }
 }
 
 async function copyImage(el, btn) {
+  if (btn.disabled) return;
   btn.disabled = true;
+  debug.log('image.copy.start');
   try {
+    if (!navigator.clipboard || typeof window.ClipboardItem === 'undefined') {
+      throw new Error('Clipboard image APIs are unavailable in this browser.');
+    }
     const canvas = await captureCanvas(el);
-    canvas.toBlob(async blob => {
-      try {
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        showToast('Image copied to clipboard!');
-      } catch (err) {
-        showToast(`Copy failed: ${err.message}`, 'error');
-      }
-      btn.disabled = false;
-    }, 'image/png');
+    const blob = await canvasToBlob(canvas);
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    showToast('Image copied to clipboard!');
+    debug.log('image.copy.ok', { bytes: blob.size });
   } catch (err) {
-    showToast(`Error: ${err.message}`, 'error');
+    showToast(getUserFacingError('Image copy', err), 'error');
+    debug.error('image.copy.error', err);
+  } finally {
     btn.disabled = false;
   }
 }
@@ -434,31 +455,45 @@ function refreshOutput() {
 
 // ─── Load handler ─────────────────────────────────────────────────────────────
 async function loadRoster() {
+  if (isLoadingRoster) {
+    showToast('Load already in progress.', 'error', 1600);
+    return;
+  }
   const seed = seedInput.value.trim().toUpperCase();
   if (!seed) { seedInput.focus(); return; }
 
+  isLoadingRoster = true;
   resultsEl.style.display = 'none';
   errorBox.style.display  = 'none';
   loadingBox.style.display = 'block';
   loadBtn.disabled = true;
   loadBtn.setAttribute('aria-busy', 'true');
+  debug.log('roster.load.start', { seed });
 
   try {
     const flat = await fetchRoster(seed);
     const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
     currentRoster = parseRoster(flat, { tacticalCards });
     refreshOutput();
-      savePrefs();
+    savePrefs();
     loadingBox.style.display = 'none';
     resultsEl.style.display  = 'block';
+    debug.log('roster.load.ok', {
+      seed,
+      unitCount: currentRoster.units.length,
+      tacticalCount: currentRoster.tacticalCards.length,
+      faction: currentRoster.faction,
+    });
   } catch (err) {
     loadingBox.style.display = 'none';
     const msg = err.status === 404
       ? `No roster found with seed <strong>${escapeHtml(seed)}</strong>. Check the code and try again.`
-      : `Error: ${escapeHtml(err.message)}`;
+      : escapeHtml(getUserFacingError('Load roster', err));
     errorBox.innerHTML = `<div class="error">❌ ${msg}</div>`;
     errorBox.style.display = 'block';
+    debug.error('roster.load.error', err, { seed });
   } finally {
+    isLoadingRoster = false;
     loadBtn.disabled = false;
     loadBtn.removeAttribute('aria-busy');
   }
@@ -506,13 +541,33 @@ tabs.forEach((tab, idx) => {
 
 // ─── Copy helpers ─────────────────────────────────────────────────────────────
 function copyText(text) {
+  if (!text) {
+    showToast('Nothing to copy yet.', 'error', 1600);
+    return;
+  }
+  if (!navigator.clipboard || !navigator.clipboard.writeText) {
+    showToast('Clipboard text APIs are unavailable in this browser.', 'error');
+    return;
+  }
   navigator.clipboard.writeText(text)
-    .then(() => showToast('Copied to clipboard!'))
-    .catch(err => showToast(`Copy failed: ${err.message}`, 'error'));
+    .then(() => {
+      showToast('Copied to clipboard!');
+      debug.log('text.copy.ok', { chars: text.length });
+    })
+    .catch(err => {
+      showToast(getUserFacingError('Text copy', err), 'error');
+      debug.error('text.copy.error', err, { chars: text.length });
+    });
 }
 document.getElementById('copy-preview-btn').addEventListener('click', () => copyText(currentFormatted));
 document.getElementById('copy-raw-btn').addEventListener('click',     () => copyText(currentFormatted));
-document.getElementById('copy-json-btn').addEventListener('click',    () => copyText(formatJson(currentRoster)));
+document.getElementById('copy-json-btn').addEventListener('click',    () => {
+  if (!currentRoster) {
+    showToast('Load a roster first.', 'error', 1600);
+    return;
+  }
+  copyText(formatJson(currentRoster));
+});
 const getSeed = () => currentRoster?.seed ?? 'roster';
 downloadImgBtn.addEventListener('click', () => downloadImage(rosterCardEl, `roster-${getSeed()}.png`,     downloadImgBtn));
 copyImgBtn.addEventListener(    'click', () => copyImage(    rosterCardEl,                               copyImgBtn));

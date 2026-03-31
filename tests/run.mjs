@@ -54,6 +54,7 @@ function test(name, fn) {
 const SUITES = [
   { label: 'Parser',    path: './parser.test.mjs'    },
   { label: 'Formatter', path: './formatter.test.mjs' },
+  { label: 'App Utils', path: './app-utils.test.mjs' },
 ];
 
 for (const { label, path } of SUITES) {

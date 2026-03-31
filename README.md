@@ -14,6 +14,32 @@ npm install
 cp .env.example .env   # fill in your Discord credentials
 ```
 
+## Run locally
+
+```bash
+# web UI
+npm run web
+
+# discord bot
+npm run bot
+```
+
+Open http://localhost:3000 for the web UI.
+
+## Test
+
+```bash
+npm test
+```
+
+The test runner auto-fetches fixtures from Firestore only when fixture files are missing.
+
+To refresh fixtures manually:
+
+```bash
+npm run test:capture
+```
+
 ## Usage
 
 ### Web UI (test without Discord)
@@ -92,3 +118,10 @@ Seed: 009IDJ
 ```
 
 Unit type abbreviations: `[H]` Hero · `[C]` Core · `[E]` Elite · `[S]` Support · `[A]` Air · `[O]` Other
+
+## Troubleshooting
+
+- Seed not found: verify the 6-character seed and ensure it exists in the Army Builder share list.
+- Clipboard text copy fails: use a secure browser context (https or localhost) and grant clipboard permission.
+- Clipboard image copy fails: some browsers block image clipboard APIs; use Download Image as fallback.
+- Debug diagnostics: append `?debug=1` to the web URL, or set localStorage key `sctmg.debug` to `true`.
