@@ -39,7 +39,6 @@ const cardCost       = document.getElementById('card-cost');
 const cardTactical   = document.getElementById('card-tactical');
 const downloadImgBtn = document.getElementById('download-img-btn');
 const copyImgBtn     = document.getElementById('copy-img-btn');
-const imgStatus      = document.getElementById('img-status');
 // Player Aid options + controls
 const aidStats       = document.getElementById('aid-stats');
 const aidAllUpgrades = document.getElementById('aid-all-upgrades');
@@ -48,7 +47,89 @@ const aidTactical    = document.getElementById('aid-tactical');
 const aidCardEl      = document.getElementById('aid-card');
 const aidDownloadBtn = document.getElementById('aid-download-btn');
 const aidCopyImgBtn  = document.getElementById('aid-copy-img-btn');
-const aidImgStatus   = document.getElementById('aid-img-status');
+
+// ─── Toast notifications ──────────────────────────────────────────────────────
+function showToast(message, type = 'success', duration = 2500) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('is-leaving');
+    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+  }, duration);
+}
+
+// ─── localStorage persistence ─────────────────────────────────────────────────
+const STORAGE_KEY = 'sctmg.prefs';
+
+function savePrefs() {
+  try {
+    const activeTab = document.querySelector('.tab.active')?.dataset.tab ?? 'preview';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      seed: seedInput.value.trim().toUpperCase(),
+      tab:  activeTab,
+      opts: {
+        plain:         optPlain.checked,
+        stats:         optStats.checked,
+        abbr:          optAbbr.checked,
+        tactLines:     optTactLines.checked,
+        tactAbbr:      optTactAbbr.checked,
+        tactSupply:    optTactSupply.checked,
+        slotBreakdown: optSlotBreakdown.checked,
+        limit:         optLimit.value,
+      },
+      card: {
+        upgrades: cardUpgrades.checked,
+        stats:    cardStats.checked,
+        cost:     cardCost.checked,
+        tactical: cardTactical.checked,
+      },
+      aid: {
+        stats:       aidStats.checked,
+        allUpgrades: aidAllUpgrades.checked,
+        activation:  aidActivation.checked,
+        tactical:    aidTactical.checked,
+      },
+    }));
+  } catch (_) { /* storage unavailable */ }
+}
+
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    if (p.seed) seedInput.value = p.seed;
+    if (p.opts) {
+      optPlain.checked         = !!p.opts.plain;
+      optStats.checked         = !!p.opts.stats;
+      optAbbr.checked          = !!p.opts.abbr;
+      optTactLines.checked     = !!p.opts.tactLines;
+      optTactAbbr.checked      = !!p.opts.tactAbbr;
+      optTactSupply.checked    = !!p.opts.tactSupply;
+      optSlotBreakdown.checked = !!p.opts.slotBreakdown;
+      if (p.opts.limit) optLimit.value = p.opts.limit;
+    }
+    if (p.card) {
+      cardUpgrades.checked = p.card.upgrades !== false;
+      cardStats.checked    = !!p.card.stats;
+      cardCost.checked     = p.card.cost     !== false;
+      cardTactical.checked = p.card.tactical !== false;
+    }
+    if (p.aid) {
+      aidStats.checked       = p.aid.stats       !== false;
+      aidAllUpgrades.checked = p.aid.allUpgrades !== false;
+      aidActivation.checked  = p.aid.activation  !== false;
+      aidTactical.checked    = p.aid.tactical    !== false;
+    }
+    if (p.tab && p.tab !== 'preview') {
+      const tabEl = document.querySelector(`.tab[data-tab="${p.tab}"]`);
+      if (tabEl) tabEl.click();
+    }
+  } catch (_) { /* corrupt storage — ignore */ }
+}
 
 // ─── ANSI → HTML renderer ─────────────────────────────────────────────────────
 // Approximates how Discord renders ```ansi blocks in its dark theme.
@@ -264,9 +345,8 @@ async function captureCanvas(el) {
   return window.html2canvas(el, { backgroundColor: '#161b22', scale: 2, useCORS: true, logging: false });
 }
 
-async function downloadImage(el, filename, statusEl, btn) {
+async function downloadImage(el, filename, btn) {
   btn.disabled = true;
-  statusEl.textContent = 'Rendering…';
   try {
     const canvas = await captureCanvas(el);
     canvas.toBlob(blob => {
@@ -276,32 +356,30 @@ async function downloadImage(el, filename, statusEl, btn) {
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
-      statusEl.textContent = '';
+      showToast('Image downloaded!');
+      btn.disabled = false;
     }, 'image/png');
   } catch (err) {
-    statusEl.textContent = `Error: ${err.message}`;
-  } finally {
+    showToast(`Download failed: ${err.message}`, 'error');
     btn.disabled = false;
   }
 }
 
-async function copyImage(el, statusEl, btn) {
+async function copyImage(el, btn) {
   btn.disabled = true;
-  statusEl.textContent = 'Rendering…';
   try {
     const canvas = await captureCanvas(el);
     canvas.toBlob(async blob => {
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        statusEl.textContent = '✓ Image copied to clipboard!';
-        setTimeout(() => { statusEl.textContent = ''; }, 2500);
+        showToast('Image copied to clipboard!');
       } catch (err) {
-        statusEl.textContent = `Copy failed: ${err.message}`;
+        showToast(`Copy failed: ${err.message}`, 'error');
       }
       btn.disabled = false;
     }, 'image/png');
   } catch (err) {
-    statusEl.textContent = `Error: ${err.message}`;
+    showToast(`Error: ${err.message}`, 'error');
     btn.disabled = false;
   }
 }
@@ -337,7 +415,6 @@ function refreshOutput() {
   });
   downloadImgBtn.style.display = 'inline-block';
   copyImgBtn.style.display     = 'inline-block';
-  imgStatus.textContent        = '';
 
   // ── Player Aid ──────────────────────────────────────────────────────────────
   aidCardEl.innerHTML = renderPlayerAid(currentRoster, {
@@ -348,7 +425,6 @@ function refreshOutput() {
   });
   aidDownloadBtn.style.display = 'inline-block';
   aidCopyImgBtn.style.display  = 'inline-block';
-  aidImgStatus.textContent     = '';
 
   // ── JSON ────────────────────────────────────────────────────────────────────
   jsonBox.textContent = formatJson(currentRoster);
@@ -369,6 +445,7 @@ async function loadRoster() {
     const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
     currentRoster = parseRoster(flat, { tacticalCards });
     refreshOutput();
+      savePrefs();
     loadingBox.style.display = 'none';
     resultsEl.style.display  = 'block';
   } catch (err) {
@@ -392,38 +469,38 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
     discordOpts.style.display = DISCORD_TABS.has(tab.dataset.tab) ? '' : 'none';
+    savePrefs();
   });
 });
 
 // ─── Copy helpers ─────────────────────────────────────────────────────────────
-function copyText(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 1800);
-  });
+function copyText(text) {
+  navigator.clipboard.writeText(text)
+    .then(() => showToast('Copied to clipboard!'))
+    .catch(err => showToast(`Copy failed: ${err.message}`, 'error'));
 }
-document.getElementById('copy-preview-btn').addEventListener('click', () =>
-  copyText(currentFormatted, document.getElementById('copy-preview-btn')));
-document.getElementById('copy-raw-btn').addEventListener('click', () =>
-  copyText(currentFormatted, document.getElementById('copy-raw-btn')));
-document.getElementById('copy-json-btn').addEventListener('click', () =>
-  copyText(formatJson(currentRoster), document.getElementById('copy-json-btn')));
+document.getElementById('copy-preview-btn').addEventListener('click', () => copyText(currentFormatted));
+document.getElementById('copy-raw-btn').addEventListener('click',     () => copyText(currentFormatted));
+document.getElementById('copy-json-btn').addEventListener('click',    () => copyText(formatJson(currentRoster)));
 const getSeed = () => currentRoster?.seed ?? 'roster';
-downloadImgBtn.addEventListener('click', () => downloadImage(rosterCardEl, `roster-${getSeed()}.png`,     imgStatus,    downloadImgBtn));
-copyImgBtn.addEventListener(    'click', () => copyImage(    rosterCardEl,                               imgStatus,    copyImgBtn));
-aidDownloadBtn.addEventListener('click', () => downloadImage(aidCardEl,    `player-aid-${getSeed()}.png`, aidImgStatus, aidDownloadBtn));
-aidCopyImgBtn.addEventListener( 'click', () => copyImage(    aidCardEl,                                  aidImgStatus, aidCopyImgBtn));
+downloadImgBtn.addEventListener('click', () => downloadImage(rosterCardEl, `roster-${getSeed()}.png`,     downloadImgBtn));
+copyImgBtn.addEventListener(    'click', () => copyImage(    rosterCardEl,                               copyImgBtn));
+aidDownloadBtn.addEventListener('click', () => downloadImage(aidCardEl,    `player-aid-${getSeed()}.png`, aidDownloadBtn));
+aidCopyImgBtn.addEventListener( 'click', () => copyImage(    aidCardEl,                                  aidCopyImgBtn));
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
 loadBtn.addEventListener('click', loadRoster);
 seedInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadRoster(); });
+function refreshAndSave() { refreshOutput(); savePrefs(); }
 // Discord / Raw options
 [optPlain, optStats, optAbbr, optTactLines, optTactAbbr, optTactSupply, optSlotBreakdown, optLimit]
-  .forEach(el => el.addEventListener('change', refreshOutput));
+  .forEach(el => el.addEventListener('change', refreshAndSave));
 // Roster Card options
 [cardUpgrades, cardStats, cardCost, cardTactical]
-  .forEach(el => el.addEventListener('change', refreshOutput));
+  .forEach(el => el.addEventListener('change', refreshAndSave));
 // Player Aid options
 [aidStats, aidAllUpgrades, aidActivation, aidTactical]
-  .forEach(el => el.addEventListener('change', refreshOutput));
+  .forEach(el => el.addEventListener('change', refreshAndSave));
+
+// Restore persisted preferences (must come after all event listeners are wired up)
+loadPrefs();

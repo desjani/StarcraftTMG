@@ -242,6 +242,36 @@
     .aid-upg-meta { font-size: .70rem; font-style: italic; }
     .aid-upg-desc { font-size: .74rem; color: var(--text); opacity: .8; margin-top: 1px; width: 100%; }
     .aid-tags { font-size: .74rem; color: var(--muted); font-style: italic; margin-bottom: 6px; }
+
+    /* ── Toast notifications ── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: .85rem;
+      color: var(--text);
+      max-width: 320px;
+      pointer-events: auto;
+      animation: toast-in .2s ease forwards;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    }
+    .toast.is-leaving { animation: toast-out .2s ease forwards; }
+    .toast.success { border-left-color: var(--green); }
+    .toast.error   { border-left-color: var(--red);   }
+    @keyframes toast-in  { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toast-out { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(20px); } }
   </style>
 </head>
 <body>
@@ -320,7 +350,6 @@
           <button class="btn" id="download-img-btn" style="display:none">⬇ Download Image</button>
           <button class="btn ghost" id="copy-img-btn" style="display:none">⧉ Copy Image</button>
         </div>
-        <div id="img-status" style="font-size:.78rem;color:var(--muted);margin-top:6px;"></div>
       </div>
 
       <!-- Player Aid -->
@@ -336,7 +365,6 @@
           <button class="btn" id="aid-download-btn" style="display:none">⬇ Download Image</button>
           <button class="btn ghost" id="aid-copy-img-btn" style="display:none">⧉ Copy Image</button>
         </div>
-        <div id="aid-img-status" style="font-size:.78rem;color:var(--muted);margin-top:6px;"></div>
       </div>
 
       <!-- JSON -->
@@ -350,6 +378,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <div id="toast-container"></div>
   <script type="module" src="app.js"></script>
 </body>
 </html>
