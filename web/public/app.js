@@ -18,7 +18,9 @@ const debug = createDebugLogger({ search: window.location.search, storage: windo
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 const seedInput      = document.getElementById('seed-input');
 const loadBtn        = document.getElementById('load-btn');
+const recentToggleBtn = document.getElementById('recent-toggle-btn');
 const saveFavoriteBtn = document.getElementById('save-favorite-btn');
+const seedHistorySectionEl = document.getElementById('seed-history-section');
 const resultsEl      = document.getElementById('results');
 const errorBox       = document.getElementById('error-box');
 const loadingBox     = document.getElementById('loading-box');
@@ -61,6 +63,7 @@ const aidCardEl      = document.getElementById('aid-card');
 const aidDownloadBtn = document.getElementById('aid-download-btn');
 const aidCopyImgBtn  = document.getElementById('aid-copy-img-btn');
 let discordMode      = 'preview';
+let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
 
 // ─── Toast notifications ──────────────────────────────────────────────────────
@@ -90,6 +93,9 @@ function savePrefs() {
       seed: seedInput.value.trim().toUpperCase(),
       tab:  activeTab,
       discordMode,
+      ui: {
+        recentCollapsed,
+      },
       opts: {
         plain:         optPlain.checked,
         stats:         optStats.checked,
@@ -149,6 +155,8 @@ function loadPrefs() {
     // Legacy compatibility: old saved "raw" tab now maps to preview + raw mode.
     const savedTab = p.tab === 'raw' ? 'preview' : p.tab;
     const savedMode = p.discordMode ?? (p.tab === 'raw' ? 'raw' : 'preview');
+    recentCollapsed = !!p.ui?.recentCollapsed;
+    applyRecentCollapsed(false);
     setDiscordMode(savedMode, { save: false });
     if (savedTab && savedTab !== 'preview') {
       const tabEl = document.querySelector(`.tab[data-tab="${savedTab}"]`);
@@ -163,6 +171,12 @@ function setDiscordMode(mode, { save = true } = {}) {
   previewContent.style.display = isRaw ? 'none' : '';
   rawBox.style.display = isRaw ? 'block' : 'none';
   discordModeToggle.checked = isRaw;
+  if (save) savePrefs();
+}
+
+function applyRecentCollapsed(save = true) {
+  seedHistorySectionEl.style.display = recentCollapsed ? 'none' : '';
+  recentToggleBtn.textContent = recentCollapsed ? 'Show History' : 'Hide History';
   if (save) savePrefs();
 }
 
@@ -690,6 +704,7 @@ async function loadRoster() {
     refreshOutput();
     addRecentSeed(seed);
     savePrefs();
+    document.body.classList.remove('preload');
     loadingBox.style.display = 'none';
     resultsEl.style.display  = 'block';
     debug.log('roster.load.ok', {
@@ -794,6 +809,11 @@ saveFavoriteBtn.addEventListener('click', () => {
   showToast(`Saved favorite: ${name.trim()}`);
 });
 
+recentToggleBtn.addEventListener('click', () => {
+  recentCollapsed = !recentCollapsed;
+  applyRecentCollapsed();
+});
+
 recentSeedsEl.addEventListener('click', e => {
   const btn = e.target.closest('button[data-seed]');
   if (!btn) return;
@@ -850,3 +870,4 @@ function refreshAndSave() { refreshOutput(); savePrefs(); }
 loadPrefs();
 loadSeedHistory();
 renderSeedHistory();
+applyRecentCollapsed(false);

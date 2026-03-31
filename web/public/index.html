@@ -102,6 +102,17 @@
       margin: 0 auto;
       padding: 28px 18px 42px;
     }
+    .lookup-shell { width: 100%; }
+    body.preload main {
+      min-height: calc(100vh - 68px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    body.preload .lookup-shell {
+      max-width: 860px;
+      width: 100%;
+    }
 
     .search-bar {
       display: grid;
@@ -140,6 +151,18 @@
       letter-spacing: .1em;
       text-transform: uppercase;
       margin-bottom: 8px;
+    }
+    .seed-history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .seed-history-head .seed-history-title { margin-bottom: 0; }
+    .seed-history-group.collapsed .seed-list,
+    .seed-history-group.collapsed .seed-empty {
+      display: none !important;
     }
     .seed-list {
       display: flex;
@@ -841,40 +864,45 @@
     }
   </style>
 </head>
-<body>
+<body class="preload">
   <header>
     <h1>⬡ StarCraft TMG · Roster Viewer</h1>
     <span class="badge">v1.0</span>
   </header>
 
   <main>
-    <!-- Search -->
-    <div class="search-bar">
-      <input type="text" id="seed-input"
-             placeholder="Enter roster seed (e.g. TRN9X2)"
-             maxlength="10" autocomplete="off" spellcheck="false">
-      <button class="btn" id="load-btn">Load Roster</button>
-      <button class="btn ghost" id="save-favorite-btn">Save Favorite</button>
-    </div>
+    <div class="lookup-shell">
+      <!-- Search -->
+      <div class="search-bar">
+        <input type="text" id="seed-input"
+               placeholder="Enter roster seed (e.g. TRN9X2)"
+               maxlength="10" autocomplete="off" spellcheck="false">
+        <button class="btn" id="load-btn">Load Roster</button>
+        <button class="btn ghost" id="recent-toggle-btn">Hide History</button>
+      </div>
 
-    <div class="seed-history">
-      <div class="seed-history-grid">
-        <div class="seed-history-group">
-          <div class="seed-history-title">Recent Seeds</div>
-          <div class="seed-list" id="recent-seeds"></div>
-          <div class="seed-empty" id="no-recent">No recent seeds yet.</div>
-        </div>
-        <div class="seed-history-group">
-          <div class="seed-history-title">Favorites</div>
-          <div class="favorite-list" id="favorite-seeds"></div>
-          <div class="seed-empty" id="no-favorites">No favorites saved yet.</div>
+      <div class="seed-history" id="seed-history-section">
+        <div class="seed-history-grid">
+          <div class="seed-history-group" id="recent-group">
+            <div class="seed-history-title">Recent Seeds</div>
+            <div class="seed-list" id="recent-seeds"></div>
+            <div class="seed-empty" id="no-recent">No recent seeds yet.</div>
+          </div>
+          <div class="seed-history-group">
+            <div class="seed-history-head">
+              <div class="seed-history-title">Favorites</div>
+              <button class="btn ghost sm" id="save-favorite-btn">Save Favorite</button>
+            </div>
+            <div class="favorite-list" id="favorite-seeds"></div>
+            <div class="seed-empty" id="no-favorites">No favorites saved yet.</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Loading / Error -->
-    <div id="loading-box" style="display:none" class="loading" role="status" aria-live="polite" aria-atomic="true">⟳ Fetching roster…</div>
-    <div id="error-box"   style="display:none" role="alert" aria-live="assertive" aria-atomic="true"></div>
+      <!-- Loading / Error -->
+      <div id="loading-box" style="display:none" class="loading" role="status" aria-live="polite" aria-atomic="true">⟳ Fetching roster…</div>
+      <div id="error-box"   style="display:none" role="alert" aria-live="assertive" aria-atomic="true"></div>
+    </div>
 
     <!-- Results -->
     <div id="results" style="display:none">
