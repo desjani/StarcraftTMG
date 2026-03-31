@@ -141,6 +141,12 @@
       box-shadow: 0 0 0 3px rgba(102, 182, 255, .16), inset 0 0 16px rgba(102, 182, 255, .06);
       transform: translateY(-1px);
     }
+    .search-bar input:focus-visible,
+    .limit-group input[type=number]:focus-visible,
+    .opt-label input[type=checkbox]:focus-visible {
+      outline: 2px solid var(--protoss);
+      outline-offset: 2px;
+    }
 
     .btn {
       border: 1px solid transparent;
@@ -161,6 +167,10 @@
     .btn:hover:not(:disabled) {
       transform: translateY(-1px);
       filter: brightness(1.07);
+    }
+    .btn:focus-visible {
+      outline: 2px solid var(--protoss);
+      outline-offset: 2px;
     }
     .btn:disabled {
       cursor: not-allowed;
@@ -194,8 +204,10 @@
       animation: rise-in .36s ease-out both;
     }
     .tab {
+      appearance: none;
       border: 1px solid transparent;
       border-radius: 8px;
+      background: transparent;
       padding: 8px 13px;
       color: var(--muted);
       font-family: 'Orbitron', sans-serif;
@@ -208,6 +220,12 @@
     .tab:hover {
       color: var(--text);
       border-color: var(--line);
+    }
+    .tab:focus-visible {
+      outline: 2px solid var(--protoss);
+      outline-offset: 1px;
+      color: var(--text);
+      border-color: var(--protoss);
     }
     .tab.active {
       color: var(--protoss);
@@ -330,7 +348,9 @@
       align-items: flex-start;
       padding: 11px 20px;
       border-bottom: 1px solid var(--line-soft);
+      transition: background .16s ease;
     }
+    .unit-row:hover { background: rgba(101, 244, 255, .045); }
     .unit-row:last-child { border-bottom: none; }
     .unit-type-badge {
       min-width: 30px;
@@ -387,7 +407,14 @@
 
     .aid-unit { border-bottom: 1px solid var(--line-soft); }
     .aid-unit:last-child { border-bottom: none; }
-    .aid-unit-header { display: flex; gap: 12px; align-items: flex-start; padding: 10px 20px 8px; }
+    .aid-unit-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 20px 8px;
+      transition: background .16s ease;
+    }
+    .aid-unit-header:hover { background: rgba(101, 244, 255, .038); }
     .aid-body { padding: 0 20px 12px 60px; }
     .aid-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     .stat-chip {
@@ -526,17 +553,17 @@
     </div>
 
     <!-- Loading / Error -->
-    <div id="loading-box" style="display:none" class="loading">⟳ Fetching roster…</div>
-    <div id="error-box"   style="display:none"></div>
+    <div id="loading-box" style="display:none" class="loading" role="status" aria-live="polite" aria-atomic="true">⟳ Fetching roster…</div>
+    <div id="error-box"   style="display:none" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
     <!-- Results -->
     <div id="results" style="display:none">
-      <div class="tabs">
-        <div class="tab active" data-tab="preview">Discord Preview</div>
-        <div class="tab"        data-tab="raw">Raw Text</div>
-        <div class="tab"        data-tab="roster">Roster Card</div>
-        <div class="tab"        data-tab="aid">Player Aid</div>
-        <div class="tab"        data-tab="json">JSON</div>
+      <div class="tabs" role="tablist" aria-label="Output views">
+        <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="tab-preview" tabindex="0" data-tab="preview">Discord Preview</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-raw" tabindex="-1" data-tab="raw">Raw Text</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-roster" tabindex="-1" data-tab="roster">Roster Card</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-aid" tabindex="-1" data-tab="aid">Player Aid</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-json" tabindex="-1" data-tab="json">JSON</button>
       </div>
 
       <!-- Discord / Raw shared options (hidden on other tabs) -->
@@ -555,18 +582,18 @@
       </div>
 
       <!-- Discord Preview -->
-      <div id="tab-preview" class="panel active">
+      <div id="tab-preview" class="panel active" role="tabpanel" tabindex="0">
         <div class="output-wrap">
           <div class="output-box" id="preview-box">
             <button class="btn ghost sm abs-copy" id="copy-preview-btn">Copy</button>
             <div id="preview-content"></div>
           </div>
         </div>
-        <div class="char-counter" id="char-counter"></div>
+        <div class="char-counter" id="char-counter" aria-live="polite" aria-atomic="true"></div>
       </div>
 
       <!-- Raw Text -->
-      <div id="tab-raw" class="panel">
+      <div id="tab-raw" class="panel" role="tabpanel" tabindex="0" hidden>
         <div class="output-box wrap" id="raw-box"></div>
         <button class="btn ghost" id="copy-raw-btn" style="margin-top:10px;width:100%">
           Copy Raw for Discord
@@ -574,7 +601,7 @@
       </div>
 
       <!-- Roster Card -->
-      <div id="tab-roster" class="panel">
+      <div id="tab-roster" class="panel" role="tabpanel" tabindex="0" hidden>
         <div class="tab-options">
           <label class="opt-label"><input type="checkbox" id="card-upgrades" checked> Upgrades</label>
           <label class="opt-label"><input type="checkbox" id="card-stats"> Unit stats</label>
@@ -589,7 +616,7 @@
       </div>
 
       <!-- Player Aid -->
-      <div id="tab-aid" class="panel">
+      <div id="tab-aid" class="panel" role="tabpanel" tabindex="0" hidden>
         <div class="tab-options">
           <label class="opt-label"><input type="checkbox" id="aid-stats" checked> Stats</label>
           <label class="opt-label"><input type="checkbox" id="aid-all-upgrades" checked> All upgrades</label>
@@ -604,7 +631,7 @@
       </div>
 
       <!-- JSON -->
-      <div id="tab-json" class="panel">
+      <div id="tab-json" class="panel" role="tabpanel" tabindex="0" hidden>
         <div class="output-box wrap" id="json-box" style="font-size:.78rem"></div>
         <button class="btn ghost" id="copy-json-btn" style="margin-top:10px;width:100%">
           Copy JSON
@@ -613,7 +640,7 @@
     </div>
   </main>
 
-  <div id="toast-container"></div>
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>

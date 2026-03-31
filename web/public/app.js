@@ -53,6 +53,8 @@ function showToast(message, type = 'success', duration = 2500) {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
   toast.textContent = message;
   container.appendChild(toast);
   setTimeout(() => {
@@ -439,6 +441,7 @@ async function loadRoster() {
   errorBox.style.display  = 'none';
   loadingBox.style.display = 'block';
   loadBtn.disabled = true;
+  loadBtn.setAttribute('aria-busy', 'true');
 
   try {
     const flat = await fetchRoster(seed);
@@ -457,19 +460,47 @@ async function loadRoster() {
     errorBox.style.display = 'block';
   } finally {
     loadBtn.disabled = false;
+    loadBtn.removeAttribute('aria-busy');
   }
 }
 
 // ─── Tab switcher ─────────────────────────────────────────────────────────────
 const DISCORD_TABS = new Set(['preview', 'raw']);
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t  => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-    discordOpts.style.display = DISCORD_TABS.has(tab.dataset.tab) ? '' : 'none';
-    savePrefs();
+const tabs = Array.from(document.querySelectorAll('.tab'));
+
+function activateTab(tab, { setFocus = false } = {}) {
+  const targetPanelId = `tab-${tab.dataset.tab}`;
+  tabs.forEach(t => {
+    const isActive = t === tab;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    t.tabIndex = isActive ? 0 : -1;
+  });
+  document.querySelectorAll('.panel').forEach(panel => {
+    const isActive = panel.id === targetPanelId;
+    panel.classList.toggle('active', isActive);
+    panel.hidden = !isActive;
+  });
+  if (setFocus) tab.focus();
+  discordOpts.style.display = DISCORD_TABS.has(tab.dataset.tab) ? '' : 'none';
+  savePrefs();
+}
+
+tabs.forEach((tab, idx) => {
+  tab.addEventListener('click', () => activateTab(tab));
+  tab.addEventListener('keydown', e => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', ' '].includes(e.key)) return;
+    e.preventDefault();
+    if (e.key === 'Enter' || e.key === ' ') {
+      activateTab(tab);
+      return;
+    }
+    let nextIdx = idx;
+    if (e.key === 'Home') nextIdx = 0;
+    if (e.key === 'End') nextIdx = tabs.length - 1;
+    if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+    if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
+    activateTab(tabs[nextIdx], { setFocus: true });
   });
 });
 
@@ -491,6 +522,7 @@ aidCopyImgBtn.addEventListener( 'click', () => copyImage(    aidCardEl,         
 // ─── Event listeners ──────────────────────────────────────────────────────────
 loadBtn.addEventListener('click', loadRoster);
 seedInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadRoster(); });
+seedInput.addEventListener('change', savePrefs);
 function refreshAndSave() { refreshOutput(); savePrefs(); }
 // Discord / Raw options
 [optPlain, optStats, optAbbr, optTactLines, optTactAbbr, optTactSupply, optSlotBreakdown, optLimit]
