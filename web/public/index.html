@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StarCraft TMG · Roster Viewer</title>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #30363d;
+      --accent:   #58a6ff;
+      --text:     #c9d1d9;
+      --muted:    #8b949e;
+      --terran:   #5b8fe8;
+      --protoss:  #8be9fd;
+      --zerg:     #ff79c6;
+      --green:    #3fb950;
+      --yellow:   #d29922;
+      --red:      #f85149;
+      --mono:     'Courier New', Courier, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
+    .badge { font-size: .7rem; background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid rgba(88,166,255,.3); border-radius: 999px; padding: 2px 8px; }
+
+    /* ── Layout ── */
+    main { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+    /* ── Search Bar ── */
+    .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+    .search-bar input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 1.05rem;
+      font-family: var(--mono);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-bar input::placeholder { letter-spacing: normal; text-transform: none; color: var(--muted); font-family: 'Segoe UI', sans-serif; font-size: .9rem; }
+    .search-bar input:focus { border-color: var(--accent); }
+
+    /* ── Buttons ── */
+    .btn {
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: .9rem;
+      cursor: pointer;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) { opacity: .85; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.sm { padding: 5px 12px; font-size: .78rem; }
+
+    /* ── Options row ── */
+    .options {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 24px;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .opt-label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .opt-label:hover { color: var(--text); }
+    .opt-label input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; }
+    .limit-group { display: flex; align-items: center; gap: 8px; }
+    .limit-group input[type=number] {
+      width: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: .85rem;
+      outline: none;
+    }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .tab {
+      padding: 8px 18px;
+      font-size: .875rem;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Panels ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Output box (preview + raw) ── */
+    .output-wrap { position: relative; }
+    .output-box {
+      background: #1e2431;   /* darker than surface to mimic Discord dark theme */
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: .875rem;
+      line-height: 1.65;
+      min-height: 160px;
+      overflow-x: auto;
+      white-space: pre;
+      color: #f8f8f2;
+    }
+    .output-box.wrap { white-space: pre-wrap; word-break: break-all; }
+    .abs-copy { position: absolute; top: 10px; right: 10px; }
+
+    /* ── Char counter ── */
+    .char-counter { font-size: .75rem; color: var(--muted); text-align: right; margin-top: 6px; }
+    .char-counter.warn { color: var(--yellow); }
+    .char-counter.over { color: var(--red); }
+
+    /* ── Roster card ── */
+    .roster-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .roster-header { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .roster-faction { font-size: 1.35rem; font-weight: 800; letter-spacing: .5px; }
+    .roster-faction.Terran  { color: var(--terran);  }
+    .roster-faction.Protoss { color: var(--protoss); }
+    .roster-faction.Zerg    { color: var(--zerg);    }
+    .roster-meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: .82rem; color: var(--muted); margin-top: 6px; }
+    .tag { background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 4px; padding: 1px 8px; font-size: .75rem; color: var(--muted); }
+    .seed-tag { color: var(--accent); border-color: rgba(88,166,255,.4); font-family: var(--mono); letter-spacing: 1px; }
+
+    .unit-list { padding: 0; }
+    .unit-row { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
+    .unit-row:last-child { border-bottom: none; }
+    .unit-type-badge {
+      min-width: 28px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; font-size: .7rem; font-weight: 700; letter-spacing: .5px;
+      flex-shrink: 0;
+    }
+    .badge-Hero    { background: rgba(210,153,34,.15); color: var(--yellow); border: 1px solid var(--yellow); }
+    .badge-Core    { background: rgba(248,248,242,.05); color: var(--text);  border: 1px solid var(--border); }
+    .badge-Elite   { background: rgba(248,81,73,.12);  color: var(--red);   border: 1px solid var(--red);    }
+    .badge-Support { background: rgba(63,185,80,.12);  color: var(--green); border: 1px solid var(--green);  }
+    .badge-Air     { background: rgba(88,166,255,.12); color: var(--accent); border: 1px solid var(--accent); }
+    .badge-Other   { background: rgba(128,128,128,.12); color: var(--muted);  border: 1px solid var(--muted);  }
+    .unit-info { flex: 1; min-width: 0; }
+    .unit-name { font-weight: 600; }
+    .unit-sub  { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+    .unit-upgrades { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .upg-pill {
+      background: rgba(63,185,80,.08);
+      border: 1px solid rgba(63,185,80,.25);
+      border-radius: 999px;
+      padding: 1px 10px;
+      font-size: .72rem;
+      color: var(--green);
+    }
+    .upg-pill strong { color: var(--yellow); }
+    .unit-cost { font-family: var(--mono); font-weight: 700; color: var(--yellow); white-space: nowrap; font-size: .9rem; padding-top: 2px; }
+
+    .tact-section { padding: 10px 20px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-top: 1px solid var(--border); }
+    .tact-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-right: 4px; }
+
+    /* ── Status messages ── */
+    .error {
+      background: rgba(248,81,73,.1);
+      border: 1px solid var(--red);
+      border-radius: 8px;
+      padding: 14px 18px;
+      color: var(--red);
+      font-size: .9rem;
+    }
+    .loading { color: var(--muted); text-align: center; padding: 40px; font-size: .9rem; }
+
+    @media (max-width: 600px) {
+      .search-bar { flex-direction: column; }
+      .tab-options { flex-direction: column; align-items: flex-start; gap: 10px; }
+    }
+
+    /* ── Tab-scoped options bar ── */
+    .tab-options {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 10px 0;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: .83rem;
+      color: var(--muted);
+    }
+
+    /* ── Player Aid expanded unit view ── */
+    .aid-unit { border-bottom: 1px solid var(--border); }
+    .aid-unit:last-child { border-bottom: none; }
+    .aid-unit-header { padding: 10px 20px 8px; display: flex; align-items: flex-start; gap: 12px; }
+    .aid-body { padding: 0 20px 12px 60px; }
+    .aid-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .stat-chip { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 4px; padding: 2px 9px; font-size: .71rem; font-family: var(--mono); color: var(--muted); }
+    .stat-chip strong { color: var(--accent); }
+    .aid-upgrades { display: flex; flex-direction: column; gap: 3px; }
+    .aid-upg { font-size: .78rem; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+    .aid-upg.is-active { color: var(--green); }
+    .aid-upg.is-inactive { color: var(--muted); }
+    .aid-upg-name { font-weight: 600; }
+    .aid-upg-cost { font-family: var(--mono); font-weight: 700; font-size: .72rem; white-space: nowrap; }
+    .aid-upg-meta { font-size: .70rem; font-style: italic; }
+    .aid-upg-desc { font-size: .74rem; color: var(--text); opacity: .8; margin-top: 1px; width: 100%; }
+    .aid-tags { font-size: .74rem; color: var(--muted); font-style: italic; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⬡ StarCraft TMG · Roster Viewer</h1>
+    <span class="badge">v1.0</span>
+  </header>
+
+  <main>
+    <!-- Search -->
+    <div class="search-bar">
+      <input type="text" id="seed-input"
+             placeholder="Enter roster seed (e.g. TRN9X2)"
+             maxlength="10" autocomplete="off" spellcheck="false">
+      <button class="btn" id="load-btn">Load Roster</button>
+    </div>
+
+    <!-- Loading / Error -->
+    <div id="loading-box" style="display:none" class="loading">⟳ Fetching roster…</div>
+    <div id="error-box"   style="display:none"></div>
+
+    <!-- Results -->
+    <div id="results" style="display:none">
+      <div class="tabs">
+        <div class="tab active" data-tab="preview">Discord Preview</div>
+        <div class="tab"        data-tab="raw">Raw Text</div>
+        <div class="tab"        data-tab="roster">Roster Card</div>
+        <div class="tab"        data-tab="aid">Player Aid</div>
+        <div class="tab"        data-tab="json">JSON</div>
+      </div>
+
+      <!-- Discord / Raw shared options (hidden on other tabs) -->
+      <div id="discord-opts" class="tab-options">
+        <label class="opt-label"><input type="checkbox" id="opt-plain"> Plain text (no ANSI)</label>
+        <label class="opt-label"><input type="checkbox" id="opt-stats"> Unit stats</label>
+        <label class="opt-label"><input type="checkbox" id="opt-abbr"> Abbreviate upgrades</label>
+        <label class="opt-label"><input type="checkbox" id="opt-tact-lines"> Tacticals per line</label>
+        <label class="opt-label"><input type="checkbox" id="opt-tact-abbr"> Abbreviate tacticals</label>
+        <label class="opt-label"><input type="checkbox" id="opt-tact-supply"> Tactical supply types</label>
+        <label class="opt-label"><input type="checkbox" id="opt-slot-breakdown"> Slot breakdown</label>
+        <div class="limit-group">
+          <label for="opt-limit">Char limit:</label>
+          <input type="number" id="opt-limit" value="2000" min="500" max="4096" step="100">
+        </div>
+      </div>
+
+      <!-- Discord Preview -->
+      <div id="tab-preview" class="panel active">
+        <div class="output-wrap">
+          <div class="output-box" id="preview-box">
+            <button class="btn ghost sm abs-copy" id="copy-preview-btn">Copy</button>
+            <div id="preview-content"></div>
+          </div>
+        </div>
+        <div class="char-counter" id="char-counter"></div>
+      </div>
+
+      <!-- Raw Text -->
+      <div id="tab-raw" class="panel">
+        <div class="output-box wrap" id="raw-box"></div>
+        <button class="btn ghost" id="copy-raw-btn" style="margin-top:10px;width:100%">
+          Copy Raw for Discord
+        </button>
+      </div>
+
+      <!-- Roster Card -->
+      <div id="tab-roster" class="panel">
+        <div class="tab-options">
+          <label class="opt-label"><input type="checkbox" id="card-upgrades" checked> Upgrades</label>
+          <label class="opt-label"><input type="checkbox" id="card-stats"> Unit stats</label>
+          <label class="opt-label"><input type="checkbox" id="card-cost" checked> Cost</label>
+          <label class="opt-label"><input type="checkbox" id="card-tactical" checked> Tactical cards</label>
+        </div>
+        <div id="roster-card"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn" id="download-img-btn" style="display:none">⬇ Download Image</button>
+          <button class="btn ghost" id="copy-img-btn" style="display:none">⧉ Copy Image</button>
+        </div>
+        <div id="img-status" style="font-size:.78rem;color:var(--muted);margin-top:6px;"></div>
+      </div>
+
+      <!-- Player Aid -->
+      <div id="tab-aid" class="panel">
+        <div class="tab-options">
+          <label class="opt-label"><input type="checkbox" id="aid-stats" checked> Stats</label>
+          <label class="opt-label"><input type="checkbox" id="aid-all-upgrades" checked> All upgrades</label>
+          <label class="opt-label"><input type="checkbox" id="aid-activation" checked> Activation info</label>
+          <label class="opt-label"><input type="checkbox" id="aid-tactical" checked> Tactical cards</label>
+        </div>
+        <div id="aid-card"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn" id="aid-download-btn" style="display:none">⬇ Download Image</button>
+          <button class="btn ghost" id="aid-copy-img-btn" style="display:none">⧉ Copy Image</button>
+        </div>
+        <div id="aid-img-status" style="font-size:.78rem;color:var(--muted);margin-top:6px;"></div>
+      </div>
+
+      <!-- JSON -->
+      <div id="tab-json" class="panel">
+        <div class="output-box wrap" id="json-box" style="font-size:.78rem"></div>
+        <button class="btn ghost" id="copy-json-btn" style="margin-top:10px;width:100%">
+          Copy JSON
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
