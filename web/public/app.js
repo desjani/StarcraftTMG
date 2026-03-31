@@ -703,6 +703,10 @@ async function loadRoster() {
     currentRoster = parseRoster(flat, { tacticalCards });
     refreshOutput();
     addRecentSeed(seed);
+    if (!recentCollapsed) {
+      recentCollapsed = true;
+      applyRecentCollapsed(false);
+    }
     savePrefs();
     document.body.classList.remove('preload');
     loadingBox.style.display = 'none';
