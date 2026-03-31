@@ -3,9 +3,9 @@
  * Imported as a module by index.html.
  * Reuses the same lib/ modules as the server and Discord bot.
  */
-import { fetchRoster, fetchTacticalCards } from '/lib/firestoreClient.js';
-import { parseRoster }           from '/lib/rosterParser.js';
-import { formatCompact, formatJson } from '/lib/formatter.js';
+import { fetchRoster, fetchTacticalCards } from './lib/firestoreClient.js';
+import { parseRoster }           from './lib/rosterParser.js';
+import { formatCompact, formatJson } from './lib/formatter.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let currentRoster    = null;
