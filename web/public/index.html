@@ -253,6 +253,32 @@
       color: var(--muted);
       font-size: .86rem;
     }
+    .opt-row {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+    }
+    .opt-row.secondary {
+      padding-top: 8px;
+      border-top: 1px solid rgba(49, 69, 99, .35);
+      margin-top: 2px;
+    }
+    .opt-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .opt-group-title {
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      font-size: .62rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-right: 2px;
+    }
     .opt-label {
       display: inline-flex;
       align-items: center;
@@ -278,6 +304,12 @@
       font-size: .8rem;
       outline: none;
     }
+    .limit-readout {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .76rem;
+      white-space: nowrap;
+    }
 
     .output-wrap { position: relative; }
     .output-box {
@@ -297,11 +329,71 @@
       box-shadow: inset 0 0 0 1px rgba(125, 180, 255, .08), 0 14px 30px var(--shadow);
     }
     .output-box.wrap { white-space: pre-wrap; word-break: break-word; }
-    .abs-copy { position: absolute; top: 11px; right: 11px; }
+    .abs-actions {
+      position: absolute;
+      top: 11px;
+      right: 11px;
+      display: flex;
+      gap: 6px;
+    }
+    .abs-copy { position: static; }
+    .mode-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: .78rem;
+      user-select: none;
+    }
+    .mode-switch input { display: none; }
+    .mode-track {
+      width: 42px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(15, 25, 40, .85);
+      position: relative;
+      transition: border-color .16s, background .16s;
+      cursor: pointer;
+    }
+    .mode-track::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: transform .16s, background .16s;
+    }
+    .mode-switch input:checked + .mode-track {
+      border-color: rgba(101, 244, 255, .58);
+      background: rgba(28, 57, 80, .88);
+    }
+    .mode-switch input:checked + .mode-track::after {
+      transform: translateX(20px);
+      background: var(--protoss);
+    }
+    .discord-raw {
+      display: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
 
     .char-counter { margin-top: 7px; text-align: right; font-size: .74rem; color: var(--muted); }
     .char-counter.warn { color: var(--yellow); }
     .char-counter.over { color: var(--red); }
+    .limit-warning {
+      margin-top: 8px;
+      border: 1px solid rgba(255, 98, 107, .6);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--red);
+      background: rgba(255, 98, 107, .1);
+      font-size: .78rem;
+      display: none;
+    }
 
     .roster-card {
       border: 1px solid var(--line);
@@ -309,6 +401,21 @@
       overflow: hidden;
       background: linear-gradient(180deg, rgba(19, 31, 50, .95), rgba(14, 22, 36, .96));
       box-shadow: 0 16px 30px var(--shadow);
+    }
+    .roster-card.faction-terran {
+      background:
+        linear-gradient(180deg, rgba(22, 38, 63, .96), rgba(13, 22, 36, .96)),
+        radial-gradient(circle at 82% 12%, rgba(125, 180, 255, .14), transparent 42%);
+    }
+    .roster-card.faction-zerg {
+      background:
+        linear-gradient(180deg, rgba(46, 22, 44, .92), rgba(17, 18, 33, .97)),
+        radial-gradient(circle at 78% 14%, rgba(247, 109, 178, .16), transparent 40%);
+    }
+    .roster-card.faction-protoss {
+      background:
+        linear-gradient(180deg, rgba(19, 39, 59, .95), rgba(12, 25, 39, .97)),
+        radial-gradient(circle at 82% 10%, rgba(101, 244, 255, .16), transparent 42%);
     }
     .roster-header {
       padding: 16px 20px;
@@ -326,6 +433,78 @@
     .roster-faction.Protoss { color: var(--protoss); }
     .roster-faction.Zerg    { color: var(--zerg); }
     .roster-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; color: var(--muted); font-size: .82rem; }
+    .meta-supply { color: var(--red); }
+    .resource-icon {
+      display: inline-block;
+      min-width: 1.05em;
+      text-align: center;
+      font-weight: 700;
+    }
+    .resource-faction-terran { color: var(--terran); }
+    .resource-faction-zerg { color: var(--zerg); }
+    .resource-faction-protoss { color: var(--protoss); }
+    .slot-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .slot-breakdown-label {
+      color: var(--muted);
+      font-size: .66rem;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .slot-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(15, 27, 43, .58);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .72rem;
+    }
+    .slot-chip-type {
+      color: inherit;
+      font-family: 'Orbitron', sans-serif;
+      font-size: .62rem;
+      letter-spacing: .08em;
+    }
+    .slot-chip.slot-hero {
+      color: var(--yellow);
+      border-color: rgba(241, 191, 89, .55);
+      background: rgba(241, 191, 89, .1);
+    }
+    .slot-chip.slot-core {
+      color: var(--protoss);
+      border-color: rgba(101, 244, 255, .55);
+      background: rgba(101, 244, 255, .1);
+    }
+    .slot-chip.slot-elite {
+      color: var(--red);
+      border-color: rgba(255, 98, 107, .55);
+      background: rgba(255, 98, 107, .1);
+    }
+    .slot-chip.slot-support {
+      color: var(--green);
+      border-color: rgba(70, 212, 138, .55);
+      background: rgba(70, 212, 138, .1);
+    }
+    .slot-chip.slot-air {
+      color: var(--accent);
+      border-color: rgba(102, 182, 255, .55);
+      background: rgba(102, 182, 255, .1);
+    }
+    .slot-chip.slot-other {
+      color: var(--muted);
+      border-color: rgba(147, 168, 196, .48);
+      background: rgba(147, 168, 196, .08);
+    }
     .tag {
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -351,6 +530,12 @@
       transition: background .16s ease;
     }
     .unit-row:hover { background: rgba(101, 244, 255, .045); }
+    .roster-card.faction-terran .unit-row { border-bottom-color: rgba(125, 180, 255, .26); }
+    .roster-card.faction-zerg .unit-row { border-bottom-color: rgba(247, 109, 178, .26); }
+    .roster-card.faction-protoss .unit-row { border-bottom-color: rgba(101, 244, 255, .26); }
+    .roster-card.faction-terran .unit-row:hover { background: rgba(125, 180, 255, .08); }
+    .roster-card.faction-zerg .unit-row:hover { background: rgba(247, 109, 178, .085); }
+    .roster-card.faction-protoss .unit-row:hover { background: rgba(101, 244, 255, .085); }
     .unit-row:last-child { border-bottom: none; }
     .unit-type-badge {
       min-width: 30px;
@@ -366,16 +551,51 @@
       border: 1px solid transparent;
     }
     .badge-Hero    { background: rgba(241, 191, 89, .14); color: var(--yellow); border-color: rgba(241, 191, 89, .65); }
-    .badge-Core    { background: rgba(255,255,255,.04); color: var(--text);  border-color: var(--line); }
+    .badge-Core    { background: rgba(101, 244, 255, .12); color: var(--protoss);  border-color: rgba(101, 244, 255, .58); }
     .badge-Elite   { background: rgba(255, 98, 107, .12); color: var(--red); border-color: rgba(255, 98, 107, .62); }
     .badge-Support { background: rgba(70, 212, 138, .13); color: var(--green); border-color: rgba(70, 212, 138, .62); }
     .badge-Air     { background: rgba(102, 182, 255, .13); color: var(--accent); border-color: rgba(102, 182, 255, .62); }
     .badge-Other   { background: rgba(147, 168, 196, .12); color: var(--muted); border-color: rgba(147, 168, 196, .5); }
 
     .unit-info { flex: 1; min-width: 0; }
+    .unit-main {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px;
+      margin-top: 1px;
+    }
     .unit-name { font-weight: 700; font-size: .96rem; }
+    .unit-main-meta {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .78rem;
+      letter-spacing: .01em;
+    }
+    .unit-size { color: var(--muted); }
+    .unit-sep { color: rgba(147, 168, 196, .65); }
+    .unit-supply { color: var(--red); }
+    .unit-main-cost { color: var(--yellow); }
     .unit-sub { margin-top: 2px; font-size: .78rem; color: var(--muted); }
-    .unit-upgrades { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .unit-sub-line {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .unit-stats-inline {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .72rem;
+    }
+    .unit-stats-line {
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .72rem;
+    }
+    .unit-upgrades { display: inline-flex; flex-wrap: wrap; gap: 5px; }
     .upg-pill {
       border-radius: 999px;
       border: 1px solid rgba(70, 212, 138, .44);
@@ -559,8 +779,7 @@
     <!-- Results -->
     <div id="results" style="display:none">
       <div class="tabs" role="tablist" aria-label="Output views">
-        <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="tab-preview" tabindex="0" data-tab="preview">Discord Preview</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-raw" tabindex="-1" data-tab="raw">Raw Text</button>
+        <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="tab-preview" tabindex="0" data-tab="preview">Discord</button>
         <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-roster" tabindex="-1" data-tab="roster">Roster Card</button>
         <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-aid" tabindex="-1" data-tab="aid">Player Aid</button>
         <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="tab-json" tabindex="-1" data-tab="json">JSON</button>
@@ -568,16 +787,36 @@
 
       <!-- Discord / Raw shared options (hidden on other tabs) -->
       <div id="discord-opts" class="tab-options">
-        <label class="opt-label"><input type="checkbox" id="opt-plain"> Plain text (no ANSI)</label>
-        <label class="opt-label"><input type="checkbox" id="opt-stats"> Unit stats</label>
-        <label class="opt-label"><input type="checkbox" id="opt-abbr"> Abbreviate upgrades</label>
-        <label class="opt-label"><input type="checkbox" id="opt-tact-lines"> Tacticals per line</label>
-        <label class="opt-label"><input type="checkbox" id="opt-tact-abbr"> Abbreviate tacticals</label>
-        <label class="opt-label"><input type="checkbox" id="opt-tact-supply"> Tactical supply types</label>
-        <label class="opt-label"><input type="checkbox" id="opt-slot-breakdown"> Slot breakdown</label>
-        <div class="limit-group">
-          <label for="opt-limit">Char limit:</label>
-          <input type="number" id="opt-limit" value="2000" min="500" max="4096" step="100">
+        <div class="opt-row">
+          <div class="opt-group">
+            <span class="opt-group-title">Style</span>
+            <label class="opt-label"><input type="checkbox" id="opt-plain"> Plain text (No color)</label>
+            <label class="opt-label"><input type="checkbox" id="opt-abbr"> Abbreviate Upgrades</label>
+            <label class="opt-label"><input type="checkbox" id="opt-tact-abbr"> Abbreviate Tac Cards</label>
+            <label class="opt-label"><input type="checkbox" id="opt-tact-lines"> Multiline Tac Card List</label>
+          </div>
+          <div class="opt-group">
+            <span class="opt-group-title">Show/Hide</span>
+            <label class="opt-label"><input type="checkbox" id="opt-slot-breakdown"> Slot breakdown</label>
+            <label class="opt-label"><input type="checkbox" id="opt-tact-supply"> Tac Card Supply slots</label>
+            <label class="opt-label"><input type="checkbox" id="opt-stats"> Unit Stats</label>
+          </div>
+        </div>
+        <div class="opt-row secondary">
+          <div class="opt-group">
+            <span class="opt-group-title">Mode</span>
+            <label class="mode-switch" for="discord-mode-toggle">
+              <span>Preview</span>
+              <input type="checkbox" id="discord-mode-toggle" aria-label="Toggle Discord output mode between preview and raw text">
+              <span class="mode-track" aria-hidden="true"></span>
+              <span>Raw</span>
+            </label>
+          </div>
+          <div class="limit-group">
+            <label for="opt-limit">Char limit:</label>
+            <input type="number" id="opt-limit" value="2000" min="500" max="4096" step="100">
+            <span class="limit-readout" id="opt-char-readout">0 chars</span>
+          </div>
         </div>
       </div>
 
@@ -585,28 +824,28 @@
       <div id="tab-preview" class="panel active" role="tabpanel" tabindex="0">
         <div class="output-wrap">
           <div class="output-box" id="preview-box">
-            <button class="btn ghost sm abs-copy" id="copy-preview-btn">Copy</button>
             <div id="preview-content"></div>
+            <div id="raw-box" class="discord-raw"></div>
           </div>
         </div>
+        <button class="btn ghost" id="copy-preview-btn" style="margin-top:10px;width:100%">Copy for Discord</button>
+        <div class="limit-warning" id="discord-limit-warning" role="alert" aria-live="polite"></div>
         <div class="char-counter" id="char-counter" aria-live="polite" aria-atomic="true"></div>
-      </div>
-
-      <!-- Raw Text -->
-      <div id="tab-raw" class="panel" role="tabpanel" tabindex="0" hidden>
-        <div class="output-box wrap" id="raw-box"></div>
-        <button class="btn ghost" id="copy-raw-btn" style="margin-top:10px;width:100%">
-          Copy Raw for Discord
-        </button>
       </div>
 
       <!-- Roster Card -->
       <div id="tab-roster" class="panel" role="tabpanel" tabindex="0" hidden>
         <div class="tab-options">
-          <label class="opt-label"><input type="checkbox" id="card-upgrades" checked> Upgrades</label>
-          <label class="opt-label"><input type="checkbox" id="card-stats"> Unit stats</label>
-          <label class="opt-label"><input type="checkbox" id="card-cost" checked> Cost</label>
-          <label class="opt-label"><input type="checkbox" id="card-tactical" checked> Tactical cards</label>
+          <div class="opt-row">
+            <div class="opt-group">
+              <span class="opt-group-title">Show/Hide</span>
+              <label class="opt-label"><input type="checkbox" id="card-upgrades" checked> Upgrades</label>
+              <label class="opt-label"><input type="checkbox" id="card-stats"> Unit stats</label>
+              <label class="opt-label"><input type="checkbox" id="card-cost" checked> Cost</label>
+              <label class="opt-label"><input type="checkbox" id="card-slots"> Supply slots</label>
+              <label class="opt-label"><input type="checkbox" id="card-tactical" checked> Tactical cards</label>
+            </div>
+          </div>
         </div>
         <div id="roster-card"></div>
         <div style="display:flex;gap:10px;margin-top:12px;">
@@ -618,10 +857,15 @@
       <!-- Player Aid -->
       <div id="tab-aid" class="panel" role="tabpanel" tabindex="0" hidden>
         <div class="tab-options">
-          <label class="opt-label"><input type="checkbox" id="aid-stats" checked> Stats</label>
-          <label class="opt-label"><input type="checkbox" id="aid-all-upgrades" checked> All upgrades</label>
-          <label class="opt-label"><input type="checkbox" id="aid-activation" checked> Activation info</label>
-          <label class="opt-label"><input type="checkbox" id="aid-tactical" checked> Tactical cards</label>
+          <div class="opt-row">
+            <div class="opt-group">
+              <span class="opt-group-title">Show/Hide</span>
+              <label class="opt-label"><input type="checkbox" id="aid-stats" checked> Stats</label>
+              <label class="opt-label"><input type="checkbox" id="aid-all-upgrades" checked> All upgrades</label>
+              <label class="opt-label"><input type="checkbox" id="aid-activation" checked> Activation info</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tactical" checked> Tactical cards</label>
+            </div>
+          </div>
         </div>
         <div id="aid-card"></div>
         <div style="display:flex;gap:10px;margin-top:12px;">

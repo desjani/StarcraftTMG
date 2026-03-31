@@ -23,9 +23,12 @@ const errorBox       = document.getElementById('error-box');
 const loadingBox     = document.getElementById('loading-box');
 const previewContent = document.getElementById('preview-content');
 const rawBox         = document.getElementById('raw-box');
+const discordModeToggle = document.getElementById('discord-mode-toggle');
 const rosterCardEl   = document.getElementById('roster-card');
 const jsonBox        = document.getElementById('json-box');
 const charCounter    = document.getElementById('char-counter');
+const optCharReadout = document.getElementById('opt-char-readout');
+const discordLimitWarning = document.getElementById('discord-limit-warning');
 const discordOpts    = document.getElementById('discord-opts');
 // Discord / Raw options
 const optPlain         = document.getElementById('opt-plain');
@@ -41,6 +44,7 @@ const cardUpgrades   = document.getElementById('card-upgrades');
 const cardStats      = document.getElementById('card-stats');
 const cardCost       = document.getElementById('card-cost');
 const cardTactical   = document.getElementById('card-tactical');
+const cardSlots      = document.getElementById('card-slots');
 const downloadImgBtn = document.getElementById('download-img-btn');
 const copyImgBtn     = document.getElementById('copy-img-btn');
 // Player Aid options + controls
@@ -51,6 +55,7 @@ const aidTactical    = document.getElementById('aid-tactical');
 const aidCardEl      = document.getElementById('aid-card');
 const aidDownloadBtn = document.getElementById('aid-download-btn');
 const aidCopyImgBtn  = document.getElementById('aid-copy-img-btn');
+let discordMode      = 'preview';
 
 // ─── Toast notifications ──────────────────────────────────────────────────────
 function showToast(message, type = 'success', duration = 2500) {
@@ -76,6 +81,7 @@ function savePrefs() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       seed: seedInput.value.trim().toUpperCase(),
       tab:  activeTab,
+      discordMode,
       opts: {
         plain:         optPlain.checked,
         stats:         optStats.checked,
@@ -91,6 +97,7 @@ function savePrefs() {
         stats:    cardStats.checked,
         cost:     cardCost.checked,
         tactical: cardTactical.checked,
+        slots:    cardSlots.checked,
       },
       aid: {
         stats:       aidStats.checked,
@@ -123,6 +130,7 @@ function loadPrefs() {
       cardStats.checked    = !!p.card.stats;
       cardCost.checked     = p.card.cost     !== false;
       cardTactical.checked = p.card.tactical !== false;
+      cardSlots.checked    = !!p.card.slots;
     }
     if (p.aid) {
       aidStats.checked       = p.aid.stats       !== false;
@@ -130,11 +138,24 @@ function loadPrefs() {
       aidActivation.checked  = p.aid.activation  !== false;
       aidTactical.checked    = p.aid.tactical    !== false;
     }
-    if (p.tab && p.tab !== 'preview') {
-      const tabEl = document.querySelector(`.tab[data-tab="${p.tab}"]`);
+    // Legacy compatibility: old saved "raw" tab now maps to preview + raw mode.
+    const savedTab = p.tab === 'raw' ? 'preview' : p.tab;
+    const savedMode = p.discordMode ?? (p.tab === 'raw' ? 'raw' : 'preview');
+    setDiscordMode(savedMode, { save: false });
+    if (savedTab && savedTab !== 'preview') {
+      const tabEl = document.querySelector(`.tab[data-tab="${savedTab}"]`);
       if (tabEl) tabEl.click();
     }
   } catch (_) { /* corrupt storage — ignore */ }
+}
+
+function setDiscordMode(mode, { save = true } = {}) {
+  discordMode = mode === 'raw' ? 'raw' : 'preview';
+  const isRaw = discordMode === 'raw';
+  previewContent.style.display = isRaw ? 'none' : '';
+  rawBox.style.display = isRaw ? 'block' : 'none';
+  discordModeToggle.checked = isRaw;
+  if (save) savePrefs();
 }
 
 // ─── ANSI → HTML renderer ─────────────────────────────────────────────────────
@@ -201,6 +222,40 @@ function ansiToHtml(raw) {
 // ─── Roster card renderer ─────────────────────────────────────────────────────
 const TYPE_ABBR = { Hero: 'H', Core: 'C', Elite: 'E', Support: 'S', Air: 'A', Other: 'O' };
 const RESOURCE_SHORT = { Terran: 'cp', Zerg: 'bm', Protoss: 'pe' };
+const RESOURCE_ICON = { Terran: '▣', Zerg: '◉', Protoss: '✦' };
+
+function hasStatValue(value) {
+  return value !== null && value !== undefined;
+}
+
+function formatUnitStatsInline(stats) {
+  return [
+    ['HP', stats.hp],
+    ['ARM', stats.armor],
+    ['EVD', stats.evade],
+    ['SPD', stats.speed],
+    ['SH', stats.shield],
+  ]
+    .filter(([, value]) => hasStatValue(value))
+    .map(([label, value]) => `${label}:${value}`)
+    .join(' ');
+}
+
+function formatSlotBreakdown(slots = {}) {
+  const ordered = ['Hero', 'Core', 'Elite', 'Support', 'Air'];
+  const extras = Object.keys(slots).filter(type => !ordered.includes(type));
+  const keys = [...ordered, ...extras];
+  return keys
+    .filter(type => slots[type] && Number(slots[type]?.avail ?? 0) > 0)
+    .map(type => {
+      const short = TYPE_ABBR[type] ?? String(type).charAt(0).toUpperCase();
+      const used = Number(slots[type]?.used ?? 0);
+      const avail = Number(slots[type]?.avail ?? 0);
+      const typeClass = `slot-${String(type).toLowerCase()}`;
+      return `<span class="slot-chip ${typeClass}"><span class="slot-chip-type">${short}</span> ${used}/${avail}</span>`;
+    })
+    .join('');
+}
 
 function renderRosterCard(roster, opts = {}) {
   const {
@@ -208,9 +263,13 @@ function renderRosterCard(roster, opts = {}) {
     showStats    = false,
     showCost     = true,
     showTactical = true,
+    showSlots    = false,
   } = opts;
-  const { minerals: m, gas: g, supply, resources, tacticalCards, units, faction, factionCard, seed } = roster;
+  const { minerals: m, gas: g, supply, resources, tacticalCards, units, faction, factionCard, seed, slots } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
+  const resourceIcon = RESOURCE_ICON[faction] ?? '◈';
+  const factionClass = `faction-${String(faction).toLowerCase()}`;
+  const slotBreakdown = showSlots ? formatSlotBreakdown(slots) : '';
 
   const unitRows = units.map(u => {
     const abbr     = TYPE_ABBR[u.type] ?? '?';
@@ -221,21 +280,26 @@ function renderRosterCard(roster, opts = {}) {
           .map(x => `<span class="upg-pill">+ ${escapeHtml(x.name)} <strong>${x.cost}m</strong></span>`)
           .join('')
       : '';
-    const statStr  = `${escapeHtml(u.size)} · ${u.supply}◆`;
-    const statsRow = showStats
-      ? `<div class="unit-sub" style="margin-top:3px;font-family:var(--mono);font-size:.72rem;">HP:${u.stats.hp} ARM:${u.stats.armor} EVD:${u.stats.evade} SPD:${u.stats.speed}${u.stats.shield ? ` SH:${u.stats.shield}` : ''}</div>`
+    const unitMeta = `
+      <span class="unit-size">${escapeHtml(u.size)}</span>
+      <span class="unit-sep">·</span>
+      <span class="unit-supply">${u.supply}◆</span>
+      ${showCost ? `<span class="unit-sep">·</span><span class="unit-main-cost">${u.totalCost}m</span>` : ''}`;
+    const statsText = showStats ? formatUnitStatsInline(u.stats) : '';
+    const statsLine = statsText
+      ? `<div class="unit-stats-line">${statsText}</div>`
       : '';
-    const costEl   = showCost ? `<div class="unit-cost">${u.totalCost}m</div>` : '';
     return `
       <div class="unit-row">
         <div class="unit-type-badge badge-${u.type}">${abbr}</div>
         <div class="unit-info">
-          <div class="unit-name">${escapeHtml(u.name)}${escapeHtml(models)}</div>
-          <div class="unit-sub">${statStr}</div>
-          ${statsRow}
-          ${upgrades ? `<div class="unit-upgrades">${upgrades}</div>` : ''}
+          <div class="unit-main">
+            <span class="unit-name">${escapeHtml(u.name)}${escapeHtml(models)}</span>
+            <span class="unit-main-meta">${unitMeta}</span>
+          </div>
+          ${upgrades ? `<div class="unit-sub-line"><span class="unit-upgrades">${upgrades}</span></div>` : ''}
+          ${statsLine}
         </div>
-        ${costEl}
       </div>`;
   }).join('');
 
@@ -244,16 +308,17 @@ function renderRosterCard(roster, opts = {}) {
     .join('');
 
   return `
-    <div class="roster-card">
+    <div class="roster-card ${factionClass}">
       <div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
           <span>💎 ${m.used}/${m.limit}m</span>
           <span>⛽ ${g.used}/${g.limit}g</span>
-          <span>🔺 ${supply} sup</span>
-          <span>📦 ${resources} ${resourceShort}</span>
+          <span class="meta-supply">◆ ${supply} sup</span>
+          <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
         </div>
+        ${slotBreakdown ? `<div class="slot-breakdown"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</div>` : ''}
       </div>
       <div class="unit-list">${unitRows}</div>
       ${showTactical && tacticalCards.length ? `<div class="tact-section"><span class="tact-label">Tactical</span>${tactPills}</div>` : ''}
@@ -270,6 +335,8 @@ function renderPlayerAid(roster, opts = {}) {
   } = opts;
   const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails, units, faction, factionCard, seed } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
+  const resourceIcon = RESOURCE_ICON[faction] ?? '◈';
+  const factionClass = `faction-${String(faction).toLowerCase()}`;
 
   const unitBlocks = units.map(u => {
     const abbr   = TYPE_ABBR[u.type] ?? '?';
@@ -281,7 +348,7 @@ function renderPlayerAid(roster, opts = {}) {
         <span class="stat-chip">ARM <strong>${u.stats.armor}</strong></span>
         <span class="stat-chip">EVD <strong>${u.stats.evade}</strong></span>
         <span class="stat-chip">SPD <strong>${u.stats.speed}</strong></span>
-        ${u.stats.shield ? `<span class="stat-chip">SH <strong>${u.stats.shield}</strong></span>` : ''}
+        ${hasStatValue(u.stats.shield) ? `<span class="stat-chip">SH <strong>${u.stats.shield}</strong></span>` : ''}
         <span class="stat-chip">SZ <strong>${escapeHtml(u.size)}</strong></span>
         <span class="stat-chip">◆ <strong>${u.supply}</strong></span>
       </div>` : '';
@@ -330,14 +397,14 @@ function renderPlayerAid(roster, opts = {}) {
     : '';
 
   return `
-    <div class="roster-card">
+    <div class="roster-card ${factionClass}">
       <div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
           <span>💎 ${m.used}/${m.limit}m</span>
           <span>⛽ ${g.used}/${g.limit}g</span>
-          <span>🔺 ${supply} sup</span>
-          <span>📦 ${resources} ${resourceShort}</span>
+          <span class="meta-supply">◆ ${supply} sup</span>
+          <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
         </div>
       </div>
@@ -348,7 +415,37 @@ function renderPlayerAid(roster, opts = {}) {
 
 // ─── Image capture helpers ────────────────────────────────────────────────────
 async function captureCanvas(el) {
-  return window.html2canvas(el, { backgroundColor: '#161b22', scale: 2, useCORS: true, logging: false });
+  const sourceEl = el.firstElementChild ?? el;
+  const stage = document.createElement('div');
+  const clone = sourceEl.cloneNode(true);
+
+  stage.style.position = 'fixed';
+  stage.style.left = '-10000px';
+  stage.style.top = '0';
+  stage.style.padding = '0';
+  stage.style.margin = '0';
+  stage.style.background = 'transparent';
+  stage.style.display = 'inline-block';
+  stage.style.width = 'fit-content';
+
+  clone.style.display = 'inline-block';
+  clone.style.width = 'fit-content';
+  clone.style.maxWidth = 'none';
+  clone.style.margin = '0';
+
+  stage.appendChild(clone);
+  document.body.appendChild(stage);
+
+  try {
+    return await window.html2canvas(clone, {
+      backgroundColor: '#161b22',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+  } finally {
+    stage.remove();
+  }
 }
 
 function canvasToBlob(canvas) {
@@ -427,7 +524,16 @@ function refreshOutput() {
   rawBox.textContent = currentFormatted;
   const len = currentFormatted.length;
   charCounter.textContent = `${len.toLocaleString()} / ${charLimit.toLocaleString()} chars`;
+  optCharReadout.textContent = `${len.toLocaleString()} chars`;
   charCounter.className = 'char-counter' + (len > charLimit ? ' over' : len > charLimit * 0.9 ? ' warn' : '');
+  if (len > charLimit) {
+    const overflow = (len - charLimit).toLocaleString();
+    discordLimitWarning.textContent = `Current output exceeds the selected character limit by ${overflow} characters and may fail when pasted to Discord.`;
+    discordLimitWarning.style.display = 'block';
+  } else {
+    discordLimitWarning.textContent = '';
+    discordLimitWarning.style.display = 'none';
+  }
 
   // ── Roster Card ─────────────────────────────────────────────────────────────
   rosterCardEl.innerHTML = renderRosterCard(currentRoster, {
@@ -435,6 +541,7 @@ function refreshOutput() {
     showStats:    cardStats.checked,
     showCost:     cardCost.checked,
     showTactical: cardTactical.checked,
+    showSlots:    cardSlots.checked,
   });
   downloadImgBtn.style.display = 'inline-block';
   copyImgBtn.style.display     = 'inline-block';
@@ -500,7 +607,7 @@ async function loadRoster() {
 }
 
 // ─── Tab switcher ─────────────────────────────────────────────────────────────
-const DISCORD_TABS = new Set(['preview', 'raw']);
+const DISCORD_TABS = new Set(['preview']);
 const tabs = Array.from(document.querySelectorAll('.tab'));
 
 function activateTab(tab, { setFocus = false } = {}) {
@@ -560,7 +667,7 @@ function copyText(text) {
     });
 }
 document.getElementById('copy-preview-btn').addEventListener('click', () => copyText(currentFormatted));
-document.getElementById('copy-raw-btn').addEventListener('click',     () => copyText(currentFormatted));
+discordModeToggle.addEventListener('change', () => setDiscordMode(discordModeToggle.checked ? 'raw' : 'preview'));
 document.getElementById('copy-json-btn').addEventListener('click',    () => {
   if (!currentRoster) {
     showToast('Load a roster first.', 'error', 1600);
@@ -583,7 +690,7 @@ function refreshAndSave() { refreshOutput(); savePrefs(); }
 [optPlain, optStats, optAbbr, optTactLines, optTactAbbr, optTactSupply, optSlotBreakdown, optLimit]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 // Roster Card options
-[cardUpgrades, cardStats, cardCost, cardTactical]
+[cardUpgrades, cardStats, cardCost, cardTactical, cardSlots]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 // Player Aid options
 [aidStats, aidAllUpgrades, aidActivation, aidTactical]
