@@ -1231,10 +1231,11 @@ function renderPlayerAid(roster, opts = {}) {
     showTactical   = true,
     mergedBuffs    = false,
   } = opts;
-  const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails, units, faction, factionCard, seed } = roster;
+  const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails, units, faction, factionCard, seed, slots } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
   const resourceIcon = RESOURCE_ICON[faction] ?? '◈';
   const factionClass = `faction-${String(faction).toLowerCase()}`;
+  const slotBreakdown = formatSlotBreakdown(slots);
   const seenUnitKeys = new Set();
   const dedupedUnits = units.filter(u => {
     const key = getAidUnitKey(u);
@@ -1454,8 +1455,8 @@ function renderPlayerAid(roster, opts = {}) {
       })
       .join('');
     const supplyHtml = mergedBuffs && supplyHighlighted
-      ? `<span class="stat-chip">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
-      : `<span class="stat-chip">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+      ? `<span class="stat-chip stat-chip-supply">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip stat-chip-supply">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
     const collapsedStatlineHtml = showStats
       ? `<div class="aid-collapsed-statline">${statChips}${supplyHtml}</div>`
       : '';
@@ -1541,9 +1542,10 @@ function renderPlayerAid(roster, opts = {}) {
           <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
         </div>
+        ${slotBreakdown ? `<div class="slot-breakdown"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</div>` : ''}
       </div>
       <div class="unit-list">${unitBlocks}</div>
-      ${tacticalHtml}
+      ${tacticalHtml ? `<div class="aid-tactical-section">${tacticalHtml}</div>` : ''}
     </div>`;
 }
 
@@ -2052,7 +2054,17 @@ function openAidPrintWindow() {
   <title>Player Aid \u2014 ${seed}</title>
   <style>
     *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { font-family: sans-serif; }
+    :root {
+      font-family: sans-serif;
+      --print-terran: #1f5f9e;
+      --print-zerg: #a12a6f;
+      --print-protoss: #6a4aa8;
+      --print-supply: #b34747;
+      --print-gold: #8a6400;
+      --print-green: #1a7a40;
+      --print-accent: #1f5f9e;
+      --print-muted-chip: #3f4f63;
+    }
     body { padding: 14px 18px; background: #fff; color: #111; }
 
     /* header */
@@ -2061,8 +2073,53 @@ function openAidPrintWindow() {
                      border-bottom: 2px solid #555; }
     .roster-faction { font-size: 1rem; font-weight: 700; letter-spacing: .06em;
                       text-transform: uppercase; margin-bottom: 4px; }
+    .roster-faction.Terran { color: var(--print-terran); }
+    .roster-faction.Zerg { color: var(--print-zerg); }
+    .roster-faction.Protoss { color: var(--print-protoss); }
     .roster-meta { font-size: .78rem; color: #444;
                    display: flex; flex-wrap: wrap; gap: 8px; }
+    .roster-meta .meta-supply { color: var(--print-supply); font-weight: 700; }
+    .roster-meta .resource-icon { font-style: normal; font-weight: 700; }
+    .roster-meta .resource-icon.resource-faction-terran { color: var(--print-terran); }
+    .roster-meta .resource-icon.resource-faction-zerg { color: var(--print-zerg); }
+    .roster-meta .resource-icon.resource-faction-protoss { color: var(--print-protoss); }
+    .slot-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .slot-breakdown-label {
+      color: #566277;
+      font-size: .66rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .slot-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #c4cfdb;
+      border-radius: 999px;
+      padding: 1px 7px;
+      background: #f3f7fb;
+      color: #445468;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: .69rem;
+    }
+    .slot-chip-type {
+      font-size: .6rem;
+      letter-spacing: .08em;
+      font-weight: 700;
+    }
+    .slot-chip.slot-hero { color: #8a6400; border-color: #d5be84; background: #fff8ea; }
+    .slot-chip.slot-core { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
+    .slot-chip.slot-elite { color: #a33846; border-color: #d8a2aa; background: #fff1f3; }
+    .slot-chip.slot-support { color: #1a7a40; border-color: #a3cdb3; background: #effaf3; }
+    .slot-chip.slot-air { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
+    .slot-chip.slot-other { color: #5f6e80; border-color: #cfd7e1; background: #f6f8fb; }
     .tag { border: 1px solid #888; border-radius: 4px; padding: 1px 6px;
            font-size: .72rem; }
     .seed-tag { font-weight: 700; }
@@ -2081,14 +2138,21 @@ function openAidPrintWindow() {
     .aid-collapse-indicator { display: none; }
     .unit-type-badge { display: inline-flex; align-items: center;
                        justify-content: center; width: 22px; height: 22px;
-                       border-radius: 4px; background: #555; color: #fff;
+                       border-radius: 4px; background: #f2f4f7; color: #334155;
+                       border: 1px solid #9aa7b8;
                        font-size: .7rem; font-weight: 700;
                        flex-shrink: 0; }
+    .badge-Hero    { color: #8a6400; border-color: #be9b47; background: #fff9ec; }
+    .badge-Core    { color: #16637f; border-color: #6ca8c0; background: #edf9ff; }
+    .badge-Elite   { color: #a33846; border-color: #d18d96; background: #fff1f3; }
+    .badge-Support { color: #1a7a40; border-color: #8dc4a4; background: #effaf3; }
+    .badge-Air     { color: #8a6400; border-color: #ccb16a; background: #fffaef; }
+    .badge-Other   { color: #4b5563; border-color: #b3bcc8; background: #f4f6f9; }
     .unit-info { flex: 1; }
     .unit-name { font-weight: 700; font-size: .88rem; color: #111; }
     .aid-unit-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .aid-collapsed-statline { display: none !important; }
-    .unit-cost { font-size: .78rem; font-weight: 700; color: #444;
+    .unit-cost { font-size: .78rem; font-weight: 700; color: var(--print-gold);
                  white-space: nowrap; }
     .aid-body-wrap { display: block !important; }
     .aid-body { padding: 8px 12px 10px 12px; }
@@ -2100,11 +2164,34 @@ function openAidPrintWindow() {
     }
 
     /* stats */
-    .aid-stats { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
-    .stat-chip { border: 1px solid #ccc; border-radius: 4px; padding: 2px 6px;
-                 font-size: .71rem; color: #333; }
-    .stat-chip strong { color: #111; }
+    .aid-stats-row { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 8px; }
+    .aid-stats { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 0; }
+    .unit-upgrades { display: inline-flex; flex-wrap: wrap; gap: 5px; }
+    .aid-upgrade-bubbles { margin-left: auto; justify-content: flex-end; }
+    .upg-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid #9dcfb4;
+      border-radius: 999px;
+      padding: 1px 8px;
+      background: #eef8f1;
+      color: #1a7a40;
+      font-size: .71rem;
+      white-space: nowrap;
+    }
+    .upg-pill strong { color: #8a6400; }
+    .stat-chip { border: 1px solid #c4cfdb; border-radius: 4px; padding: 2px 6px;
+                 font-size: .71rem; color: var(--print-muted-chip); background: #f8fbff; }
+    .stat-chip strong { color: var(--print-accent); }
+    .stat-chip.stat-chip-supply {
+      border-color: #e2b0b0;
+      color: var(--print-supply);
+      background: #fff3f3;
+    }
+    .stat-chip.stat-chip-supply strong { color: var(--print-supply); }
     .stat-chip strong.aid-buff-highlight { color: #1a7a40; }
+    .aid-buff-highlight { color: #1a7a40; font-weight: 700; }
 
     /* weapons table */
     .aid-section-title { font-size: .63rem; text-transform: uppercase;
@@ -2129,33 +2216,58 @@ function openAidPrintWindow() {
     .aid-ability-group:first-child { border-top: none; padding-top: 0; }
     .aid-phase-tag { position: absolute; left: 0; top: 6px;
                      min-width: 36px; height: 17px; border-radius: 999px;
-                     border: 1px solid #bbb; display: inline-flex;
+             border: 1px solid #9aa7b8; display: inline-flex;
                      align-items: center; justify-content: center;
-                     color: #555; font-size: .6rem; letter-spacing: .05em;
-                     font-weight: 700; background: #f4f4f4; }
+             color: #445468; font-size: .6rem; letter-spacing: .05em;
+             font-weight: 700; background: #f1f5f9; }
     .aid-ability-group:first-child .aid-phase-tag { top: 0; }
+    .aid-phase-tag.phase-movement { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
+    .aid-phase-tag.phase-assault { color: #a33846; border-color: #d8a2aa; background: #fff1f3; }
+    .aid-phase-tag.phase-combat { color: #8a6400; border-color: #d5be84; background: #fff8ea; }
+    .aid-phase-tag.phase-scoring { color: #1a7a40; border-color: #a3cdb3; background: #effaf3; }
+    .aid-phase-tag.phase-cleanup { color: #6a4aa8; border-color: #bfafd9; background: #f5f1ff; }
     .aid-upgrades { display: flex; flex-direction: column; gap: 3px; }
     .aid-upg { border: 1px solid #ddd; border-radius: 6px; padding: 5px 8px;
                font-size: .78rem; background: #fafafa; }
     .aid-upg-top { display: flex; align-items: center;
                    flex-wrap: wrap; gap: 5px; }
     .aid-upg-name { font-weight: 700; color: #111; }
+    .aid-upg.is-active {
+      border-color: #9dcfb4;
+      background: #f2fbf6;
+    }
     .aid-upg.is-active .aid-upg-name { color: #1a7a40; }
     .aid-upg.is-natural .aid-upg-name { color: #111; }
+    .aid-upg.is-inactive .aid-upg-name { color: #666; }
     .aid-upg-desc { margin-top: 3px; font-size: .73rem; color: #333;
                     line-height: 1.45; }
     .aid-upg-desc strong { font-weight: 700; color: #111; }
     .aid-inline-chip { display: inline-flex; align-items: center;
-                       border: 1px solid #ccc; border-radius: 999px;
-                       padding: 1px 7px; background: #eee;
-                       font-size: .66rem; color: #555; }
-    .aid-inline-activation { color: #6a0dad; }
-    .aid-inline-resource { color: #222; }
+               border: 1px solid #c4cfdb; border-radius: 999px;
+               padding: 1px 7px; background: #f3f7fb;
+               font-size: .66rem; color: #445468; }
+    .aid-inline-activation { color: #6a4aa8; border-color: #beafd6; background: #f5f1ff; }
+    .aid-inline-resource { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
+    .aid-inline-resource .resource-icon.resource-faction-terran { color: var(--print-terran); }
+    .aid-inline-resource .resource-icon.resource-faction-zerg { color: var(--print-zerg); }
+    .aid-inline-resource .resource-icon.resource-faction-protoss { color: var(--print-protoss); }
     .resource-icon { font-style: normal; }
+    .aid-merged-buffs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+    .aid-merged-pill {
+      border-color: #9dcfb4;
+      background: #eef8f1;
+      color: #1a7a40;
+    }
     .aid-tactical-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
                          gap: 8px; margin-top: 2px; }
+    .aid-tactical-section {
+      break-before: page;
+      page-break-before: always;
+    }
     .aid-tact-card { border: 1px solid #ccc; border-radius: 8px; padding: 8px;
-                     background: #fafafa; }
+                     background: #fafafa;
+                     break-inside: avoid;
+                     page-break-inside: avoid; }
     .aid-tact-card-header { display: flex; gap: 8px; align-items: flex-start;
                             margin-bottom: 6px; }
     .aid-tact-art { display: none; }
@@ -2164,9 +2276,10 @@ function openAidPrintWindow() {
                           margin-bottom: 4px; }
     .aid-tact-card-count { font-size: .74rem; color: #555; font-weight: 700; }
     .aid-tact-card-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+    .aid-tact-meta-chip { color: #445468; border-color: #c4cfdb; background: #f3f7fb; }
     .aid-tact-gas-cost { margin-left: auto; white-space: nowrap;
                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-               font-size: .82rem; color: #8a6400; font-weight: 700;
+           font-size: .82rem; color: var(--print-gold); font-weight: 700;
                align-self: flex-start; }
     .aid-tact-abilities { display: flex; flex-direction: column; gap: 5px; }
     .aid-tact-ability { border: 1px solid #ddd; border-radius: 6px; padding: 5px 7px;
@@ -2174,9 +2287,19 @@ function openAidPrintWindow() {
     .aid-tact-ability-top { display: flex; flex-wrap: wrap; align-items: center;
                             gap: 5px; margin-bottom: 2px; }
     .aid-tact-ability-name { font-size: .76rem; font-weight: 700; color: #111; }
-    .aid-tact-phase-chip { color: #444; }
+    .aid-tact-phase-chip { color: #445468; border-color: #c4cfdb; background: #f3f7fb; }
+    .aid-tact-phase-chip.phase-movement { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
+    .aid-tact-phase-chip.phase-assault { color: #a33846; border-color: #d8a2aa; background: #fff1f3; }
+    .aid-tact-phase-chip.phase-combat { color: #8a6400; border-color: #d5be84; background: #fff8ea; }
+    .aid-tact-phase-chip.phase-scoring { color: #1a7a40; border-color: #a3cdb3; background: #effaf3; }
+    .aid-tact-phase-chip.phase-cleanup { color: #6a4aa8; border-color: #bfafd9; background: #f5f1ff; }
     .aid-tact-slot-chip { gap: 0; }
     .aid-tact-slot { font-weight: 700; min-width: 0; }
+    .aid-tact-slot-hero { color: #8a6400; }
+    .aid-tact-slot-core { color: #16637f; }
+    .aid-tact-slot-elite { color: #a33846; }
+    .aid-tact-slot-support { color: #1a7a40; }
+    .aid-tact-slot-air { color: #8a6400; }
     .aid-tags { font-size: .73rem; color: #666; margin-bottom: 5px; }
     a, button { display: none !important; }
   </style>
