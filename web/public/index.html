@@ -754,6 +754,14 @@
     .aid-unit-header:hover { background: rgba(101, 244, 255, .038); }
     .aid-body { padding: 0 20px 12px 60px; }
     .aid-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .aid-section-title {
+      margin: 10px 0 6px;
+      color: var(--muted);
+      font-size: .66rem;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
     .stat-chip {
       border: 1px solid var(--line);
       border-radius: 4px;
@@ -764,14 +772,88 @@
       font-size: .72rem;
     }
     .stat-chip strong { color: var(--accent); }
+    .aid-weapons-wrap {
+      margin-bottom: 8px;
+      overflow-x: auto;
+      border: 1px solid rgba(49, 69, 99, .42);
+      border-radius: 8px;
+      background: rgba(14, 24, 40, .42);
+    }
+    .aid-weapons-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+      font-size: .74rem;
+    }
+    .aid-weapons-table th,
+    .aid-weapons-table td {
+      padding: 7px 9px;
+      border-bottom: 1px solid rgba(49, 69, 99, .3);
+      text-align: left;
+      vertical-align: top;
+    }
+    .aid-weapons-table th {
+      color: var(--muted);
+      font-family: 'Orbitron', sans-serif;
+      font-size: .6rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      background: rgba(18, 31, 50, .72);
+      white-space: nowrap;
+    }
+    .aid-weapons-table tbody tr:last-child td { border-bottom: none; }
+    .aid-weapons-table tbody tr.is-active { color: var(--text); }
+    .aid-weapons-table tbody tr.is-inactive { color: var(--muted); }
+    .aid-weapons-table .weapon-name {
+      color: var(--green);
+      font-weight: 600;
+      white-space: nowrap;
+    }
     .aid-upgrades { display: flex; flex-direction: column; gap: 3px; }
-    .aid-upg { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: .79rem; }
-    .aid-upg.is-active { color: var(--green); }
-    .aid-upg.is-inactive { color: var(--muted); }
-    .aid-upg-name { font-weight: 600; }
-    .aid-upg-cost { white-space: nowrap; font-size: .72rem; font-family: var(--mono); font-weight: 700; }
-    .aid-upg-meta { font-size: .69rem; font-style: italic; }
-    .aid-upg-desc { width: 100%; margin-top: 1px; color: var(--text); opacity: .82; font-size: .74rem; }
+    .aid-upg {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px 8px;
+      border: 1px solid rgba(49, 69, 99, .26);
+      border-radius: 8px;
+      background: rgba(16, 28, 45, .34);
+      font-size: .79rem;
+    }
+    .aid-upg.is-active { border-color: rgba(70, 212, 138, .28); }
+    .aid-upg.is-inactive { opacity: .82; }
+    .aid-upg-name { font-weight: 700; color: var(--text); }
+    .aid-upg.is-active .aid-upg-name { color: var(--green); }
+    .aid-upg.is-natural .aid-upg-name { color: var(--text); }
+    .aid-upg.is-inactive .aid-upg-name { color: var(--muted); }
+    .aid-upg-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .aid-meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(49, 69, 99, .38);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(19, 31, 50, .6);
+      font-size: .69rem;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+    .aid-meta-activation { color: var(--protoss); }
+    .aid-meta-resource { color: var(--text); }
+    .aid-meta-phase { color: var(--yellow); }
+    .aid-upg-desc {
+      margin-top: 1px;
+      color: var(--text);
+      opacity: .88;
+      font-size: .74rem;
+      line-height: 1.45;
+    }
+    .aid-upg-desc strong { color: var(--text); font-weight: 700; }
     .aid-tags { margin-bottom: 6px; color: var(--muted); font-size: .74rem; font-style: italic; }
 
     .error {

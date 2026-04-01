@@ -363,7 +363,12 @@ const RESOURCE_SHORT = { Terran: 'cp', Zerg: 'bm', Protoss: 'pe' };
 const RESOURCE_ICON = { Terran: '▣', Zerg: '◉', Protoss: '✦' };
 
 function hasStatValue(value) {
-  return value !== null && value !== undefined;
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!normalized || normalized === '-' || normalized.toLowerCase() === 'n/a') return false;
+  }
+  return true;
 }
 
 function compareText(a, b) {
@@ -386,6 +391,150 @@ function sortTacticalNames(cards = []) {
 
 function sortTacticalDetailsByName(cards = []) {
   return [...cards].sort((a, b) => compareText(a?.name, b?.name));
+}
+
+function isWeaponProfile(upgrade) {
+  const description = String(upgrade?.description || '').trim();
+  return /^RANGE\s*:/i.test(description) && /\bTARGET\s*:/i.test(description);
+}
+
+function parseWeaponProfile(upgrade) {
+  const description = String(upgrade?.description || '').trim();
+  const lines = description
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+  const statsLine = lines[0] || '';
+  const surgeLine = lines.find(line => /^SURGE\s*:/i.test(line)) || '';
+  const statEntries = Object.fromEntries(
+    statsLine
+      .split('|')
+      .map(part => part.trim())
+      .filter(Boolean)
+      .map(part => {
+        const [label, ...rest] = part.split(':');
+        return [String(label || '').trim().toUpperCase(), rest.join(':').trim()];
+      })
+  );
+  const traits = lines
+    .slice(lines.indexOf(surgeLine) >= 0 ? lines.indexOf(surgeLine) + 1 : 1)
+    .filter(line => !/^SURGE\s*:/i.test(line))
+    .join(' | ');
+
+  return {
+    name: upgrade?.name ?? '',
+    range: statEntries.RANGE ?? '-',
+    target: statEntries.TARGET ?? '-',
+    roa: statEntries.ROA ?? '-',
+    hit: statEntries.HIT ?? '-',
+    damage: statEntries.DMG ?? '-',
+    surge: surgeLine ? surgeLine.replace(/^SURGE\s*:/i, '').trim() || '-' : '-',
+    traits,
+    active: !!upgrade?.active,
+  };
+}
+
+function renderAidWeaponsTable(weapons) {
+  if (!weapons.length) return '';
+  return `
+    <div class="aid-section-title">Weapons</div>
+    <div class="aid-weapons-wrap">
+      <table class="aid-weapons-table">
+        <thead>
+          <tr>
+            <th>Weapon</th>
+            <th>Rng</th>
+            <th>Target</th>
+            <th>RoA</th>
+            <th>Hit</th>
+            <th>Dmg</th>
+            <th>Surge</th>
+            <th>Traits</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${weapons.map(weapon => `
+            <tr class="${weapon.active ? 'is-active' : 'is-inactive'}">
+              <td class="weapon-name">${escapeHtml(weapon.name)}</td>
+              <td>${escapeHtml(weapon.range)}</td>
+              <td>${escapeHtml(weapon.target)}</td>
+              <td>${escapeHtml(weapon.roa)}</td>
+              <td>${escapeHtml(weapon.hit)}</td>
+              <td>${escapeHtml(weapon.damage)}</td>
+              <td>${escapeHtml(weapon.surge)}</td>
+              <td>${formatAidRichText(weapon.traits || '-', { allowLineBreaks: false })}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function getFactionResourceLabelConfig(faction, factionClass) {
+  return {
+    icon: RESOURCE_ICON[faction] ?? '◈',
+    className: `resource-${factionClass}`,
+    patterns: faction === 'Terran'
+      ? ['Command Point']
+      : faction === 'Zerg'
+        ? ['Biomass']
+        : ['Psionic Energy'],
+  };
+}
+
+function formatAidRichText(text, { faction, factionClass, allowLineBreaks = true } = {}) {
+  let html = escapeHtml(String(text || ''));
+
+  if (faction && factionClass) {
+    const resourceConfig = getFactionResourceLabelConfig(faction, factionClass);
+    for (const pattern of resourceConfig.patterns) {
+      const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(\\d+) ${escapedPattern}`, 'g');
+      html = html.replace(regex, (_, amount) => `${amount} <span class="resource-icon ${resourceConfig.className}">${resourceConfig.icon}</span>`);
+    }
+  }
+
+  const keywordRegex = /\b([A-Z]{2}[A-Z0-9-]*(?:\s+[A-Z]{2}[A-Z0-9-]*)*\s*\([^)\n<>{}]*\)|[A-Z]{2}[A-Z0-9-]*(?:\s+[A-Z]{2}[A-Z0-9-]*)*)/g;
+  html = html
+    .split(/(<[^>]+>)/g)
+    .map(part => (part.startsWith('<') ? part : part.replace(keywordRegex, '<strong>$1</strong>')))
+    .join('');
+
+  if (allowLineBreaks) html = html.replace(/\r?\n/g, '<br>');
+  return html;
+}
+
+function renderAidUpgradeMeta(upgrade, { faction, factionClass, showActivation }) {
+  if (!showActivation) return '';
+
+  const pieces = [];
+  const activationParts = String(upgrade.activation || '')
+    .split(/\r?\n/)
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  if (activationParts[0]) {
+    pieces.push(`<span class="aid-meta-chip aid-meta-activation">${escapeHtml(activationParts[0].replace(/[<>]/g, ''))}</span>`);
+  }
+  if (activationParts[1]) {
+    pieces.push(`<span class="aid-meta-chip aid-meta-resource">${formatAidRichText(activationParts[1].replace(/[()]/g, ''), { faction, factionClass, allowLineBreaks: false })}</span>`);
+  }
+  if (upgrade.phase) {
+    pieces.push(`<span class="aid-meta-chip aid-meta-phase">${escapeHtml(upgrade.phase)}</span>`);
+  }
+
+  return pieces.length ? `<div class="aid-upg-meta">${pieces.join('')}</div>` : '';
+}
+
+function isNaturalAbility(upgrade) {
+  const cost = upgrade?.cost;
+  if (typeof cost === 'number') return cost <= 0;
+  if (typeof cost === 'string') {
+    const trimmed = cost.trim().toLowerCase();
+    if (!trimmed || trimmed === 'free') return true;
+    const numericCost = Number.parseFloat(trimmed);
+    if (Number.isFinite(numericCost)) return numericCost <= 0;
+  }
+  return cost == null;
 }
 
 function formatUnitStatsInline(stats) {
@@ -552,34 +701,41 @@ function renderPlayerAid(roster, opts = {}) {
     const abbr   = TYPE_ABBR[u.type] ?? '?';
     const models = u.models > 1 ? ` ×${u.models}` : '';
 
+    const statChips = [
+      ['HP', u.stats.hp],
+      ['ARM', u.stats.armor],
+      ['EVD', u.stats.evade],
+      ['SPD', u.stats.speed],
+      ['SH', u.stats.shield],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value]) => `<span class="stat-chip">${label} <strong>${value}</strong></span>`)
+      .join('');
     const statsHtml = showStats ? `
       <div class="aid-stats">
-        <span class="stat-chip">HP <strong>${u.stats.hp}</strong></span>
-        <span class="stat-chip">ARM <strong>${u.stats.armor}</strong></span>
-        <span class="stat-chip">EVD <strong>${u.stats.evade}</strong></span>
-        <span class="stat-chip">SPD <strong>${u.stats.speed}</strong></span>
-        ${hasStatValue(u.stats.shield) ? `<span class="stat-chip">SH <strong>${u.stats.shield}</strong></span>` : ''}
-        <span class="stat-chip">SZ <strong>${escapeHtml(u.size)}</strong></span>
+        ${statChips}
         <span class="stat-chip">◆ <strong>${u.supply}</strong></span>
       </div>` : '';
 
     const upgradeList     = sortUpgradesForDisplay(u.allUpgrades ?? []);
-    const visibleUpgrades = allUpgrades ? upgradeList : upgradeList.filter(ug => ug.active);
+    const weaponProfiles  = upgradeList.filter(isWeaponProfile).map(parseWeaponProfile);
+    const visibleUpgrades = upgradeList
+      .filter(ug => !isWeaponProfile(ug))
+      .filter(ug => isNaturalAbility(ug) || ug.active);
+    const weaponsHtml     = renderAidWeaponsTable(weaponProfiles);
     const upgradesHtml    = visibleUpgrades.length ? `
+      <div class="aid-section-title">Abilities</div>
       <div class="aid-upgrades">
         ${visibleUpgrades.map(ug => {
-          const cls  = ug.active ? 'is-active' : 'is-inactive';
-          const mark = ug.active ? '✓ ' : '';
-          const cost = ug.cost > 0
-            ? `<span class="aid-upg-cost">${ug.cost}m</span>`
-            : `<span class="aid-upg-cost" style="color:var(--muted)">free</span>`;
-          const meta = showActivation && (ug.activation || ug.phase)
-            ? `<span class="aid-upg-meta">${[ug.activation, ug.phase].filter(Boolean).join(' · ')}</span>`
-            : '';
+          const natural = isNaturalAbility(ug);
+          const selectedUpgrade = !natural && ug.active;
+          const cls  = selectedUpgrade ? 'is-active' : (natural ? 'is-natural' : 'is-inactive');
+          const mark = selectedUpgrade ? '✓ ' : '';
+          const meta = renderAidUpgradeMeta(ug, { faction, factionClass, showActivation });
           const desc = ug.description
-            ? `<div class="aid-upg-desc">${escapeHtml(ug.description)}</div>`
+            ? `<div class="aid-upg-desc">${formatAidRichText(ug.description, { faction, factionClass })}</div>`
             : '';
-          return `<div class="aid-upg ${cls}"><span class="aid-upg-name">${mark}${escapeHtml(ug.name)}</span>${cost}${meta}${desc}</div>`;
+          return `<div class="aid-upg ${cls}"><span class="aid-upg-name">${mark}${escapeHtml(ug.name)}</span>${meta}${desc}</div>`;
         }).join('')}
       </div>` : '';
 
@@ -587,18 +743,17 @@ function renderPlayerAid(roster, opts = {}) {
       ? `<div class="aid-tags">${escapeHtml(String(u.tags))}</div>`
       : '';
 
-    const hasBody = statsHtml || upgradesHtml || tagsHtml;
+    const hasBody = statsHtml || weaponsHtml || upgradesHtml || tagsHtml;
     return `
       <div class="aid-unit">
         <div class="aid-unit-header">
           <div class="unit-type-badge badge-${escapeHtml(u.type)}">${abbr}</div>
           <div class="unit-info">
             <div class="unit-name">${escapeHtml(u.name)}${escapeHtml(models)}</div>
-            <div class="unit-sub">${escapeHtml(u.size)} · ${u.baseCost}m base · ${u.supply}◆</div>
           </div>
           <div class="unit-cost">${u.totalCost}m</div>
         </div>
-        ${hasBody ? `<div class="aid-body">${tagsHtml}${statsHtml}${upgradesHtml}</div>` : ''}
+        ${hasBody ? `<div class="aid-body">${tagsHtml}${statsHtml}${weaponsHtml}${upgradesHtml}</div>` : ''}
       </div>`;
   }).join('');
 
