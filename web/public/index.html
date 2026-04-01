@@ -619,6 +619,17 @@
       background: rgba(23, 36, 58, .7);
       font-size: .72rem;
     }
+    .tag .tact-tag-name { color: var(--muted); }
+    .tag .tact-tag-resource { color: var(--protoss); }
+    .tag .tact-tag-gas { color: var(--yellow); }
+    .tag .tact-tag-supply { color: var(--green); }
+    .tag .tact-slot-bracket { color: var(--muted); }
+    .tag .tact-slot-core { color: var(--protoss); }
+    .tag .tact-slot-elite { color: var(--red); }
+    .tag .tact-slot-support { color: var(--green); }
+    .tag .tact-slot-hero { color: var(--yellow); }
+    .tag .tact-slot-air { color: var(--accent); }
+    .tag .tact-slot-other { color: var(--muted); }
     .seed-tag {
       color: var(--accent);
       border-color: rgba(102, 182, 255, .52);
@@ -927,6 +938,8 @@
             <span class="opt-group-title">Show/Hide</span>
             <label class="opt-label"><input type="checkbox" id="opt-slot-breakdown"> Slot breakdown</label>
             <label class="opt-label"><input type="checkbox" id="opt-tact-supply"> Tac Card Supply slots</label>
+            <label class="opt-label"><input type="checkbox" id="opt-tact-resource"> Tac Card Faction resource</label>
+            <label class="opt-label"><input type="checkbox" id="opt-tact-gas"> Tac Card Gas costs</label>
             <label class="opt-label"><input type="checkbox" id="opt-stats"> Unit Stats</label>
           </div>
         </div>
@@ -969,9 +982,13 @@
               <span class="opt-group-title">Show/Hide</span>
               <label class="opt-label"><input type="checkbox" id="card-upgrades" checked> Upgrades</label>
               <label class="opt-label"><input type="checkbox" id="card-stats"> Unit stats</label>
+              <label class="opt-label"><input type="checkbox" id="card-size" checked> Unit size</label>
               <label class="opt-label"><input type="checkbox" id="card-cost" checked> Cost</label>
               <label class="opt-label"><input type="checkbox" id="card-slots"> Supply slots</label>
               <label class="opt-label"><input type="checkbox" id="card-tactical" checked> Tactical cards</label>
+              <label class="opt-label"><input type="checkbox" id="card-tact-resource"> Tac card faction resource</label>
+              <label class="opt-label"><input type="checkbox" id="card-tact-gas"> Tac card gas costs</label>
+              <label class="opt-label"><input type="checkbox" id="card-tact-supply"> Tac card supply slots</label>
             </div>
           </div>
         </div>

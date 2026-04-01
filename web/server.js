@@ -13,6 +13,8 @@
  *     ?tactLine=1   → tactical cards on separate lines
  *     ?tactAbbr=1   → abbreviate tactical card names
  *     ?tactSupply=1 → show tactical supply types (e.g. [S+2])
+ *     ?tactResource=1 → show tactical card faction-resource values (e.g. 1cp)
+ *     ?tactGas=1    → show tactical card gas costs (e.g. 35g)
  *     ?slotBreakdown=1 → move supply to dedicated line with slot used/total values
  *     ?limit=N   → character limit (default 2000)
  */
@@ -54,6 +56,8 @@ app.get('/api/format/:seed', async (req, res) => {
   const tacticalPerLine = req.query.tactLine === '1' || req.query.tactLine === 'true';
   const abbreviateTacticalCards = req.query.tactAbbr === '1' || req.query.tactAbbr === 'true';
   const showTacticalSupplyTypes = req.query.tactSupply === '1' || req.query.tactSupply === 'true';
+  const showTacticalResourceCosts = req.query.tactResource === '1' || req.query.tactResource === 'true';
+  const showTacticalGasCosts = req.query.tactGas === '1' || req.query.tactGas === 'true';
   const showSlotBreakdown = req.query.slotBreakdown === '1' || req.query.slotBreakdown === 'true';
   const charLimit = parseInt(req.query.limit ?? '2000', 10);
   try {
@@ -67,6 +71,8 @@ app.get('/api/format/:seed', async (req, res) => {
       tacticalPerLine,
       abbreviateTacticalCards,
       showTacticalSupplyTypes,
+      showTacticalResourceCosts,
+      showTacticalGasCosts,
       showSlotBreakdown,
       charLimit,
     });

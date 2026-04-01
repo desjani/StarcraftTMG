@@ -236,6 +236,35 @@ export async function run({ test }) {
         const out = formatCompact(r, { plain: true, tacticalPerLine: true });
         assert.ok(out.includes('\n  - '), 'per-line tactical cards prefix "  - " not found');
       });
+
+      test(`[${seed}] showTacticalGasCosts=true shows tactical gas labels`, () => {
+        const firstCard = r.tacticalCardDetails?.[0];
+        assert.ok(firstCard, 'expected at least one tactical card detail');
+        const withGas = {
+          ...r,
+          tacticalCardDetails: r.tacticalCardDetails.map((card, idx) => ({
+            ...card,
+            gasCost: idx === 0 ? 35 : card.gasCost,
+          })),
+        };
+        const out = formatCompact(withGas, { plain: true, showTacticalGasCosts: true });
+        assert.ok(out.includes('35g'), 'expected tactical gas label "35g" in output');
+      });
+
+      test(`[${seed}] showTacticalResourceCosts=true shows tactical resource labels`, () => {
+        const firstCard = r.tacticalCardDetails?.[0];
+        assert.ok(firstCard, 'expected at least one tactical card detail');
+        const resourceShort = { Terran: 'cp', Zerg: 'bm', Protoss: 'pe' }[r.faction] ?? 'res';
+        const withResource = {
+          ...r,
+          tacticalCardDetails: r.tacticalCardDetails.map((card, idx) => ({
+            ...card,
+            resource: idx === 0 ? 1 : card.resource,
+          })),
+        };
+        const out = formatCompact(withResource, { plain: true, showTacticalResourceCosts: true });
+        assert.ok(out.includes(`1${resourceShort}`), `expected tactical resource label "1${resourceShort}" in output`);
+      });
     }
   }
 

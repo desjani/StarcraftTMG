@@ -44,13 +44,19 @@ const optAbbr          = document.getElementById('opt-abbr');
 const optTactLines     = document.getElementById('opt-tact-lines');
 const optTactAbbr      = document.getElementById('opt-tact-abbr');
 const optTactSupply    = document.getElementById('opt-tact-supply');
+const optTactResource  = document.getElementById('opt-tact-resource');
+const optTactGas       = document.getElementById('opt-tact-gas');
 const optSlotBreakdown = document.getElementById('opt-slot-breakdown');
 const optLimit         = document.getElementById('opt-limit');
 // Roster Card options + controls
 const cardUpgrades   = document.getElementById('card-upgrades');
 const cardStats      = document.getElementById('card-stats');
+const cardSize       = document.getElementById('card-size');
 const cardCost       = document.getElementById('card-cost');
 const cardTactical   = document.getElementById('card-tactical');
+const cardTactResource = document.getElementById('card-tact-resource');
+const cardTactGas    = document.getElementById('card-tact-gas');
+const cardTactSupply = document.getElementById('card-tact-supply');
 const cardSlots      = document.getElementById('card-slots');
 const downloadImgBtn = document.getElementById('download-img-btn');
 const copyImgBtn     = document.getElementById('copy-img-btn');
@@ -103,14 +109,20 @@ function savePrefs() {
         tactLines:     optTactLines.checked,
         tactAbbr:      optTactAbbr.checked,
         tactSupply:    optTactSupply.checked,
+        tactResource:  optTactResource.checked,
+        tactGas:       optTactGas.checked,
         slotBreakdown: optSlotBreakdown.checked,
         limit:         optLimit.value,
       },
       card: {
         upgrades: cardUpgrades.checked,
         stats:    cardStats.checked,
+        size:     cardSize.checked,
         cost:     cardCost.checked,
         tactical: cardTactical.checked,
+        tactResource: cardTactResource.checked,
+        tactGas:      cardTactGas.checked,
+        tactSupply:   cardTactSupply.checked,
         slots:    cardSlots.checked,
       },
       aid: {
@@ -136,14 +148,20 @@ function loadPrefs() {
       optTactLines.checked     = !!p.opts.tactLines;
       optTactAbbr.checked      = !!p.opts.tactAbbr;
       optTactSupply.checked    = !!p.opts.tactSupply;
+      optTactResource.checked  = !!p.opts.tactResource;
+      optTactGas.checked       = !!p.opts.tactGas;
       optSlotBreakdown.checked = !!p.opts.slotBreakdown;
       if (p.opts.limit) optLimit.value = p.opts.limit;
     }
     if (p.card) {
       cardUpgrades.checked = p.card.upgrades !== false;
       cardStats.checked    = !!p.card.stats;
+      cardSize.checked     = p.card.size !== false;
       cardCost.checked     = p.card.cost     !== false;
       cardTactical.checked = p.card.tactical !== false;
+      cardTactResource.checked = !!p.card.tactResource;
+      cardTactGas.checked      = !!p.card.tactGas;
+      cardTactSupply.checked   = !!p.card.tactSupply;
       cardSlots.checked    = !!p.card.slots;
     }
     if (p.aid) {
@@ -348,6 +366,28 @@ function hasStatValue(value) {
   return value !== null && value !== undefined;
 }
 
+function compareText(a, b) {
+  return String(a ?? '').localeCompare(String(b ?? ''), undefined, { sensitivity: 'base' });
+}
+
+function compareUpgradesForDisplay(a, b) {
+  const costDiff = Number(b?.cost ?? 0) - Number(a?.cost ?? 0);
+  if (costDiff !== 0) return costDiff;
+  return compareText(a?.name, b?.name);
+}
+
+function sortUpgradesForDisplay(upgrades = []) {
+  return [...upgrades].sort(compareUpgradesForDisplay);
+}
+
+function sortTacticalNames(cards = []) {
+  return [...cards].sort(compareText);
+}
+
+function sortTacticalDetailsByName(cards = []) {
+  return [...cards].sort((a, b) => compareText(a?.name, b?.name));
+}
+
 function formatUnitStatsInline(stats) {
   return [
     ['HP', stats.hp],
@@ -377,15 +417,56 @@ function formatSlotBreakdown(slots = {}) {
     .join('');
 }
 
+function formatTacticalSupplyTypes(slots = {}) {
+  const ordered = ['Hero', 'Core', 'Elite', 'Support', 'Air'];
+  const extras = Object.keys(slots).filter(type => !ordered.includes(type));
+  const keys = [...ordered, ...extras];
+  const letters = [];
+  for (const type of keys) {
+    const count = Number(slots[type] ?? 0);
+    if (count <= 0) continue;
+    const letter = TYPE_ABBR[type] ?? String(type).charAt(0).toUpperCase();
+    for (let i = 0; i < count; i += 1) {
+      letters.push({ type, letter });
+    }
+  }
+  return letters;
+}
+
+function renderRosterTacticalTag(card, { showResource = false, showGas = false, showSupply = false } = {}, resourceShort = 'res') {
+  const details = [];
+  if (showResource && typeof card.resource === 'number') {
+    details.push(`<span class="tact-tag-resource">${card.resource}${escapeHtml(resourceShort)}</span>`);
+  }
+  if (showGas && typeof card.gasCost === 'number') {
+    details.push(`<span class="tact-tag-gas">${card.gasCost}g</span>`);
+  }
+  if (showSupply) {
+    const supplyLetters = formatTacticalSupplyTypes(card.slots ?? {});
+    if (supplyLetters.length) {
+      const supplyHtml = supplyLetters
+        .map(({ type, letter }) => `<span class="tact-slot-${escapeHtml(String(type).toLowerCase())}">${escapeHtml(letter)}</span>`)
+        .join('');
+      details.push(`<span class="tact-tag-supply"><span class="tact-slot-bracket">[</span>${supplyHtml}<span class="tact-slot-bracket">]</span></span>`);
+    }
+  }
+  const suffix = details.length ? ` ${details.join(' ')}` : '';
+  return `<span class="tag"><span class="tact-tag-name">${escapeHtml(card.name)}</span>${suffix}</span>`;
+}
+
 function renderRosterCard(roster, opts = {}) {
   const {
     showUpgrades = true,
     showStats    = false,
+    showSize     = true,
     showCost     = true,
     showTactical = true,
+    showTacticalResource = false,
+    showTacticalGas = false,
+    showTacticalSupply = false,
     showSlots    = false,
   } = opts;
-  const { minerals: m, gas: g, supply, resources, tacticalCards, units, faction, factionCard, seed, slots } = roster;
+  const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails, units, faction, factionCard, seed, slots } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
   const resourceIcon = RESOURCE_ICON[faction] ?? '◈';
   const factionClass = `faction-${String(faction).toLowerCase()}`;
@@ -395,16 +476,18 @@ function renderRosterCard(roster, opts = {}) {
     const abbr     = TYPE_ABBR[u.type] ?? '?';
     const models   = u.models > 1 ? ` ×${u.models}` : '';
     const upgrades = showUpgrades
-      ? u.activeUpgrades
+      ? sortUpgradesForDisplay(u.activeUpgrades)
           .filter(x => x.cost > 0)
           .map(x => `<span class="upg-pill">+ ${escapeHtml(x.name)} <strong>${x.cost}m</strong></span>`)
           .join('')
       : '';
-    const unitMeta = `
-      <span class="unit-size">${escapeHtml(u.size)}</span>
-      <span class="unit-sep">·</span>
-      <span class="unit-supply">${u.supply}◆</span>
-      ${showCost ? `<span class="unit-sep">·</span><span class="unit-main-cost">${u.totalCost}m</span>` : ''}`;
+    const unitMetaParts = [];
+    if (showSize) unitMetaParts.push(`<span class="unit-size">${escapeHtml(u.size)}</span>`);
+    unitMetaParts.push(`<span class="unit-supply">${u.supply}◆</span>`);
+    if (showCost) unitMetaParts.push(`<span class="unit-main-cost">${u.totalCost}m</span>`);
+    const unitMeta = unitMetaParts
+      .map((part, idx) => idx === 0 ? part : `<span class="unit-sep">·</span>${part}`)
+      .join('');
     const statsText = showStats ? formatUnitStatsInline(u.stats) : '';
     const statsLine = statsText
       ? `<div class="unit-stats-line">${statsText}</div>`
@@ -423,8 +506,15 @@ function renderRosterCard(roster, opts = {}) {
       </div>`;
   }).join('');
 
-  const tactPills = tacticalCards
-    .map(t => `<span class="tag">${escapeHtml(t)}</span>`)
+  const tacticalItems = (tacticalCardDetails?.length
+    ? sortTacticalDetailsByName(tacticalCardDetails)
+    : sortTacticalNames(tacticalCards).map(name => ({ name, resource: null, gasCost: null, slots: {} })));
+  const tactPills = tacticalItems
+    .map(card => renderRosterTacticalTag(card, {
+      showResource: showTacticalResource,
+      showGas: showTacticalGas,
+      showSupply: showTacticalSupply,
+    }, resourceShort))
     .join('');
 
   return `
@@ -441,7 +531,7 @@ function renderRosterCard(roster, opts = {}) {
         ${slotBreakdown ? `<div class="slot-breakdown"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</div>` : ''}
       </div>
       <div class="unit-list">${unitRows}</div>
-      ${showTactical && tacticalCards.length ? `<div class="tact-section"><span class="tact-label">Tactical</span>${tactPills}</div>` : ''}
+      ${showTactical && tacticalItems.length ? `<div class="tact-section"><span class="tact-label">Tactical</span>${tactPills}</div>` : ''}
     </div>`;
 }
 
@@ -473,7 +563,7 @@ function renderPlayerAid(roster, opts = {}) {
         <span class="stat-chip">◆ <strong>${u.supply}</strong></span>
       </div>` : '';
 
-    const upgradeList     = u.allUpgrades ?? [];
+    const upgradeList     = sortUpgradesForDisplay(u.allUpgrades ?? []);
     const visibleUpgrades = allUpgrades ? upgradeList : upgradeList.filter(ug => ug.active);
     const upgradesHtml    = visibleUpgrades.length ? `
       <div class="aid-upgrades">
@@ -513,7 +603,7 @@ function renderPlayerAid(roster, opts = {}) {
   }).join('');
 
   const tactPills = showTactical
-    ? (tacticalCardDetails ?? []).map(t => `<span class="tag">${escapeHtml(t.name)}</span>`).join('')
+    ? sortTacticalDetailsByName(tacticalCardDetails ?? []).map(t => `<span class="tag">${escapeHtml(t.name)}</span>`).join('')
     : '';
 
   return `
@@ -538,6 +628,11 @@ async function captureCanvas(el) {
   const sourceEl = el.firstElementChild ?? el;
   const stage = document.createElement('div');
   const clone = sourceEl.cloneNode(true);
+  const isRosterCardCapture = el === rosterCardEl;
+  const rosterCardMinWidth = 480;
+  const rosterCardMaxWidth = 760;
+  const rosterCardWidthStep = 20;
+  const rosterTitlePadding = 40;
 
   stage.style.position = 'fixed';
   stage.style.left = '-10000px';
@@ -552,11 +647,91 @@ async function captureCanvas(el) {
   clone.style.width = 'fit-content';
   clone.style.maxWidth = 'none';
   clone.style.margin = '0';
-
   stage.appendChild(clone);
   document.body.appendChild(stage);
 
   try {
+    if (isRosterCardCapture) {
+      const applyRosterExportWidth = (targetWidth) => {
+        stage.style.width = `${targetWidth}px`;
+        stage.style.maxWidth = `${targetWidth}px`;
+        clone.style.width = `${targetWidth}px`;
+        clone.style.maxWidth = `${targetWidth}px`;
+
+        clone.querySelectorAll('.roster-header').forEach(header => {
+          header.style.paddingBottom = '12px';
+        });
+
+        clone.querySelectorAll('.roster-faction').forEach(title => {
+          if (!title.dataset.exportOriginalHtml) {
+            title.dataset.exportOriginalHtml = title.innerHTML;
+          }
+
+          title.innerHTML = title.dataset.exportOriginalHtml;
+          title.style.display = '';
+          title.style.flexDirection = '';
+          title.style.alignItems = '';
+          title.style.gap = '';
+          title.style.lineHeight = '';
+          title.style.whiteSpace = '';
+
+          const rawTitle = title.textContent || '';
+          const parts = rawTitle.split(/\s[·-]\s/).map(part => part.trim()).filter(Boolean);
+          const availableTitleWidth = Math.max(220, targetWidth - rosterTitlePadding);
+          title.style.whiteSpace = 'nowrap';
+          const singleLineWidth = Math.ceil(title.scrollWidth || title.getBoundingClientRect().width || 0);
+          title.style.whiteSpace = '';
+
+          if (parts.length === 2 && singleLineWidth > availableTitleWidth) {
+            title.innerHTML = `<div>${escapeHtml(parts[0])}</div><div>${escapeHtml(parts[1])}</div>`;
+            title.style.display = 'flex';
+            title.style.flexDirection = 'column';
+            title.style.alignItems = 'flex-start';
+            title.style.gap = '2px';
+            title.style.lineHeight = '1.08';
+            title.style.whiteSpace = 'normal';
+          }
+        });
+
+        clone.querySelectorAll('.roster-meta').forEach(meta => {
+          meta.style.display = 'flex';
+          meta.style.flexWrap = 'wrap';
+          meta.style.gap = '8px 12px';
+          meta.style.alignItems = 'center';
+          meta.style.maxWidth = '100%';
+        });
+
+        clone.querySelectorAll('.slot-breakdown').forEach(breakdown => {
+          breakdown.style.maxWidth = '100%';
+        });
+
+        clone.querySelectorAll('.tact-label').forEach(label => {
+          label.style.flexBasis = '100%';
+          label.style.marginRight = '0';
+        });
+
+        clone.querySelectorAll('.tact-section').forEach(section => {
+          section.style.alignItems = 'flex-start';
+          section.style.rowGap = '6px';
+        });
+      };
+
+      let bestWidth = 620;
+      let bestScore = Number.POSITIVE_INFINITY;
+
+      for (let width = rosterCardMinWidth; width <= rosterCardMaxWidth; width += rosterCardWidthStep) {
+        applyRosterExportWidth(width);
+        const rect = clone.getBoundingClientRect();
+        const areaScore = Math.ceil(rect.width) * Math.ceil(rect.height);
+        if (areaScore < bestScore) {
+          bestScore = areaScore;
+          bestWidth = width;
+        }
+      }
+
+      applyRosterExportWidth(bestWidth);
+    }
+
     return await window.html2canvas(clone, {
       backgroundColor: '#161b22',
       scale: 2,
@@ -637,6 +812,8 @@ function refreshOutput() {
     tacticalPerLine:         optTactLines.checked,
     abbreviateTacticalCards: optTactAbbr.checked,
     showTacticalSupplyTypes: optTactSupply.checked,
+    showTacticalResourceCosts: optTactResource.checked,
+    showTacticalGasCosts:    optTactGas.checked,
     showSlotBreakdown:       optSlotBreakdown.checked,
     // Keep user-selected options intact in preview/raw; use selectedCharLimit only for warning UI.
     charLimit: Number.MAX_SAFE_INTEGER,
@@ -660,8 +837,12 @@ function refreshOutput() {
   rosterCardEl.innerHTML = renderRosterCard(currentRoster, {
     showUpgrades: cardUpgrades.checked,
     showStats:    cardStats.checked,
+    showSize:     cardSize.checked,
     showCost:     cardCost.checked,
     showTactical: cardTactical.checked,
+    showTacticalResource: cardTactResource.checked,
+    showTacticalGas: cardTactGas.checked,
+    showTacticalSupply: cardTactSupply.checked,
     showSlots:    cardSlots.checked,
   });
   downloadImgBtn.style.display = 'inline-block';
@@ -862,10 +1043,10 @@ seedInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadRoster()
 seedInput.addEventListener('change', savePrefs);
 function refreshAndSave() { refreshOutput(); savePrefs(); }
 // Discord / Raw options
-[optPlain, optStats, optAbbr, optTactLines, optTactAbbr, optTactSupply, optSlotBreakdown, optLimit]
+[optPlain, optStats, optAbbr, optTactLines, optTactAbbr, optTactSupply, optTactResource, optTactGas, optSlotBreakdown, optLimit]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 // Roster Card options
-[cardUpgrades, cardStats, cardCost, cardTactical, cardSlots]
+[cardUpgrades, cardStats, cardSize, cardCost, cardTactical, cardTactResource, cardTactGas, cardTactSupply, cardSlots]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 // Player Aid options
 [aidStats, aidAllUpgrades, aidActivation, aidTactical]
