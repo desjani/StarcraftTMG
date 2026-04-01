@@ -747,13 +747,86 @@
     .aid-unit-header {
       display: flex;
       gap: 12px;
-      align-items: flex-start;
+      align-items: center;
       padding: 10px 20px 8px;
+      cursor: pointer;
       transition: background .16s ease;
     }
+    .aid-unit-header:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
     .aid-unit-header:hover { background: rgba(101, 244, 255, .038); }
-    .aid-body { padding: 0 20px 12px 60px; }
-    .aid-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .aid-unit-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .aid-collapsed-statline {
+      display: none;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .aid-unit.is-collapsed .aid-collapsed-statline {
+      display: inline-flex;
+    }
+    .aid-unit.is-collapsed .aid-unit-title-row {
+      display: grid;
+      grid-template-columns: var(--aid-collapsed-name-width, auto) minmax(0, 1fr);
+      align-items: center;
+      column-gap: 6px;
+      width: 100%;
+    }
+    .aid-unit.is-collapsed .aid-unit-title-row .unit-name {
+      white-space: nowrap;
+    }
+    .aid-collapsed-statline .stat-chip {
+      padding: 1px 7px;
+      font-size: .66rem;
+    }
+    .aid-collapse-indicator {
+      width: 9px;
+      height: 9px;
+      margin-left: 2px;
+      border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted);
+      transform: rotate(45deg);
+      transition: transform .24s ease, border-color .16s ease;
+      flex-shrink: 0;
+    }
+    .aid-unit:hover .aid-collapse-indicator,
+    .aid-unit-header:focus-visible .aid-collapse-indicator { border-color: var(--accent); }
+    .aid-unit.is-collapsed .aid-collapse-indicator { transform: rotate(-45deg); }
+    .aid-body-wrap {
+      display: grid;
+      grid-template-rows: 1fr;
+      transition: grid-template-rows .26s ease;
+    }
+    .aid-unit.is-collapsed .aid-body-wrap { grid-template-rows: 0fr; }
+    .aid-body {
+      min-height: 0;
+      overflow: hidden;
+      padding: 0 20px 12px 60px;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .aid-unit.is-collapsed .aid-body {
+      opacity: 0;
+      transform: translateY(-6px);
+      padding-bottom: 0;
+      pointer-events: none;
+    }
+    .aid-stats-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .aid-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0; }
+    .aid-upgrade-bubbles { margin-left: auto; justify-content: flex-end; }
     .aid-section-title {
       margin: 10px 0 6px;
       color: var(--muted);
@@ -772,6 +845,7 @@
       font-size: .72rem;
     }
     .stat-chip strong { color: var(--accent); }
+    .stat-chip strong.aid-buff-highlight { color: var(--green); }
     .aid-weapons-wrap {
       margin-bottom: 8px;
       overflow-x: auto;
@@ -803,12 +877,13 @@
     }
     .aid-weapons-table tbody tr:last-child td { border-bottom: none; }
     .aid-weapons-table tbody tr.is-active { color: var(--text); }
-    .aid-weapons-table tbody tr.is-inactive { color: var(--muted); }
+    .aid-weapons-table tbody tr.is-inactive { color: var(--text); }
     .aid-weapons-table .weapon-name {
-      color: var(--green);
+      color: var(--text);
       font-weight: 600;
       white-space: nowrap;
     }
+    .aid-weapons-table .weapon-name.is-highlighted { color: var(--green); }
     .aid-ability-group {
       margin-bottom: 8px;
       position: relative;
@@ -893,7 +968,148 @@
       line-height: 1.45;
     }
     .aid-upg-desc strong { color: var(--text); font-weight: 700; }
+    .aid-merged-buffs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 10px;
+    }
+    .aid-merged-pill {
+      border-color: rgba(70, 212, 138, .42);
+      background: rgba(70, 212, 138, .12);
+      color: var(--text);
+    }
+    .aid-buff-highlight {
+      color: var(--green);
+      font-weight: 700;
+    }
+    .aid-tactical-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 2px;
+    }
+    .aid-tact-card {
+      border: 1px solid rgba(49, 69, 99, .32);
+      border-radius: 10px;
+      padding: 10px;
+      background:
+        linear-gradient(180deg, rgba(24, 38, 61, .78), rgba(14, 22, 35, .82));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+    }
+    .aid-tact-card-header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .aid-tact-art {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(101, 244, 255, .18);
+      background: rgba(10, 16, 28, .8);
+      flex-shrink: 0;
+    }
+    .aid-tact-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .aid-tact-card-headings {
+      min-width: 0;
+      flex: 1;
+    }
+    .aid-tact-card-name {
+      color: var(--text);
+      font-size: .92rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .aid-tact-card-count {
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 700;
+    }
+    .aid-tact-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .aid-tact-gas-cost {
+      margin-left: auto;
+      white-space: nowrap;
+      font-family: var(--mono);
+      font-size: .88rem;
+      color: var(--yellow);
+      font-weight: 700;
+      align-self: flex-start;
+      padding-top: 1px;
+    }
+    .aid-tact-meta-chip {
+      color: var(--text);
+      background: rgba(19, 31, 50, .75);
+    }
+    .aid-tact-phase-chip.phase-any { color: var(--muted); }
+    .aid-tact-phase-chip.phase-movement { color: var(--accent); }
+    .aid-tact-phase-chip.phase-assault { color: var(--red); }
+    .aid-tact-phase-chip.phase-combat { color: var(--yellow); }
+    .aid-tact-phase-chip.phase-scoring { color: var(--green); }
+    .aid-tact-phase-chip.phase-cleanup { color: var(--protoss); }
+    .aid-tact-slot-chip {
+      gap: 0;
+    }
+    .aid-tact-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      font-weight: 700;
+    }
+    .aid-tact-slot-hero { color: var(--protoss); }
+    .aid-tact-slot-core { color: var(--text); }
+    .aid-tact-slot-elite { color: var(--red); }
+    .aid-tact-slot-support { color: var(--green); }
+    .aid-tact-slot-air { color: var(--yellow); }
+    .aid-tact-tags {
+      margin-bottom: 8px;
+    }
+    .aid-tact-abilities {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .aid-tact-ability {
+      border: 1px solid rgba(49, 69, 99, .24);
+      border-radius: 8px;
+      padding: 7px 8px;
+      background: rgba(12, 21, 34, .48);
+    }
+    .aid-tact-ability-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 3px;
+    }
+    .aid-tact-ability-name {
+      color: var(--text);
+      font-size: .79rem;
+      font-weight: 700;
+    }
     .aid-tags { margin-bottom: 6px; color: var(--muted); font-size: .74rem; font-style: italic; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .aid-unit-header,
+      .aid-collapse-indicator,
+      .aid-body-wrap,
+      .aid-body {
+        transition: none;
+      }
+    }
 
     .error {
       margin-bottom: 14px;
@@ -1167,9 +1383,16 @@
               <label class="opt-label"><input type="checkbox" id="aid-activation" checked> Activation info</label>
               <label class="opt-label"><input type="checkbox" id="aid-tactical" checked> Tactical cards</label>
             </div>
+            <div class="opt-group">
+              <span class="opt-group-title">Ability View</span>
+              <label class="opt-label"><input type="radio" name="aid-mode" id="aid-mode-all" checked> Show all abilities</label>
+              <label class="opt-label"><input type="radio" name="aid-mode" id="aid-mode-merged"> Merged buffs</label>
+            </div>
           </div>
         </div>
         <div id="aid-print-bar" style="display:none;gap:10px;margin-bottom:14px;">
+          <button class="btn ghost" id="aid-collapse-all-btn">Collapse All Units</button>
+          <button class="btn ghost" id="aid-expand-all-btn">Expand All Units</button>
           <button class="btn" id="aid-print-btn">🖨 Print / Save as PDF</button>
         </div>
         <div id="aid-card"></div>

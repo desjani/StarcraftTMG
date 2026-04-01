@@ -65,8 +65,12 @@ const aidStats       = document.getElementById('aid-stats');
 const aidAllUpgrades = document.getElementById('aid-all-upgrades');
 const aidActivation  = document.getElementById('aid-activation');
 const aidTactical    = document.getElementById('aid-tactical');
+const aidModeAll     = document.getElementById('aid-mode-all');
+const aidModeMerged  = document.getElementById('aid-mode-merged');
 const aidCardEl      = document.getElementById('aid-card');
 const aidPrintBar    = document.getElementById('aid-print-bar');
+const aidCollapseAllBtn = document.getElementById('aid-collapse-all-btn');
+const aidExpandAllBtn = document.getElementById('aid-expand-all-btn');
 const aidPrintBtn    = document.getElementById('aid-print-btn');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
@@ -130,6 +134,7 @@ function savePrefs() {
         allUpgrades: aidAllUpgrades.checked,
         activation:  aidActivation.checked,
         tactical:    aidTactical.checked,
+        mode:        aidModeMerged.checked ? 'merged' : 'all',
       },
     }));
   } catch (_) { /* storage unavailable */ }
@@ -169,6 +174,9 @@ function loadPrefs() {
       aidAllUpgrades.checked = p.aid.allUpgrades !== false;
       aidActivation.checked  = p.aid.activation  !== false;
       aidTactical.checked    = p.aid.tactical    !== false;
+      const mode = p.aid.mode === 'merged' ? 'merged' : 'all';
+      aidModeMerged.checked = mode === 'merged';
+      aidModeAll.checked = mode !== 'merged';
     }
     // Legacy compatibility: old saved "raw" tab now maps to preview + raw mode.
     const savedTab = p.tab === 'raw' ? 'preview' : p.tab;
@@ -393,6 +401,51 @@ function sortTacticalDetailsByName(cards = []) {
   return [...cards].sort((a, b) => compareText(a?.name, b?.name));
 }
 
+function getAidUnitKey(unit) {
+  const activeNames = (unit?.allUpgrades ?? [])
+    .filter(ug => ug.active)
+    .map(ug => String(ug.name ?? ug.id ?? ''))
+    .sort()
+    .join('|');
+  return `${unit?.id ?? unit?.name}::${unit?.size}::${activeNames}`;
+}
+
+function compareAidWeaponProfiles(a, b) {
+  const aRange = String(a?.range ?? '').trim().toUpperCase();
+  const bRange = String(b?.range ?? '').trim().toUpperCase();
+  const aIsMelee = aRange === 'E';
+  const bIsMelee = bRange === 'E';
+  if (aIsMelee !== bIsMelee) return aIsMelee ? 1 : -1;
+  return compareText(a?.name, b?.name);
+}
+
+function resolveLinkedWeaponReplacements(weapons = [], unitModels = 1) {
+  const parsedModelCount = Number.parseInt(String(unitModels ?? 1), 10);
+  const modelCount = Number.isFinite(parsedModelCount) && parsedModelCount > 0 ? parsedModelCount : 1;
+  const byName = new Map(
+    weapons
+      .map((weapon, index) => [String(weapon?.name ?? '').trim().toLowerCase(), index])
+      .filter(([name]) => !!name)
+  );
+
+  const replacedBaseNames = new Set();
+  for (const weapon of weapons) {
+    const linkedTo = String(weapon?.linkedTo ?? '').trim();
+    if (!linkedTo || linkedTo === '-' || !weapon?.active) continue;
+    // SPECIALIST upgrades only replace one model's weapon, so keep base profile visible for multi-model units.
+    const hasSpecialistTrait = /\bSPECIALIST\b/i.test(String(weapon?.traits ?? ''));
+    if (hasSpecialistTrait && modelCount > 1) continue;
+    const key = linkedTo.toLowerCase();
+    if (byName.has(key)) replacedBaseNames.add(key);
+  }
+
+  return weapons.filter((weapon) => {
+    const nameKey = String(weapon?.name ?? '').trim().toLowerCase();
+    if (!nameKey) return true;
+    return !replacedBaseNames.has(nameKey);
+  });
+}
+
 function isWeaponProfile(upgrade) {
   const description = String(upgrade?.description || '').trim();
   return /^RANGE\s*:/i.test(description) && /\bTARGET\s*:/i.test(description);
@@ -423,6 +476,7 @@ function parseWeaponProfile(upgrade) {
 
   return {
     name: upgrade?.name ?? '',
+    linkedTo: String(upgrade?.linkedTo ?? '').trim(),
     range: statEntries.RANGE ?? '-',
     target: statEntries.TARGET ?? '-',
     roa: statEntries.ROA ?? '-',
@@ -434,8 +488,12 @@ function parseWeaponProfile(upgrade) {
   };
 }
 
-function renderAidWeaponsTable(weapons) {
+function renderAidWeaponsTable(weapons, { mergedBuffs = false } = {}) {
   if (!weapons.length) return '';
+  const renderCell = (value, highlighted = false) => {
+    const inner = escapeHtml(String(value ?? '-'));
+    return highlighted ? `<span class="aid-buff-highlight">${inner}</span>` : inner;
+  };
   return `
     <div class="aid-section-title">Weapons</div>
     <div class="aid-weapons-wrap">
@@ -455,14 +513,17 @@ function renderAidWeaponsTable(weapons) {
         <tbody>
           ${weapons.map(weapon => `
             <tr class="${weapon.active ? 'is-active' : 'is-inactive'}">
-              <td class="weapon-name">${escapeHtml(weapon.name)}</td>
-              <td>${escapeHtml(weapon.range)}</td>
+              <td class="weapon-name${weapon.nameHighlighted ? ' is-highlighted' : ''}">${escapeHtml(weapon.name)}</td>
+              <td>${renderCell(weapon.range, mergedBuffs && !!weapon.fieldHighlights?.range)}</td>
               <td>${escapeHtml(weapon.target)}</td>
-              <td>${escapeHtml(weapon.roa)}</td>
-              <td>${escapeHtml(weapon.hit)}</td>
-              <td>${escapeHtml(weapon.damage)}</td>
-              <td>${escapeHtml(weapon.surge)}</td>
-              <td>${formatAidRichText(weapon.traits || '-', { allowLineBreaks: false })}</td>
+              <td>${renderCell(weapon.roa, mergedBuffs && !!weapon.fieldHighlights?.roa)}</td>
+              <td>${renderCell(weapon.hit, mergedBuffs && !!weapon.fieldHighlights?.hit)}</td>
+              <td>${renderCell(weapon.damage, mergedBuffs && !!weapon.fieldHighlights?.damage)}</td>
+              <td>${renderCell(weapon.surge, mergedBuffs && !!weapon.fieldHighlights?.surge)}</td>
+              <td>${formatAidRichText(weapon.traits || '-', {
+                allowLineBreaks: false,
+                highlightTerms: mergedBuffs ? (weapon.traitHighlights ?? []) : [],
+              })}</td>
             </tr>`).join('')}
         </tbody>
       </table>
@@ -481,7 +542,7 @@ function getFactionResourceLabelConfig(faction, factionClass) {
   };
 }
 
-function formatAidRichText(text, { faction, factionClass, allowLineBreaks = true } = {}) {
+function formatAidRichText(text, { faction, factionClass, allowLineBreaks = true, highlightTerms = [] } = {}) {
   let html = escapeHtml(String(text || ''));
 
   if (faction && factionClass) {
@@ -498,6 +559,19 @@ function formatAidRichText(text, { faction, factionClass, allowLineBreaks = true
     .split(/(<[^>]+>)/g)
     .map(part => (part.startsWith('<') ? part : part.replace(keywordRegex, '<strong>$1</strong>')))
     .join('');
+
+  if (highlightTerms.length) {
+    const sortedTerms = [...new Set(highlightTerms.filter(Boolean))]
+      .sort((a, b) => String(b).length - String(a).length);
+    for (const term of sortedTerms) {
+      const escaped = String(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const termRegex = new RegExp(`(${escaped})`, 'gi');
+      html = html
+        .split(/(<[^>]+>)/g)
+        .map(part => (part.startsWith('<') ? part : part.replace(termRegex, '<span class="aid-buff-highlight">$1</span>')))
+        .join('');
+    }
+  }
 
   if (allowLineBreaks) html = html.replace(/\r?\n/g, '<br>');
   return html;
@@ -539,6 +613,26 @@ function parseAidActivation(upgrade) {
     .map(part => part.trim())
     .filter(Boolean);
 
+  if (activationParts.length === 1) {
+    const single = activationParts[0];
+    const tagged = single.match(/^<\s*([^>]+)\s*>(?:\s*\(([^)]+)\))?$/);
+    if (tagged) {
+      return {
+        state: String(tagged[1] || '').trim(),
+        resource: String(tagged[2] || '').trim(),
+      };
+    }
+
+    const resourceMatch = single.match(/\(([^)]+)\)\s*$/);
+    const resource = resourceMatch ? String(resourceMatch[1] || '').trim() : '';
+    const state = single
+      .replace(/[<>]/g, '')
+      .replace(/\s*\([^)]+\)\s*$/, '')
+      .trim();
+
+    return { state, resource };
+  }
+
   return {
     state: activationParts[0] ? activationParts[0].replace(/[<>]/g, '') : '',
     resource: activationParts[1] ? activationParts[1].replace(/[()]/g, '') : '',
@@ -563,6 +657,294 @@ function groupAbilitiesByPhase(abilities = []) {
       return compareText(a, b);
     })
     .map(([phase, abilitiesInPhase]) => ({ phase, abilities: abilitiesInPhase }));
+}
+
+const AID_CONDITIONAL_CUES = /\b(if|when|while|after|before|whenever|until|during|within|against|for each|for the purposes of|for controlling|for contesting|for completing|for resolving|instead|at the end|at start|at the start|first|may)\b/i;
+const AID_ABILITY_REFERENCE_CUES = /\bspecial\s+ability\s*['’]s\b/i;
+const AID_MUTATION_VERBS = /\b(gains?|loses?|increase(?:d|s)?|decrease(?:d|s)?|reduce(?:d|s)?|adds?|remove(?:s|d)?|becomes?)\b/i;
+const AID_STAT_PATTERNS = [
+  /\b(HIT\s*POINTS?|HP|ARMOU?R|EVADE|SPEED|SHIELD|SUPPLY)\b(?:\s+characteristic)?(?:\s+by\s+\d+)?/gi,
+  /\b(RANGE|ROA|HIT|DMG|DAMAGE|SURGE)\b(?:\s+characteristic)?(?:\s+by\s+\d+)?/gi,
+];
+const AID_TRAIT_TERMS = [
+  'PRECISION', 'PIERCE', 'LONG RANGE', 'PINPOINT', 'SIDEARM', 'TOUGH',
+  'ANTI-EVADE', 'INDIRECT FIRE', 'LOCKED IN', 'CRITICAL HIT', 'IMPACT',
+  'HIDDEN', 'NON-LETHAL DAMAGE', 'HEAL', 'BUFF', 'DEBUFF',
+];
+
+const AID_EXPLICIT_BUFF_TERM = /\b(?:BUFF|DEBUFF)\s+[A-Z][A-Z0-9-]*(?:\s+[A-Z][A-Z0-9-]*)*\s*\([^)\n]*\)/gi;
+const AID_GAINED_EFFECT_TERM = /\bgains?\s+([A-Z][A-Z0-9-]*(?:\s+[A-Z0-9-]*)*\s*\([^)\n]*\))/gi;
+const AID_STAT_FIELD_MAP = {
+  RANGE: 'range',
+  ROA: 'roa',
+  HIT: 'hit',
+  DMG: 'damage',
+  DAMAGE: 'damage',
+};
+
+function normalizeAidUnitStatField(token) {
+  const normalized = String(token || '').toUpperCase().replace(/\s+/g, ' ').trim();
+  if (normalized === 'HP' || normalized === 'HIT POINT' || normalized === 'HIT POINTS') return 'hp';
+  if (normalized === 'ARMOR' || normalized === 'ARMOUR') return 'armor';
+  if (normalized === 'EVADE') return 'evade';
+  if (normalized === 'SPEED') return 'speed';
+  if (normalized === 'SHIELD') return 'shield';
+  if (normalized === 'SUPPLY') return 'supply';
+  return null;
+}
+
+function parseUnitStatEffects(text) {
+  const source = String(text || '');
+  const effects = [];
+  const seen = new Set();
+
+  const toDelta = (verb, amount) => {
+    const lower = String(verb || '').toLowerCase();
+    if (lower.startsWith('decreas') || lower.startsWith('reduc')) return -amount;
+    return amount;
+  };
+
+  const addEffect = (fieldToken, verb, amountRaw, hit) => {
+    const field = normalizeAidUnitStatField(fieldToken);
+    const amount = Number.parseInt(String(amountRaw || ''), 10);
+    if (!field || !Number.isFinite(amount) || amount <= 0) return;
+    const delta = toDelta(verb, amount);
+    const textHit = String(hit || '').trim();
+    const key = `${field}:${delta}:${textHit.toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    effects.push({ field, delta, text: textHit });
+  };
+
+  let match;
+  const statFirst = /\b(HIT\s*POINTS?|HP|ARMOU?R|EVADE|SPEED|SHIELD|SUPPLY)\b(?:\s+characteristic)?(?:\s+(?:is|was))?\s+(increased?|decreased?|reduced?)\s+by\s+(\d+)/gi;
+  while ((match = statFirst.exec(source)) !== null) {
+    addEffect(match[1], match[2], match[3], match[0]);
+  }
+
+  const verbFirst = /\b(increase|decrease|reduce)\b[^.!?]*?\b(HIT\s*POINTS?|HP|ARMOU?R|EVADE|SPEED|SHIELD|SUPPLY)\b(?:\s+characteristic)?\s+by\s+(\d+)/gi;
+  while ((match = verbFirst.exec(source)) !== null) {
+    addEffect(match[2], match[1], match[3], match[0]);
+  }
+
+  return effects;
+}
+
+function extractBuffEffectTerms(text) {
+  const source = String(text || '');
+  const terms = [];
+
+  const explicit = source.match(AID_EXPLICIT_BUFF_TERM) ?? [];
+  for (const hit of explicit) terms.push(hit.trim());
+
+  for (const pattern of AID_STAT_PATTERNS) {
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(source)) !== null) {
+      const hit = String(match[0] || '').trim();
+      if (!hit) continue;
+      const at = Number(match.index ?? 0);
+      const prevChar = at > 0 ? source.charAt(at - 1) : '';
+      if (prevChar === '-') continue;
+      terms.push(hit);
+    }
+    pattern.lastIndex = 0;
+  }
+
+  for (const term of AID_TRAIT_TERMS) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escaped}\\b(?:\\s*\\([^)\\n]*\\))?`, 'gi');
+    const matches = source.match(regex) ?? [];
+    for (const hit of matches) terms.push(hit.trim());
+  }
+
+  return [...new Set(terms.filter(Boolean))];
+}
+
+function extractWeaponEffectTerms(text) {
+  const source = String(text || '');
+  const terms = [];
+  const explicit = source.match(AID_EXPLICIT_BUFF_TERM) ?? [];
+  for (const hit of explicit) terms.push(hit.trim());
+
+  let match;
+  while ((match = AID_GAINED_EFFECT_TERM.exec(source)) !== null) {
+    const captured = String(match[1] || '').trim();
+    if (captured) terms.push(captured);
+  }
+  AID_GAINED_EFFECT_TERM.lastIndex = 0;
+
+  const surgeMatch = source.match(/\bgains?\s+surge\s+type\s*:\s*([^,.;]+)(?:,\s*and\s*s\s*dice\s*:\s*([^.;]+))?/i);
+  if (surgeMatch) {
+    const surgeType = String(surgeMatch[1] || '').trim();
+    const surgeDice = String(surgeMatch[2] || '').trim();
+    if (surgeType) {
+      terms.push(`SURGE: ${surgeType}${surgeDice ? ` (${surgeDice})` : ''}`);
+    }
+  }
+
+  return [...new Set(terms.filter(Boolean))];
+}
+
+function parseWeaponEffect(effectText) {
+  const text = String(effectText || '').trim();
+  if (!text) return null;
+
+  const surgeReplacement = text.match(/^SURGE\s*:\s*(.+)$/i);
+  if (surgeReplacement) {
+    const value = String(surgeReplacement[1] || '').trim();
+    if (!value) return null;
+    return {
+      kind: 'field-replacement',
+      field: 'surge',
+      value,
+      text,
+    };
+  }
+
+  const buffMatch = text.match(/^(BUFF|DEBUFF)\s+([A-Z][A-Z0-9-]*)\s*\(([^)]+)\)$/i);
+  if (buffMatch) {
+    const mode = buffMatch[1].toUpperCase();
+    const statToken = buffMatch[2].toUpperCase();
+    const statField = AID_STAT_FIELD_MAP[statToken] ?? null;
+    const value = Number.parseInt(buffMatch[3], 10);
+    if (statField && Number.isFinite(value)) {
+      return {
+        kind: 'stat-delta',
+        field: statField,
+        delta: mode === 'DEBUFF' ? -value : value,
+        text,
+      };
+    }
+    return { kind: 'trait', trait: text };
+  }
+
+  if (/^[A-Z][A-Z0-9-]*(?:\s+[A-Z0-9-]*)*\s*\([^)]+\)$/i.test(text)) {
+    return { kind: 'trait', trait: text };
+  }
+  return null;
+}
+
+function splitTraitTokens(traits) {
+  return String(traits || '')
+    .split(/\s*\|\s*|\s*,\s*/)
+    .map(token => token.trim())
+    .filter(Boolean);
+}
+
+function normalizeTraitKey(trait) {
+  return String(trait || '')
+    .replace(/\s*\([^)]+\)\s*$/, '')
+    .trim()
+    .toUpperCase();
+}
+
+function parseTraitNumericRank(trait) {
+  const match = String(trait || '').match(/\((\d+)\)\s*$/);
+  return match ? Number.parseInt(match[1], 10) : Number.NaN;
+}
+
+function mergeWeaponTraits(baseTraits, addedTraits) {
+  const ordered = [];
+  const byKey = new Map();
+
+  const add = (trait, fromAdded) => {
+    const cleaned = String(trait || '').trim();
+    if (!cleaned) return;
+    const key = normalizeTraitKey(cleaned);
+    const rank = parseTraitNumericRank(cleaned);
+    if (!byKey.has(key)) {
+      byKey.set(key, { text: cleaned, rank, fromAdded });
+      ordered.push(key);
+      return;
+    }
+    const prev = byKey.get(key);
+    if (Number.isFinite(rank) && (!Number.isFinite(prev.rank) || rank > prev.rank)) {
+      byKey.set(key, { text: cleaned, rank, fromAdded: true });
+    }
+  };
+
+  for (const trait of baseTraits) add(trait, false);
+  for (const trait of addedTraits) add(trait, true);
+
+  const merged = ordered.map(key => byKey.get(key)?.text).filter(Boolean);
+  const highlights = ordered
+    .map(key => byKey.get(key))
+    .filter(entry => entry?.fromAdded)
+    .map(entry => entry.text);
+
+  return { merged, highlights };
+}
+
+function applyNumericDelta(value, delta) {
+  const numeric = Number.parseInt(String(value || '').trim(), 10);
+  if (!Number.isFinite(numeric)) return { value, changed: false };
+  return { value: String(numeric + delta), changed: true };
+}
+
+function detectWeaponBuffTargets(chunk, weaponProfiles = []) {
+  const results = [];
+  const quoted = chunk.replace(/[’]/g, "'");
+
+  for (const weapon of weaponProfiles) {
+    const weaponName = String(weapon?.name || '').trim();
+    if (!weaponName) continue;
+    const escapedWeapon = weaponName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const weaponRegex = new RegExp(`\\b${escapedWeapon}\\b`, 'i');
+    if (!weaponRegex.test(quoted)) continue;
+
+    const effects = extractWeaponEffectTerms(quoted);
+    if (!effects.length) continue;
+    for (const effect of effects) {
+      const parsed = parseWeaponEffect(effect);
+      if (!parsed) continue;
+      results.push({ weaponName, effect, parsed });
+    }
+  }
+
+  return results;
+}
+
+function detectUnconditionalPassiveBuff(upgrade, weaponProfiles = []) {
+  const activation = String(upgrade?.activation ?? '').toLowerCase();
+  if (!activation.includes('<passive>')) return null;
+
+  const description = String(upgrade?.description ?? '').trim();
+  if (!description) return null;
+
+  const highlights = [];
+  const weaponApplications = [];
+  const unitStatApplications = [];
+  const chunks = description
+    .split(/\r?\n+/)
+    .flatMap(part => part.split(/(?<=[.!?])\s+/))
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  for (const chunk of chunks) {
+    if (AID_CONDITIONAL_CUES.test(chunk)) continue;
+    // Exclude passives that modify a different named ability instead of unit/weapon state.
+    if (AID_ABILITY_REFERENCE_CUES.test(chunk) && !/\bthis\s+unit\b/i.test(chunk)) continue;
+    if (!AID_MUTATION_VERBS.test(chunk)) continue;
+
+    for (const effect of extractBuffEffectTerms(chunk)) highlights.push(effect);
+    for (const application of detectWeaponBuffTargets(chunk, weaponProfiles)) {
+      weaponApplications.push(application);
+    }
+    for (const unitEffect of parseUnitStatEffects(chunk)) {
+      unitStatApplications.push(unitEffect);
+    }
+  }
+
+  const uniqueHighlights = [...new Set(highlights.filter(Boolean))];
+  const hasWeaponApplications = weaponApplications.some(entry => entry?.weaponName && entry?.effect);
+  const hasUnitStatApplications = unitStatApplications.some(entry => entry?.field && Number.isFinite(entry?.delta));
+  if (!uniqueHighlights.length && !hasWeaponApplications && !hasUnitStatApplications) return null;
+  return {
+    highlights: uniqueHighlights,
+    weaponApplications: weaponApplications.filter(entry => entry?.weaponName && entry?.effect),
+    unitStatApplications: unitStatApplications.filter(entry => entry?.field && Number.isFinite(entry?.delta)),
+  };
 }
 
 function isNaturalAbility(upgrade) {
@@ -641,6 +1023,122 @@ function renderRosterTacticalTag(card, { showResource = false, showGas = false, 
   }
   const suffix = details.length ? ` ${details.join(' ')}` : '';
   return `<span class="tag"><span class="tact-tag-name">${escapeHtml(card.name)}</span>${suffix}</span>`;
+}
+
+function groupAidTacticalCards(cards = []) {
+  const groups = [];
+  const byKey = new Map();
+
+  for (const card of sortTacticalDetailsByName(cards)) {
+    const key = String(card?.id ?? card?.name ?? '').trim().toLowerCase();
+    if (!key) continue;
+    const existing = byKey.get(key);
+    if (existing) {
+      existing.count += 1;
+      continue;
+    }
+    const group = { ...card, count: 1 };
+    byKey.set(key, group);
+    groups.push(group);
+  }
+
+  return groups;
+}
+
+function parseAidTacticalAbility(ability = {}) {
+  const name = String(ability?.name ?? '').trim();
+  const rawText = String(ability?.text ?? ability?.description ?? '').trim();
+  let activation = '';
+  let phase = 'Any Phase';
+  let description = rawText;
+
+  const taggedMatch = rawText.match(/^(.*?)\s*<([^>]+)>\s*<([^>]+)>\s*:\s*([\s\S]+)$/);
+  if (taggedMatch) {
+    activation = String(taggedMatch[2] ?? '').trim();
+    phase = String(taggedMatch[3] ?? '').trim() || 'Any Phase';
+    description = String(taggedMatch[4] ?? '').trim();
+  } else {
+    const activationOnlyMatch = rawText.match(/^(.*?)\s*<([^>]+)>\s*:\s*([\s\S]+)$/);
+    if (activationOnlyMatch) {
+      activation = String(activationOnlyMatch[2] ?? '').trim();
+      description = String(activationOnlyMatch[3] ?? '').trim();
+    }
+  }
+
+  return {
+    name,
+    activation,
+    phase,
+    description,
+  };
+}
+
+function renderAidTacticalCards(cards = [], { faction, factionClass } = {}) {
+  const groupedCards = groupAidTacticalCards(cards);
+  if (!groupedCards.length) return '';
+
+  const resourceConfig = getFactionResourceLabelConfig(faction, factionClass);
+  return `
+    <div class="aid-section-title">Tactical Cards</div>
+    <div class="aid-tactical-grid">
+      ${groupedCards.map(card => {
+        const meta = [];
+        if (typeof card.resource === 'number') {
+          meta.push(`<span class="aid-inline-chip aid-inline-resource">${card.resource} <span class="resource-icon ${resourceConfig.className}">${resourceConfig.icon}</span></span>`);
+        }
+        const supplyLetters = formatTacticalSupplyTypes(card.slots ?? {});
+        if (supplyLetters.length) {
+          meta.push(`<span class="aid-inline-chip aid-tact-meta-chip aid-tact-slot-chip">${supplyLetters.map(({ type, letter }) => `<span class="aid-tact-slot aid-tact-slot-${escapeHtml(String(type).toLowerCase())}">${escapeHtml(letter)}</span>`).join('')}</span>`);
+        }
+        if (card.isUnique) meta.push('<span class="aid-inline-chip aid-tact-meta-chip">Unique</span>');
+
+        const abilities = Array.isArray(card.abilities) ? card.abilities.map(parseAidTacticalAbility) : [];
+        const artHtml = card.frontUrl
+          ? `<div class="aid-tact-art"><img src="${escapeHtml(card.frontUrl)}" alt="${escapeHtml(card.name)}"></div>`
+          : '';
+        const gasHtml = typeof card.gasCost === 'number'
+          ? `<div class="aid-tact-gas-cost">${card.gasCost}g</div>`
+          : '';
+        const countSuffix = card.count > 1 ? ` <span class="aid-tact-card-count">x${card.count}</span>` : '';
+        const tagsHtml = card.tags
+          ? `<div class="aid-tags aid-tact-tags">${escapeHtml(card.tags)}</div>`
+          : '';
+
+        return `
+          <article class="aid-tact-card${artHtml ? ' has-art' : ''}">
+            <div class="aid-tact-card-header">
+              ${artHtml}
+              <div class="aid-tact-card-headings">
+                <div class="aid-tact-card-name">${escapeHtml(card.name)}${countSuffix}</div>
+                ${meta.length ? `<div class="aid-tact-card-meta">${meta.join('')}</div>` : ''}
+              </div>
+              ${gasHtml}
+            </div>
+            ${tagsHtml}
+            <div class="aid-tact-abilities">
+              ${abilities.map(ability => {
+                const phaseClass = `phase-${String(normalizePhaseLabel(ability.phase)).toLowerCase()}`;
+                const phaseTag = getPhaseTag(ability.phase);
+                const activationHtml = ability.activation
+                  ? `<span class="aid-inline-chip aid-inline-activation">${escapeHtml(ability.activation)}</span>`
+                  : '';
+                const phaseHtml = ability.phase
+                  ? `<span class="aid-inline-chip ${escapeHtml(phaseClass)} aid-tact-phase-chip">${escapeHtml(phaseTag)}</span>`
+                  : '';
+                return `
+                  <div class="aid-tact-ability">
+                    <div class="aid-tact-ability-top">
+                      <span class="aid-tact-ability-name">${escapeHtml(ability.name || 'Ability')}</span>
+                      ${activationHtml}
+                      ${phaseHtml}
+                    </div>
+                    ${ability.description ? `<div class="aid-upg-desc">${formatAidRichText(ability.description, { faction, factionClass })}</div>` : ''}
+                  </div>`;
+              }).join('')}
+            </div>
+          </article>`;
+      }).join('')}
+    </div>`;
 }
 
 function renderRosterCard(roster, opts = {}) {
@@ -731,56 +1229,252 @@ function renderPlayerAid(roster, opts = {}) {
     allUpgrades    = true,
     showActivation = true,
     showTactical   = true,
+    mergedBuffs    = false,
   } = opts;
   const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails, units, faction, factionCard, seed } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
   const resourceIcon = RESOURCE_ICON[faction] ?? '◈';
   const factionClass = `faction-${String(faction).toLowerCase()}`;
-
-  function unitAidKey(u) {
-    const activeNames = (u.allUpgrades ?? [])
-      .filter(ug => ug.active)
-      .map(ug => String(ug.name ?? ug.id ?? ''))
-      .sort()
-      .join('|');
-    return `${u.id ?? u.name}::${u.size}::${activeNames}`;
-  }
   const seenUnitKeys = new Set();
   const dedupedUnits = units.filter(u => {
-    const key = unitAidKey(u);
+    const key = getAidUnitKey(u);
     if (seenUnitKeys.has(key)) return false;
     seenUnitKeys.add(key);
     return true;
   });
 
   const unitBlocks = dedupedUnits.map(u => {
+    const unitKey = getAidUnitKey(u);
+    const isCollapsed = collapsedAidUnits.has(unitKey);
     const abbr   = TYPE_ABBR[u.type] ?? '?';
     const models = u.models > 1 ? ` ×${u.models}` : '';
 
-    const statChips = [
-      ['HP', u.stats.hp],
-      ['ARM', u.stats.armor],
-      ['EVD', u.stats.evade],
-      ['SPD', u.stats.speed],
-      ['SH', u.stats.shield],
-    ]
-      .filter(([, value]) => hasStatValue(value))
-      .map(([label, value]) => `<span class="stat-chip">${label} <strong>${value}</strong></span>`)
+    const aidUpgradePills = sortUpgradesForDisplay(u.activeUpgrades ?? [])
+      .filter(upg => Number(upg?.cost ?? 0) > 0)
+      .map(upg => `<span class="upg-pill">+ ${escapeHtml(upg.name)} <strong>${upg.cost}m</strong></span>`)
       .join('');
-    const statsHtml = showStats ? `
-      <div class="aid-stats">
-        ${statChips}
-        <span class="stat-chip">◆ <strong>${u.supply}</strong></span>
-      </div>` : '';
 
     const upgradeList     = sortUpgradesForDisplay(u.allUpgrades ?? []);
-    const weaponProfiles  = upgradeList.filter(isWeaponProfile).map(parseWeaponProfile);
+    const weaponProfiles  = resolveLinkedWeaponReplacements(
+      upgradeList
+        .filter(isWeaponProfile)
+        .map(parseWeaponProfile),
+      u.models
+    ).sort(compareAidWeaponProfiles);
     const visibleUpgrades = upgradeList
       .filter(ug => !isWeaponProfile(ug))
       .filter(ug => isNaturalAbility(ug) || ug.active);
-    const weaponsHtml     = renderAidWeaponsTable(weaponProfiles);
-    const abilitiesByPhase = groupAbilitiesByPhase(visibleUpgrades);
-    const upgradesHtml    = visibleUpgrades.length ? `
+
+    const mergedBuffEntries = [];
+    const weaponBuffMap = new Map();
+    const unitStatDeltas = {};
+    const displayedAbilities = [];
+    for (const ability of visibleUpgrades) {
+      const detected = detectUnconditionalPassiveBuff(ability, weaponProfiles);
+      const hasDetectedHighlights = (detected?.highlights?.length ?? 0) > 0;
+      const hasWeaponApplications = (detected?.weaponApplications?.length ?? 0) > 0;
+      const hasUnitStatApplications = (detected?.unitStatApplications?.length ?? 0) > 0;
+      if (mergedBuffs && (hasDetectedHighlights || hasWeaponApplications || hasUnitStatApplications)) {
+        const weaponEffects = (detected.weaponApplications ?? []).map(entry => String(entry.effect || '').trim());
+        const weaponEffectSet = new Set(weaponEffects.map(effect => effect.toLowerCase()));
+        const weaponEffectTokens = weaponEffects.map(effect => String(effect || '').trim().toLowerCase());
+        const genericWeaponStatHighlights = new Set(['range', 'roa', 'hit', 'dmg', 'damage', 'surge']);
+        const unitStatHighlightTokens = new Set();
+        const unitStatAliases = {
+          hp: ['hp', 'hit', 'hit point', 'hit points'],
+          armor: ['armor', 'armour'],
+          evade: ['evade'],
+          speed: ['speed'],
+          shield: ['shield'],
+          supply: ['supply'],
+        };
+        for (const entry of detected.unitStatApplications ?? []) {
+          const text = String(entry?.text || '').trim().toLowerCase();
+          if (text) unitStatHighlightTokens.add(text);
+          const field = String(entry?.field || '').trim().toLowerCase();
+          for (const alias of unitStatAliases[field] ?? []) {
+            unitStatHighlightTokens.add(alias);
+          }
+        }
+
+        const nonWeaponHighlights = (detected.highlights ?? [])
+          .filter(effect => !weaponEffectSet.has(String(effect || '').trim().toLowerCase()))
+          .filter(effect => {
+            const normalized = String(effect || '').trim().toLowerCase();
+            if (!normalized) return false;
+            if (genericWeaponStatHighlights.has(normalized) && weaponEffectTokens.some(token => token.includes(normalized))) {
+              return false;
+            }
+            if (unitStatHighlightTokens.has(normalized)) return false;
+            for (const token of unitStatHighlightTokens) {
+              if (token && normalized.includes(token)) return false;
+            }
+            return true;
+          });
+
+        if (nonWeaponHighlights.length) {
+          mergedBuffEntries.push({
+            name: ability.name,
+            highlights: nonWeaponHighlights,
+          });
+        }
+
+        for (const entry of detected.weaponApplications ?? []) {
+          const key = String(entry.weaponName || '').toLowerCase();
+          if (!key) continue;
+          if (!weaponBuffMap.has(key)) {
+            weaponBuffMap.set(key, { statDeltas: {}, fieldReplacements: {}, traits: [] });
+          }
+          const target = weaponBuffMap.get(key);
+          if (entry.parsed?.kind === 'stat-delta' && entry.parsed.field) {
+            const field = entry.parsed.field;
+            target.statDeltas[field] = Number(target.statDeltas[field] ?? 0) + Number(entry.parsed.delta ?? 0);
+          } else if (entry.parsed?.kind === 'field-replacement' && entry.parsed.field) {
+            target.fieldReplacements[entry.parsed.field] = entry.parsed.value;
+          } else if (entry.parsed?.kind === 'trait' && entry.parsed.trait) {
+            target.traits.push(entry.parsed.trait);
+          }
+        }
+
+        for (const entry of detected.unitStatApplications ?? []) {
+          const field = String(entry?.field || '').trim();
+          if (!field) continue;
+          unitStatDeltas[field] = Number(unitStatDeltas[field] ?? 0) + Number(entry?.delta ?? 0);
+        }
+      } else {
+        displayedAbilities.push({
+          ...ability,
+          _detectedHighlights: detected?.highlights ?? [],
+        });
+      }
+    }
+
+    const buffedWeaponProfiles = weaponProfiles.map(weapon => {
+      const key = String(weapon.name || '').toLowerCase();
+      const applied = weaponBuffMap.get(key);
+      if (!applied) {
+        return {
+          ...weapon,
+          nameHighlighted: !!weapon.active,
+        };
+      }
+
+      const fieldHighlights = {};
+      let nextRange = weapon.range;
+      let nextRoa = weapon.roa;
+      let nextHit = weapon.hit;
+      let nextDamage = weapon.damage;
+      let nextSurge = weapon.surge;
+
+      const applyField = (field, currentValue) => {
+        const delta = Number(applied.statDeltas?.[field] ?? 0);
+        if (!delta) return { value: currentValue, changed: false };
+        return applyNumericDelta(currentValue, delta);
+      };
+
+      const rangeApplied = applyField('range', nextRange);
+      nextRange = rangeApplied.value;
+      fieldHighlights.range = rangeApplied.changed;
+
+      const roaApplied = applyField('roa', nextRoa);
+      nextRoa = roaApplied.value;
+      fieldHighlights.roa = roaApplied.changed;
+
+      const hitApplied = applyField('hit', nextHit);
+      nextHit = hitApplied.value;
+      fieldHighlights.hit = hitApplied.changed;
+
+      const dmgApplied = applyField('damage', nextDamage);
+      nextDamage = dmgApplied.value;
+      fieldHighlights.damage = dmgApplied.changed;
+
+      if (typeof applied.fieldReplacements?.surge === 'string' && applied.fieldReplacements.surge.trim()) {
+        const normalizedSurge = applied.fieldReplacements.surge.trim();
+        fieldHighlights.surge = normalizedSurge !== String(weapon.surge ?? '').trim();
+        nextSurge = normalizedSurge;
+      } else {
+        fieldHighlights.surge = false;
+      }
+
+      const baseTraits = splitTraitTokens(weapon.traits);
+      const addedTraits = [...new Set((applied.traits ?? []).map(x => String(x).trim()).filter(Boolean))];
+      const mergedTraitsResult = mergeWeaponTraits(baseTraits, addedTraits);
+      const mergedTraits = mergedTraitsResult.merged.join(' | ');
+
+      const hasChanges = Object.values(fieldHighlights).some(Boolean) || mergedTraitsResult.highlights.length;
+      if (!hasChanges) return weapon;
+
+      return {
+        ...weapon,
+        range: nextRange,
+        roa: nextRoa,
+        hit: nextHit,
+        damage: nextDamage,
+        surge: nextSurge,
+        traits: mergedTraits,
+        fieldHighlights,
+        traitHighlights: mergedTraitsResult.highlights,
+        nameHighlighted: !!weapon.active || hasChanges,
+      };
+    });
+
+    const buffedUnitStats = { ...(u.stats ?? {}) };
+    const unitStatHighlights = {};
+    for (const [field, deltaRaw] of Object.entries(unitStatDeltas)) {
+      if (field === 'supply') continue;
+      const delta = Number(deltaRaw ?? 0);
+      if (!delta) continue;
+      const applied = applyNumericDelta(buffedUnitStats[field], delta);
+      buffedUnitStats[field] = applied.value;
+      unitStatHighlights[field] = applied.changed;
+    }
+
+    let displaySupply = u.supply;
+    let supplyHighlighted = false;
+    if (Number(unitStatDeltas.supply ?? 0)) {
+      const appliedSupply = applyNumericDelta(u.supply, Number(unitStatDeltas.supply));
+      displaySupply = appliedSupply.value;
+      supplyHighlighted = appliedSupply.changed;
+    }
+
+    const statChips = [
+      ['HP', buffedUnitStats.hp, 'hp'],
+      ['ARM', buffedUnitStats.armor, 'armor'],
+      ['EVD', buffedUnitStats.evade, 'evade'],
+      ['SPD', buffedUnitStats.speed, 'speed'],
+      ['SH', buffedUnitStats.shield, 'shield'],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value, field]) => {
+        const highlighted = mergedBuffs && !!unitStatHighlights[field];
+        const valueHtml = highlighted
+          ? `<strong class="aid-buff-highlight">${escapeHtml(String(value))}</strong>`
+          : `<strong>${escapeHtml(String(value))}</strong>`;
+        return `<span class="stat-chip">${label} ${valueHtml}</span>`;
+      })
+      .join('');
+    const supplyHtml = mergedBuffs && supplyHighlighted
+      ? `<span class="stat-chip">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+    const collapsedStatlineHtml = showStats
+      ? `<div class="aid-collapsed-statline">${statChips}${supplyHtml}</div>`
+      : '';
+    const statsHtml = showStats ? `
+      <div class="aid-stats-row">
+        <div class="aid-stats">
+          ${statChips}
+          ${supplyHtml}
+        </div>
+        ${aidUpgradePills ? `<div class="unit-upgrades aid-upgrade-bubbles">${aidUpgradePills}</div>` : ''}
+      </div>` : '';
+
+    const weaponsHtml     = renderAidWeaponsTable(buffedWeaponProfiles, { mergedBuffs });
+    const mergedBuffsHtml = mergedBuffEntries.length ? `
+      <div class="aid-merged-buffs">
+        ${mergedBuffEntries.map(entry => `<span class="upg-pill aid-merged-pill">+ ${escapeHtml(entry.name)}: ${formatAidRichText(entry.highlights.join(', '), { allowLineBreaks: false, highlightTerms: entry.highlights })}</span>`).join('')}
+      </div>` : '';
+    const abilitiesByPhase = groupAbilitiesByPhase(displayedAbilities);
+    const upgradesHtml    = displayedAbilities.length ? `
       <div class="aid-section-title">Abilities</div>
       ${abilitiesByPhase.map(group => {
         const phaseTag = getPhaseTag(group.phase);
@@ -802,7 +1496,7 @@ function renderPlayerAid(roster, opts = {}) {
                   ? `<span class="aid-inline-chip aid-inline-resource">${formatAidRichText(activation.resource, { faction, factionClass, allowLineBreaks: false })}</span>`
                   : '';
                 const desc = ug.description
-                  ? `<div class="aid-upg-desc">${formatAidRichText(ug.description, { faction, factionClass })}</div>`
+                  ? `<div class="aid-upg-desc">${formatAidRichText(ug.description, { faction, factionClass, highlightTerms: mergedBuffs ? ug._detectedHighlights : [] })}</div>`
                   : '';
                 return `<div class="aid-upg ${cls}"><div class="aid-upg-top"><span class="aid-upg-name">${mark}${escapeHtml(ug.name)}</span>${activationHtml}${resourceHtml}</div>${desc}</div>`;
               }).join('')}
@@ -814,22 +1508,26 @@ function renderPlayerAid(roster, opts = {}) {
       ? `<div class="aid-tags">${escapeHtml(String(u.tags))}</div>`
       : '';
 
-    const hasBody = statsHtml || weaponsHtml || upgradesHtml || tagsHtml;
+    const hasBody = statsHtml || weaponsHtml || mergedBuffsHtml || upgradesHtml || tagsHtml;
     return `
-      <div class="aid-unit">
-        <div class="aid-unit-header">
+      <div class="aid-unit${isCollapsed ? ' is-collapsed' : ''}" data-aid-unit-key="${escapeHtml(unitKey)}">
+        <div class="aid-unit-header" role="button" tabindex="0" aria-expanded="${isCollapsed ? 'false' : 'true'}" aria-label="Toggle ${escapeHtml(u.name)} details">
           <div class="unit-type-badge badge-${escapeHtml(u.type)}">${abbr}</div>
           <div class="unit-info">
-            <div class="unit-name">${escapeHtml(u.name)}${escapeHtml(models)}</div>
+            <div class="aid-unit-title-row">
+              <div class="unit-name">${escapeHtml(u.name)}${escapeHtml(models)}</div>
+              ${collapsedStatlineHtml}
+            </div>
           </div>
           <div class="unit-cost">${u.totalCost}m</div>
+          <span class="aid-collapse-indicator" aria-hidden="true"></span>
         </div>
-        ${hasBody ? `<div class="aid-body">${tagsHtml}${statsHtml}${weaponsHtml}${upgradesHtml}</div>` : ''}
+        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${tagsHtml}${statsHtml}${mergedBuffsHtml}${weaponsHtml}${upgradesHtml}</div></div>` : ''}
       </div>`;
   }).join('');
 
-  const tactPills = showTactical
-    ? sortTacticalDetailsByName(tacticalCardDetails ?? []).map(t => `<span class="tag">${escapeHtml(t.name)}</span>`).join('')
+  const tacticalHtml = showTactical
+    ? renderAidTacticalCards(tacticalCardDetails ?? [], { faction, factionClass })
     : '';
 
   return `
@@ -845,8 +1543,88 @@ function renderPlayerAid(roster, opts = {}) {
         </div>
       </div>
       <div class="unit-list">${unitBlocks}</div>
-      ${showTactical && (tacticalCardDetails?.length ?? 0) > 0 ? `<div class="tact-section"><span class="tact-label">Tactical</span>${tactPills}</div>` : ''}
+      ${tacticalHtml}
     </div>`;
+}
+
+const collapsedAidUnits = new Set();
+
+function syncAidUnitCollapsedState(unitEl, collapsed) {
+  if (!unitEl) return;
+  unitEl.classList.toggle('is-collapsed', collapsed);
+  const header = unitEl.querySelector('.aid-unit-header');
+  if (header) header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+}
+
+function toggleAidUnitCollapsed(unitEl) {
+  if (!unitEl) return;
+  const unitKey = String(unitEl.dataset.aidUnitKey || '').trim();
+  const nextCollapsed = !unitEl.classList.contains('is-collapsed');
+  if (unitKey) {
+    if (nextCollapsed) {
+      collapsedAidUnits.add(unitKey);
+    } else {
+      collapsedAidUnits.delete(unitKey);
+    }
+  }
+  syncAidUnitCollapsedState(unitEl, nextCollapsed);
+  scheduleAidCollapsedStatlineAlignment();
+}
+
+function setAllAidUnitsCollapsed(collapsed) {
+  const unitEls = Array.from(aidCardEl.querySelectorAll('.aid-unit[data-aid-unit-key]'));
+  for (const unitEl of unitEls) {
+    const unitKey = String(unitEl.dataset.aidUnitKey || '').trim();
+    if (unitKey) {
+      if (collapsed) {
+        collapsedAidUnits.add(unitKey);
+      } else {
+        collapsedAidUnits.delete(unitKey);
+      }
+    }
+    syncAidUnitCollapsedState(unitEl, collapsed);
+  }
+  scheduleAidCollapsedStatlineAlignment();
+}
+
+function syncAidCollapsedStatlineAlignment() {
+  const nameEls = Array.from(aidCardEl.querySelectorAll('.aid-unit .unit-name'));
+  if (!nameEls.length) {
+    aidCardEl.style.removeProperty('--aid-collapsed-name-width');
+    return;
+  }
+
+  let maxWidth = 0;
+  for (const nameEl of nameEls) {
+    const width = Math.ceil(
+      Number(nameEl.scrollWidth)
+      || Number(nameEl.offsetWidth)
+      || Number(nameEl.getBoundingClientRect().width)
+      || 0
+    );
+    if (Number.isFinite(width) && width > maxWidth) maxWidth = width;
+  }
+
+  if (maxWidth > 0) {
+    const widthPx = `${maxWidth}px`;
+    aidCardEl.style.setProperty('--aid-collapsed-name-width', widthPx);
+    const titleRows = aidCardEl.querySelectorAll('.aid-unit-title-row');
+    for (const row of titleRows) row.style.setProperty('--aid-collapsed-name-width', widthPx);
+  } else {
+    aidCardEl.style.removeProperty('--aid-collapsed-name-width');
+    const titleRows = aidCardEl.querySelectorAll('.aid-unit-title-row');
+    for (const row of titleRows) row.style.removeProperty('--aid-collapsed-name-width');
+  }
+}
+
+let aidCollapsedAlignmentRaf = 0;
+function scheduleAidCollapsedStatlineAlignment() {
+  if (aidCollapsedAlignmentRaf) cancelAnimationFrame(aidCollapsedAlignmentRaf);
+  aidCollapsedAlignmentRaf = requestAnimationFrame(() => {
+    aidCollapsedAlignmentRaf = 0;
+    syncAidCollapsedStatlineAlignment();
+    requestAnimationFrame(() => syncAidCollapsedStatlineAlignment());
+  });
 }
 
 // ─── Image capture helpers ────────────────────────────────────────────────────
@@ -1080,7 +1858,9 @@ function refreshOutput() {
     allUpgrades:    aidAllUpgrades.checked,
     showActivation: aidActivation.checked,
     showTactical:   aidTactical.checked,
+    mergedBuffs:    aidModeMerged.checked,
   });
+  scheduleAidCollapsedStatlineAlignment();
   aidPrintBar.style.display = 'flex';
 
   // ── JSON ────────────────────────────────────────────────────────────────────
@@ -1298,6 +2078,7 @@ function openAidPrintWindow() {
     .aid-unit-header { display: flex; align-items: center; gap: 10px;
                        padding: 6px 10px; background: #f0f0f0;
                        border-bottom: 1px solid #bbb; }
+    .aid-collapse-indicator { display: none; }
     .unit-type-badge { display: inline-flex; align-items: center;
                        justify-content: center; width: 22px; height: 22px;
                        border-radius: 4px; background: #555; color: #fff;
@@ -1305,15 +2086,25 @@ function openAidPrintWindow() {
                        flex-shrink: 0; }
     .unit-info { flex: 1; }
     .unit-name { font-weight: 700; font-size: .88rem; color: #111; }
+    .aid-unit-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .aid-collapsed-statline { display: none !important; }
     .unit-cost { font-size: .78rem; font-weight: 700; color: #444;
                  white-space: nowrap; }
+    .aid-body-wrap { display: block !important; }
     .aid-body { padding: 8px 12px 10px 12px; }
+    .aid-unit.is-collapsed .aid-body {
+      opacity: 1 !important;
+      transform: none !important;
+      padding-bottom: 10px !important;
+      pointer-events: auto !important;
+    }
 
     /* stats */
     .aid-stats { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
     .stat-chip { border: 1px solid #ccc; border-radius: 4px; padding: 2px 6px;
                  font-size: .71rem; color: #333; }
     .stat-chip strong { color: #111; }
+    .stat-chip strong.aid-buff-highlight { color: #1a7a40; }
 
     /* weapons table */
     .aid-section-title { font-size: .63rem; text-transform: uppercase;
@@ -1361,6 +2152,31 @@ function openAidPrintWindow() {
     .aid-inline-activation { color: #6a0dad; }
     .aid-inline-resource { color: #222; }
     .resource-icon { font-style: normal; }
+    .aid-tactical-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+                         gap: 8px; margin-top: 2px; }
+    .aid-tact-card { border: 1px solid #ccc; border-radius: 8px; padding: 8px;
+                     background: #fafafa; }
+    .aid-tact-card-header { display: flex; gap: 8px; align-items: flex-start;
+                            margin-bottom: 6px; }
+    .aid-tact-art { display: none; }
+    .aid-tact-card-headings { flex: 1; }
+    .aid-tact-card-name { font-size: .86rem; font-weight: 700; color: #111;
+                          margin-bottom: 4px; }
+    .aid-tact-card-count { font-size: .74rem; color: #555; font-weight: 700; }
+    .aid-tact-card-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+    .aid-tact-gas-cost { margin-left: auto; white-space: nowrap;
+               font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+               font-size: .82rem; color: #8a6400; font-weight: 700;
+               align-self: flex-start; }
+    .aid-tact-abilities { display: flex; flex-direction: column; gap: 5px; }
+    .aid-tact-ability { border: 1px solid #ddd; border-radius: 6px; padding: 5px 7px;
+                        background: #fff; }
+    .aid-tact-ability-top { display: flex; flex-wrap: wrap; align-items: center;
+                            gap: 5px; margin-bottom: 2px; }
+    .aid-tact-ability-name { font-size: .76rem; font-weight: 700; color: #111; }
+    .aid-tact-phase-chip { color: #444; }
+    .aid-tact-slot-chip { gap: 0; }
+    .aid-tact-slot { font-weight: 700; min-width: 0; }
     .aid-tags { font-size: .73rem; color: #666; margin-bottom: 5px; }
     a, button { display: none !important; }
   </style>
@@ -1379,6 +2195,20 @@ function openAidPrintWindow() {
 }
 
 aidPrintBtn.addEventListener('click', () => openAidPrintWindow());
+aidCollapseAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(true));
+aidExpandAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(false));
+aidCardEl.addEventListener('click', e => {
+  const header = e.target.closest('.aid-unit-header');
+  if (!header || !aidCardEl.contains(header)) return;
+  toggleAidUnitCollapsed(header.closest('.aid-unit'));
+});
+aidCardEl.addEventListener('keydown', e => {
+  const header = e.target.closest('.aid-unit-header');
+  if (!header || !aidCardEl.contains(header)) return;
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  toggleAidUnitCollapsed(header.closest('.aid-unit'));
+});
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
 loadBtn.addEventListener('click', loadRoster);
@@ -1392,8 +2222,13 @@ function refreshAndSave() { refreshOutput(); savePrefs(); }
 [cardUpgrades, cardStats, cardSize, cardCost, cardTactical, cardTactResource, cardTactGas, cardTactSupply, cardSlots]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 // Player Aid options
-[aidStats, aidAllUpgrades, aidActivation, aidTactical]
+[aidStats, aidAllUpgrades, aidActivation, aidTactical, aidModeAll, aidModeMerged]
   .forEach(el => el.addEventListener('change', refreshAndSave));
+
+window.addEventListener('resize', () => scheduleAidCollapsedStatlineAlignment());
+if (document.fonts?.ready?.then) {
+  document.fonts.ready.then(() => scheduleAidCollapsedStatlineAlignment()).catch(() => {});
+}
 
 // Restore persisted preferences (must come after all event listeners are wired up)
 loadPrefs();

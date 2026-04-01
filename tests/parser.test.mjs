@@ -348,6 +348,47 @@ export async function run({ test }) {
     });
   }
 
+  test('[parser] tacticalCards option preserves rich tactical card metadata', () => {
+    const synthetic = {
+      id: 'SYNTH',
+      state: {
+        faction: 'Terran',
+        factionCardId: 'terran_armed_forces',
+        tacticalCardIds: ['orbital_command'],
+        roster: [],
+      },
+    };
+
+    const parsed = parseRoster(synthetic, {
+      tacticalCards: [{
+        id: 'orbital_command',
+        name: 'Orbital Command',
+        faction: 'Terran',
+        tags: 'Structure',
+        frontUrl: 'https://example.test/orbital-command.jpg',
+        isUnique: true,
+        resource: 1,
+        gasCost: 25,
+        slots: { Core: 1 },
+        abilities: [{ name: 'Scanner Sweep', text: 'Scanner Sweep <Active> <Movement Phase>: Test text.' }],
+      }],
+    });
+
+    assert.equal(parsed.tacticalCardDetails.length, 1);
+    assert.deepEqual(parsed.tacticalCardDetails[0], {
+      id: 'orbital_command',
+      name: 'Orbital Command',
+      slots: { Core: 1 },
+      faction: 'Terran',
+      tags: 'Structure',
+      frontUrl: 'https://example.test/orbital-command.jpg',
+      isUnique: true,
+      resource: 1,
+      gasCost: 25,
+      abilities: [{ name: 'Scanner Sweep', text: 'Scanner Sweep <Active> <Movement Phase>: Test text.' }],
+    });
+  });
+
   // ── Regression: VNIEMU-specific known unit costs ─────────────────────────
 
   test('[VNIEMU] Goliath base cost is 190', () => {
@@ -401,5 +442,40 @@ export async function run({ test }) {
     assert.ok(stalker, 'no stalker found');
     // Protoss units have shields
     assert.ok(stalker.stats.shield !== null && stalker.stats.shield !== '-');
+  });
+
+  test('[TTPIBA] Adept Glaive Strike links to Strike', () => {
+    const adept = rosters.TTPIBA.units.find(u => u.id === 'adept');
+    assert.ok(adept, 'no adept found');
+
+    const glaiveStrike = adept.allUpgrades.find(upg => upg.name === 'Glaive Strike');
+    assert.ok(glaiveStrike, 'no Glaive Strike upgrade found');
+    assert.equal(glaiveStrike.linkedTo, 'Strike');
+  });
+
+  test('[parser] factionCardId raynor_s_raiders formats as Raynor\'s Raiders', () => {
+    const synthetic = {
+      id: 'SYNTH',
+      state: {
+        faction: 'Terran',
+        factionCardId: 'raynor_s_raiders',
+        roster: [],
+      },
+    };
+    const parsed = parseRoster(synthetic);
+    assert.equal(parsed.factionCard, "Raynor's Raiders");
+  });
+
+  test('[parser] factionCardId kerrigan_s_swarm formats as Kerrigan\'s Swarm', () => {
+    const synthetic = {
+      id: 'SYNTH',
+      state: {
+        faction: 'Zerg',
+        factionCardId: 'kerrigan_s_swarm',
+        roster: [],
+      },
+    };
+    const parsed = parseRoster(synthetic);
+    assert.equal(parsed.factionCard, "Kerrigan's Swarm");
   });
 }
