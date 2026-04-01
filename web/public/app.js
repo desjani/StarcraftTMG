@@ -629,7 +629,7 @@ function refreshOutput() {
   if (!currentRoster) return;
 
   // ── Discord / Raw ───────────────────────────────────────────────────────────
-  const charLimit = Math.max(500, parseInt(optLimit.value, 10) || 2000);
+  const selectedCharLimit = Math.max(500, parseInt(optLimit.value, 10) || 2000);
   currentFormatted = formatCompact(currentRoster, {
     plain:                   optPlain.checked,
     showStats:               optStats.checked,
@@ -638,16 +638,17 @@ function refreshOutput() {
     abbreviateTacticalCards: optTactAbbr.checked,
     showTacticalSupplyTypes: optTactSupply.checked,
     showSlotBreakdown:       optSlotBreakdown.checked,
-    charLimit,
+    // Keep user-selected options intact in preview/raw; use selectedCharLimit only for warning UI.
+    charLimit: Number.MAX_SAFE_INTEGER,
   });
   previewContent.innerHTML = ansiToHtml(currentFormatted);
   rawBox.textContent = currentFormatted;
   const len = currentFormatted.length;
-  charCounter.textContent = `${len.toLocaleString()} / ${charLimit.toLocaleString()} chars`;
+  charCounter.textContent = `${len.toLocaleString()} / ${selectedCharLimit.toLocaleString()} chars`;
   optCharReadout.textContent = `${len.toLocaleString()} chars`;
-  charCounter.className = 'char-counter' + (len > charLimit ? ' over' : len > charLimit * 0.9 ? ' warn' : '');
-  if (len > charLimit) {
-    const overflow = (len - charLimit).toLocaleString();
+  charCounter.className = 'char-counter' + (len > selectedCharLimit ? ' over' : len > selectedCharLimit * 0.9 ? ' warn' : '');
+  if (len > selectedCharLimit) {
+    const overflow = (len - selectedCharLimit).toLocaleString();
     discordLimitWarning.textContent = `Current output exceeds the selected character limit by ${overflow} characters and may fail when pasted to Discord.`;
     discordLimitWarning.style.display = 'block';
   } else {
