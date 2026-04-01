@@ -66,8 +66,8 @@ const aidAllUpgrades = document.getElementById('aid-all-upgrades');
 const aidActivation  = document.getElementById('aid-activation');
 const aidTactical    = document.getElementById('aid-tactical');
 const aidCardEl      = document.getElementById('aid-card');
-const aidDownloadBtn = document.getElementById('aid-download-btn');
-const aidCopyImgBtn  = document.getElementById('aid-copy-img-btn');
+const aidPrintBar    = document.getElementById('aid-print-bar');
+const aidPrintBtn    = document.getElementById('aid-print-btn');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
@@ -503,26 +503,66 @@ function formatAidRichText(text, { faction, factionClass, allowLineBreaks = true
   return html;
 }
 
-function renderAidUpgradeMeta(upgrade, { faction, factionClass, showActivation }) {
-  if (!showActivation) return '';
+const PHASE_ORDER = ['Any', 'Movement', 'Assault', 'Combat', 'Scoring', 'Cleanup'];
+const PHASE_TAG = {
+  Any: 'ANY',
+  Movement: 'MOV',
+  Assault: 'ASS',
+  Combat: 'COM',
+  Scoring: 'SCO',
+  Cleanup: 'CLN',
+};
 
-  const pieces = [];
-  const activationParts = String(upgrade.activation || '')
+function normalizePhaseLabel(phase) {
+  const cleaned = String(phase || '')
+    .replace(/\s+phase\b/gi, '')
+    .trim();
+  if (!cleaned) return 'Any';
+
+  if (/\b(any|passive|always)\b/i.test(cleaned)) return 'Any';
+  if (/\b(move|movement|maneuver|deploy|setup)\b/i.test(cleaned)) return 'Movement';
+  if (/\bassault\b/i.test(cleaned)) return 'Assault';
+  if (/\bcombat\b/i.test(cleaned)) return 'Combat';
+  if (/\bscor(e|ing)\b/i.test(cleaned)) return 'Scoring';
+  if (/\b(cleanup|regroup|end)\b/i.test(cleaned)) return 'Cleanup';
+  return 'Any';
+}
+
+function getPhaseTag(phaseLabel) {
+  const normalized = normalizePhaseLabel(phaseLabel);
+  return PHASE_TAG[normalized] ?? 'ANY';
+}
+
+function parseAidActivation(upgrade) {
+  const activationParts = String(upgrade?.activation || '')
     .split(/\r?\n/)
     .map(part => part.trim())
     .filter(Boolean);
 
-  if (activationParts[0]) {
-    pieces.push(`<span class="aid-meta-chip aid-meta-activation">${escapeHtml(activationParts[0].replace(/[<>]/g, ''))}</span>`);
-  }
-  if (activationParts[1]) {
-    pieces.push(`<span class="aid-meta-chip aid-meta-resource">${formatAidRichText(activationParts[1].replace(/[()]/g, ''), { faction, factionClass, allowLineBreaks: false })}</span>`);
-  }
-  if (upgrade.phase) {
-    pieces.push(`<span class="aid-meta-chip aid-meta-phase">${escapeHtml(upgrade.phase)}</span>`);
+  return {
+    state: activationParts[0] ? activationParts[0].replace(/[<>]/g, '') : '',
+    resource: activationParts[1] ? activationParts[1].replace(/[()]/g, '') : '',
+  };
+}
+
+function groupAbilitiesByPhase(abilities = []) {
+  const groups = new Map();
+  for (const ability of abilities) {
+    const phase = normalizePhaseLabel(ability?.phase);
+    if (!groups.has(phase)) groups.set(phase, []);
+    groups.get(phase).push(ability);
   }
 
-  return pieces.length ? `<div class="aid-upg-meta">${pieces.join('')}</div>` : '';
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => {
+      const ai = PHASE_ORDER.indexOf(a);
+      const bi = PHASE_ORDER.indexOf(b);
+      const ar = ai === -1 ? PHASE_ORDER.length : ai;
+      const br = bi === -1 ? PHASE_ORDER.length : bi;
+      if (ar !== br) return ar - br;
+      return compareText(a, b);
+    })
+    .map(([phase, abilitiesInPhase]) => ({ phase, abilities: abilitiesInPhase }));
 }
 
 function isNaturalAbility(upgrade) {
@@ -697,7 +737,23 @@ function renderPlayerAid(roster, opts = {}) {
   const resourceIcon = RESOURCE_ICON[faction] ?? '◈';
   const factionClass = `faction-${String(faction).toLowerCase()}`;
 
-  const unitBlocks = units.map(u => {
+  function unitAidKey(u) {
+    const activeNames = (u.allUpgrades ?? [])
+      .filter(ug => ug.active)
+      .map(ug => String(ug.name ?? ug.id ?? ''))
+      .sort()
+      .join('|');
+    return `${u.id ?? u.name}::${u.size}::${activeNames}`;
+  }
+  const seenUnitKeys = new Set();
+  const dedupedUnits = units.filter(u => {
+    const key = unitAidKey(u);
+    if (seenUnitKeys.has(key)) return false;
+    seenUnitKeys.add(key);
+    return true;
+  });
+
+  const unitBlocks = dedupedUnits.map(u => {
     const abbr   = TYPE_ABBR[u.type] ?? '?';
     const models = u.models > 1 ? ` ×${u.models}` : '';
 
@@ -723,21 +779,36 @@ function renderPlayerAid(roster, opts = {}) {
       .filter(ug => !isWeaponProfile(ug))
       .filter(ug => isNaturalAbility(ug) || ug.active);
     const weaponsHtml     = renderAidWeaponsTable(weaponProfiles);
+    const abilitiesByPhase = groupAbilitiesByPhase(visibleUpgrades);
     const upgradesHtml    = visibleUpgrades.length ? `
       <div class="aid-section-title">Abilities</div>
-      <div class="aid-upgrades">
-        ${visibleUpgrades.map(ug => {
-          const natural = isNaturalAbility(ug);
-          const selectedUpgrade = !natural && ug.active;
-          const cls  = selectedUpgrade ? 'is-active' : (natural ? 'is-natural' : 'is-inactive');
-          const mark = selectedUpgrade ? '✓ ' : '';
-          const meta = renderAidUpgradeMeta(ug, { faction, factionClass, showActivation });
-          const desc = ug.description
-            ? `<div class="aid-upg-desc">${formatAidRichText(ug.description, { faction, factionClass })}</div>`
-            : '';
-          return `<div class="aid-upg ${cls}"><span class="aid-upg-name">${mark}${escapeHtml(ug.name)}</span>${meta}${desc}</div>`;
-        }).join('')}
-      </div>` : '';
+      ${abilitiesByPhase.map(group => {
+        const phaseTag = getPhaseTag(group.phase);
+        const phaseClass = `phase-${String(group.phase).toLowerCase()}`;
+        return `
+          <div class="aid-ability-group">
+            <span class="aid-phase-tag ${escapeHtml(phaseClass)}" title="${escapeHtml(group.phase)}">${escapeHtml(phaseTag)}</span>
+            <div class="aid-upgrades">
+              ${group.abilities.map(ug => {
+                const natural = isNaturalAbility(ug);
+                const selectedUpgrade = !natural && ug.active;
+                const cls  = selectedUpgrade ? 'is-active' : (natural ? 'is-natural' : 'is-inactive');
+                const mark = selectedUpgrade ? '✓ ' : '';
+                const activation = parseAidActivation(ug);
+                const activationHtml = showActivation && activation.state
+                  ? `<span class="aid-inline-chip aid-inline-activation">${escapeHtml(activation.state)}</span>`
+                  : '';
+                const resourceHtml = showActivation && activation.resource
+                  ? `<span class="aid-inline-chip aid-inline-resource">${formatAidRichText(activation.resource, { faction, factionClass, allowLineBreaks: false })}</span>`
+                  : '';
+                const desc = ug.description
+                  ? `<div class="aid-upg-desc">${formatAidRichText(ug.description, { faction, factionClass })}</div>`
+                  : '';
+                return `<div class="aid-upg ${cls}"><div class="aid-upg-top"><span class="aid-upg-name">${mark}${escapeHtml(ug.name)}</span>${activationHtml}${resourceHtml}</div>${desc}</div>`;
+              }).join('')}
+            </div>
+          </div>`;
+      }).join('')}` : '';
 
     const tagsHtml = u.tags
       ? `<div class="aid-tags">${escapeHtml(String(u.tags))}</div>`
@@ -1010,8 +1081,7 @@ function refreshOutput() {
     showActivation: aidActivation.checked,
     showTactical:   aidTactical.checked,
   });
-  aidDownloadBtn.style.display = 'inline-block';
-  aidCopyImgBtn.style.display  = 'inline-block';
+  aidPrintBar.style.display = 'flex';
 
   // ── JSON ────────────────────────────────────────────────────────────────────
   jsonBox.textContent = formatJson(currentRoster);
@@ -1189,8 +1259,126 @@ document.getElementById('copy-json-btn').addEventListener('click',    () => {
 const getSeed = () => currentRoster?.seed ?? 'roster';
 downloadImgBtn.addEventListener('click', () => downloadImage(rosterCardEl, `roster-${getSeed()}.png`,     downloadImgBtn));
 copyImgBtn.addEventListener(    'click', () => copyImage(    rosterCardEl,                               copyImgBtn));
-aidDownloadBtn.addEventListener('click', () => downloadImage(aidCardEl,    `player-aid-${getSeed()}.png`, aidDownloadBtn));
-aidCopyImgBtn.addEventListener( 'click', () => copyImage(    aidCardEl,                                  aidCopyImgBtn));
+function openAidPrintWindow() {
+  if (!currentRoster) return;
+  const seed = getSeed();
+  const cardHtml = aidCardEl.innerHTML;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Player Aid \u2014 ${seed}</title>
+  <style>
+    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { font-family: sans-serif; }
+    body { padding: 14px 18px; background: #fff; color: #111; }
+
+    /* header */
+    .roster-card { width: 100%; }
+    .roster-header { margin-bottom: 12px; padding-bottom: 8px;
+                     border-bottom: 2px solid #555; }
+    .roster-faction { font-size: 1rem; font-weight: 700; letter-spacing: .06em;
+                      text-transform: uppercase; margin-bottom: 4px; }
+    .roster-meta { font-size: .78rem; color: #444;
+                   display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { border: 1px solid #888; border-radius: 4px; padding: 1px 6px;
+           font-size: .72rem; }
+    .seed-tag { font-weight: 700; }
+    .tact-section { margin-top: 10px; display: flex; flex-wrap: wrap;
+                    align-items: center; gap: 6px; font-size: .78rem; }
+    .tact-label { font-weight: 700; font-size: .72rem;
+                  text-transform: uppercase; color: #555; }
+
+    /* unit list */
+    .unit-list { display: flex; flex-direction: column; gap: 8px; }
+    .aid-unit { break-inside: avoid; page-break-inside: avoid;
+                border: 1px solid #bbb; border-radius: 6px; overflow: hidden; }
+    .aid-unit-header { display: flex; align-items: center; gap: 10px;
+                       padding: 6px 10px; background: #f0f0f0;
+                       border-bottom: 1px solid #bbb; }
+    .unit-type-badge { display: inline-flex; align-items: center;
+                       justify-content: center; width: 22px; height: 22px;
+                       border-radius: 4px; background: #555; color: #fff;
+                       font-size: .7rem; font-weight: 700;
+                       flex-shrink: 0; }
+    .unit-info { flex: 1; }
+    .unit-name { font-weight: 700; font-size: .88rem; color: #111; }
+    .unit-cost { font-size: .78rem; font-weight: 700; color: #444;
+                 white-space: nowrap; }
+    .aid-body { padding: 8px 12px 10px 12px; }
+
+    /* stats */
+    .aid-stats { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .stat-chip { border: 1px solid #ccc; border-radius: 4px; padding: 2px 6px;
+                 font-size: .71rem; color: #333; }
+    .stat-chip strong { color: #111; }
+
+    /* weapons table */
+    .aid-section-title { font-size: .63rem; text-transform: uppercase;
+                         letter-spacing: .08em; color: #666;
+                         margin: 10px 0 5px; }
+    .aid-weapons-wrap { overflow-x: auto; border: 1px solid #ccc;
+                        border-radius: 6px; margin-bottom: 8px; }
+    .aid-weapons-table { width: 100%; border-collapse: collapse;
+                         min-width: 560px; font-size: .73rem; }
+    .aid-weapons-table th, .aid-weapons-table td {
+      padding: 5px 8px; border-bottom: 1px solid #ddd;
+      text-align: left; vertical-align: top; }
+    .aid-weapons-table th { background: #f4f4f4; font-size: .6rem;
+                             text-transform: uppercase; color: #555; }
+    .aid-weapons-table tbody tr:last-child td { border-bottom: none; }
+    .weapon-name { font-weight: 700; color: #222; }
+
+    /* ability phase groups */
+    .aid-ability-group { position: relative; padding-left: 46px;
+                         padding-top: 6px; margin-bottom: 6px;
+                         border-top: 1px solid #e0e0e0; }
+    .aid-ability-group:first-child { border-top: none; padding-top: 0; }
+    .aid-phase-tag { position: absolute; left: 0; top: 6px;
+                     min-width: 36px; height: 17px; border-radius: 999px;
+                     border: 1px solid #bbb; display: inline-flex;
+                     align-items: center; justify-content: center;
+                     color: #555; font-size: .6rem; letter-spacing: .05em;
+                     font-weight: 700; background: #f4f4f4; }
+    .aid-ability-group:first-child .aid-phase-tag { top: 0; }
+    .aid-upgrades { display: flex; flex-direction: column; gap: 3px; }
+    .aid-upg { border: 1px solid #ddd; border-radius: 6px; padding: 5px 8px;
+               font-size: .78rem; background: #fafafa; }
+    .aid-upg-top { display: flex; align-items: center;
+                   flex-wrap: wrap; gap: 5px; }
+    .aid-upg-name { font-weight: 700; color: #111; }
+    .aid-upg.is-active .aid-upg-name { color: #1a7a40; }
+    .aid-upg.is-natural .aid-upg-name { color: #111; }
+    .aid-upg-desc { margin-top: 3px; font-size: .73rem; color: #333;
+                    line-height: 1.45; }
+    .aid-upg-desc strong { font-weight: 700; color: #111; }
+    .aid-inline-chip { display: inline-flex; align-items: center;
+                       border: 1px solid #ccc; border-radius: 999px;
+                       padding: 1px 7px; background: #eee;
+                       font-size: .66rem; color: #555; }
+    .aid-inline-activation { color: #6a0dad; }
+    .aid-inline-resource { color: #222; }
+    .resource-icon { font-style: normal; }
+    .aid-tags { font-size: .73rem; color: #666; margin-bottom: 5px; }
+    a, button { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="roster-card">${cardHtml}</div>
+  <script>
+    window.addEventListener('load', () => {
+      document.title = 'Player Aid \u2014 ${seed}';
+      ${`window.print();`}
+    });
+  <\/script>
+</body>
+</html>`);
+  win.document.close();
+}
+
+aidPrintBtn.addEventListener('click', () => openAidPrintWindow());
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
 loadBtn.addEventListener('click', loadRoster);

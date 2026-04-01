@@ -809,11 +809,50 @@
       font-weight: 600;
       white-space: nowrap;
     }
-    .aid-upgrades { display: flex; flex-direction: column; gap: 3px; }
+    .aid-ability-group {
+      margin-bottom: 8px;
+      position: relative;
+      padding-left: 46px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(49, 69, 99, .22);
+    }
+    .aid-ability-group:first-child { border-top: none; padding-top: 0; }
+    .aid-ability-group:first-child .aid-phase-tag { top: 0; }
+    .aid-ability-group:last-child { margin-bottom: 0; }
+    .aid-phase-tag {
+      position: absolute;
+      left: 0;
+      top: 6px;
+      min-width: 38px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .62rem;
+      letter-spacing: .05em;
+      font-weight: 700;
+      background: rgba(19, 31, 50, .72);
+    }
+    .aid-phase-tag.phase-any { color: var(--muted); }
+    .aid-phase-tag.phase-movement { color: var(--accent); }
+    .aid-phase-tag.phase-assault { color: var(--red); }
+    .aid-phase-tag.phase-combat { color: var(--yellow); }
+    .aid-phase-tag.phase-scoring { color: var(--green); }
+    .aid-phase-tag.phase-cleanup { color: var(--protoss); }
+    .aid-upgrades {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-height: 18px;
+    }
     .aid-upg {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       padding: 6px 8px;
       border: 1px solid rgba(49, 69, 99, .26);
       border-radius: 8px;
@@ -826,26 +865,26 @@
     .aid-upg.is-active .aid-upg-name { color: var(--green); }
     .aid-upg.is-natural .aid-upg-name { color: var(--text); }
     .aid-upg.is-inactive .aid-upg-name { color: var(--muted); }
-    .aid-upg-meta {
+    .aid-upg-top {
       display: flex;
+      align-items: center;
       flex-wrap: wrap;
       gap: 6px;
     }
-    .aid-meta-chip {
+    .aid-inline-chip {
       display: inline-flex;
       align-items: center;
       gap: 5px;
       border: 1px solid rgba(49, 69, 99, .38);
       border-radius: 999px;
-      padding: 2px 8px;
+      padding: 1px 8px;
       background: rgba(19, 31, 50, .6);
-      font-size: .69rem;
+      font-size: .67rem;
       font-family: var(--mono);
       color: var(--muted);
     }
-    .aid-meta-activation { color: var(--protoss); }
-    .aid-meta-resource { color: var(--text); }
-    .aid-meta-phase { color: var(--yellow); }
+    .aid-inline-activation { color: var(--protoss); }
+    .aid-inline-resource { color: var(--text); }
     .aid-upg-desc {
       margin-top: 1px;
       color: var(--text);
@@ -954,6 +993,42 @@
         animation: none !important;
         transition: none !important;
       }
+    }
+
+    /* ── Player Aid print styles ─────────────────────────────────────────── */
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      header, .search-bar, .tabs, .recent-section,
+      #tab-discord, #tab-roster, #tab-json,
+      .tab-options, #aid-print-bar, #toast-container { display: none !important; }
+      main { padding: 0 !important; }
+      #tab-aid { display: block !important; }
+      .roster-card { background: #fff !important; box-shadow: none !important;
+                     border: none !important; padding: 8px 0 !important; }
+      .aid-unit {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border: 1px solid #ccc !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        margin-bottom: 8px !important;
+        color: #000 !important;
+      }
+      .aid-unit-header { background: #f4f4f4 !important; border-radius: 6px 6px 0 0 !important; }
+      .unit-type-badge { background: #e0e0e0 !important; color: #000 !important; }
+      .stat-chip { border-color: #ccc !important; color: #000 !important; }
+      .stat-chip strong { color: #000 !important; }
+      .aid-upg { background: #fafafa !important; border-color: #ddd !important; }
+      .aid-upg-name { color: #000 !important; }
+      .aid-upg-desc { color: #333 !important; opacity: 1 !important; }
+      .aid-phase-tag { border-color: #ccc !important; color: #555 !important;
+                       background: #f0f0f0 !important; }
+      .aid-inline-chip { background: #eee !important; border-color: #ccc !important;
+                         color: #555 !important; }
+      .aid-inline-activation, .aid-inline-resource { color: #333 !important; }
+      .aid-ability-group { border-top-color: #e0e0e0 !important; }
+      .unit-list { gap: 8px !important; }
+      a, button { display: none !important; }
     }
   </style>
 </head>
@@ -1094,11 +1169,10 @@
             </div>
           </div>
         </div>
-        <div id="aid-card"></div>
-        <div style="display:flex;gap:10px;margin-top:12px;">
-          <button class="btn" id="aid-download-btn" style="display:none">⬇ Download Image</button>
-          <button class="btn ghost" id="aid-copy-img-btn" style="display:none">⧉ Copy Image</button>
+        <div id="aid-print-bar" style="display:none;gap:10px;margin-bottom:14px;">
+          <button class="btn" id="aid-print-btn">🖨 Print / Save as PDF</button>
         </div>
+        <div id="aid-card"></div>
       </div>
 
       <!-- JSON -->
