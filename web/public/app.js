@@ -72,10 +72,26 @@ const aidPrintBar    = document.getElementById('aid-print-bar');
 const aidCollapseAllBtn = document.getElementById('aid-collapse-all-btn');
 const aidExpandAllBtn = document.getElementById('aid-expand-all-btn');
 const aidPrintCardDeckBtn = document.getElementById('aid-print-carddeck-btn');
+const aidPrintInkFriendlyCheckbox = document.getElementById('aid-print-ink-friendly');
 const aidPrintBtn    = document.getElementById('aid-print-btn');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
+
+// Initialize ink-friendly preference from localStorage
+function initInkFriendlyPreference() {
+  const saved = localStorage.getItem('aidPrintInkFriendly');
+  const isInkFriendly = saved !== null ? JSON.parse(saved) : false;
+  aidPrintInkFriendlyCheckbox.checked = isInkFriendly;
+}
+
+// Save ink-friendly preference to localStorage
+aidPrintInkFriendlyCheckbox.addEventListener('change', () => {
+  localStorage.setItem('aidPrintInkFriendly', JSON.stringify(aidPrintInkFriendlyCheckbox.checked));
+});
+
+// Initialize on load
+initInkFriendlyPreference();
 
 // ─── Toast notifications ──────────────────────────────────────────────────────
 function showToast(message, type = 'success', duration = 2500) {
@@ -2636,6 +2652,7 @@ function openAidCardDeckPrintWindow() {
   const seed = getSeed();
   const roster = currentRoster;
   const factionClass = `faction-${String(roster.faction).toLowerCase()}`;
+  const isInkFriendly = JSON.parse(localStorage.getItem('aidPrintInkFriendly') || 'false');
 
   const seenUnitKeys = new Set();
   const dedupedUnits = (roster.units ?? []).filter((u) => {
@@ -2674,6 +2691,7 @@ function openAidCardDeckPrintWindow() {
   }
 
   const win = window.open('', '_blank', 'width=1100,height=900');
+  const inkFriendlyClass = isInkFriendly ? 'ink-friendly' : '';
   win.document.write(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2683,6 +2701,58 @@ function openAidCardDeckPrintWindow() {
     *,*::before,*::after { box-sizing: border-box; }
     :root { font-family: Arial, sans-serif; }
     body { margin: 0; padding: 12mm; background: #fff; color: #111; }
+    body.ink-friendly { background: #ffffff; }
+    body.ink-friendly .unit-card { background: linear-gradient(150deg, #f5f7fa 0%, #eff2f7 56%, #e8ecf3 100%); box-shadow: inset 0 0 0 1px #cdd9e8; }
+    body.ink-friendly .unit-card.faction-terran { border-color: #1052cc; }
+    body.ink-friendly .unit-card.faction-zerg { border-color: #c41e5a; }
+    body.ink-friendly .unit-card.faction-protoss { border-color: #b8860b; }
+    body.ink-friendly .unit-title { color: #1a1a1a; }
+    body.ink-friendly .unit-card.faction-terran .unit-title { color: #1052cc; }
+    body.ink-friendly .unit-card.faction-zerg .unit-title { color: #c41e5a; }
+    body.ink-friendly .unit-card.faction-protoss .unit-title { color: #b8860b; }
+    body.ink-friendly .deck-section-title { color: #1052cc; }
+    body.ink-friendly .unit-stat-table { border-color: #99aac4; background: #ffffff; }
+    body.ink-friendly .unit-stat-table th { background: #e8ecf3; color: #222; border-color: #99aac4; }
+    body.ink-friendly .unit-stat-table td { background: #f9f9f9; color: #111; border-color: #e0e8f2; }
+    body.ink-friendly .unit-stat-table td.highlighted { color: #1a6b2f; background: #e8f5e9; }
+    body.ink-friendly .unit-weapons-table { border-color: #99aac4; }
+    body.ink-friendly .unit-weapons-table th { background: #e8ecf3; color: #222; border-color: #99aac4; }
+    body.ink-friendly .unit-weapons-table td { color: #111; border-color: #e0e8f2; }
+    body.ink-friendly .unit-weapons-table td.is-highlighted { color: #1a6b2f; font-weight: 700; }
+    body.ink-friendly .unit-weapons-table tr.is-active td { color: #1a6b2f; }
+    body.ink-friendly .unit-ability { border-color: #99aac4; background: #f5f7fa; }
+    body.ink-friendly .unit-ability.is-active { border-color: #1a6b2f; background: #e8f5e9; }
+    body.ink-friendly .unit-ability-title { color: #111; }
+    body.ink-friendly .unit-ability.is-active .unit-ability-title { color: #1a6b2f; }
+    body.ink-friendly .unit-ability-text { color: #333; }
+    body.ink-friendly .unit-ability-chip { border-color: #99aac4; background: #eff2f7; color: #333; }
+    body.ink-friendly .unit-ability-chip.active { border-color: #1a6b2f; color: #1a6b2f; }
+    body.ink-friendly .unit-ability-chip.passive { border-color: #666; color: #333; }
+    body.ink-friendly .unit-ability-chip.phase-movement { color: #1052cc; border-color: #4da6ff; }
+    body.ink-friendly .unit-ability-chip.phase-assault { color: #c41e5a; border-color: #ff4d8f; }
+    body.ink-friendly .unit-ability-chip.phase-combat { color: #b8860b; border-color: #ffd700; }
+    body.ink-friendly .unit-ability-chip.phase-scoring { color: #1a6b2f; border-color: #66bb6a; }
+    body.ink-friendly .unit-upgrade-pill { color: #1a6b2f; background: #e8f5e9; border-color: #66bb6a; }
+    body.ink-friendly .tac-card { background: linear-gradient(150deg, #f5f7fa 0%, #eff2f7 56%, #e8ecf3 100%); box-shadow: inset 0 0 0 1px #cdd9e8; }
+    body.ink-friendly .tac-card.faction-terran { border-color: #1052cc; }
+    body.ink-friendly .tac-card.faction-zerg { border-color: #c41e5a; }
+    body.ink-friendly .tac-card.faction-protoss { border-color: #b8860b; }
+    body.ink-friendly .tac-title { color: #1a1a1a; }
+    body.ink-friendly .tac-card.faction-terran .tac-title { color: #1052cc; }
+    body.ink-friendly .tac-card.faction-zerg .tac-title { color: #c41e5a; }
+    body.ink-friendly .tac-card.faction-protoss .tac-title { color: #b8860b; }
+    body.ink-friendly .tac-meta-table { border-color: #99aac4; }
+    body.ink-friendly .tac-meta-table th { background: #e8ecf3; color: #222; border-color: #99aac4; }
+    body.ink-friendly .tac-meta-table td { background: #f9f9f9; color: #111; border-color: #e0e8f2; }
+    body.ink-friendly .tac-meta-value-resource { color: #111; }
+    body.ink-friendly .tac-card.faction-terran .tac-meta-value-resource { color: #1052cc; }
+    body.ink-friendly .tac-card.faction-zerg .tac-meta-value-resource { color: #c41e5a; }
+    body.ink-friendly .tac-card.faction-protoss .tac-meta-value-resource { color: #b8860b; }
+    body.ink-friendly .tac-ability { border-color: #99aac4; background: #f5f7fa; }
+    body.ink-friendly .tac-ability-title { color: #111; }
+    body.ink-friendly .tac-ability-text { color: #333; }
+    body.ink-friendly .tac-ability-pill { border-color: #99aac4; background: #eff2f7; color: #333; }
+    body.ink-friendly .tac-ability-pill.resource { color: #b8860b; border-color: #ffd700; background: #fffbf0; }
     .deck-header { margin-bottom: 8mm; border-bottom: 1px solid #314563; padding-bottom: 3mm; }
     .deck-section-title { font-size: 14px; font-weight: 700; margin: 8mm 0 6mm; color: #66b6ff; text-transform: uppercase; }
     .deck-title { font-size: 16px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #66b6ff; }
@@ -3141,11 +3211,66 @@ function openAidCardDeckPrintWindow() {
     .tac-card-back.faction-zerg .tac-back-value { border-color: rgba(247, 109, 178, .45); background: rgba(247, 109, 178, .14); }
     .tac-card-back.faction-protoss .tac-back-value { border-color: rgba(241, 191, 89, .45); background: rgba(241, 191, 89, .14); }
 
+    /* INK-FRIENDLY MODE */
+    body.ink-friendly { background: #ffffff; }
+    body.ink-friendly .unit-card { background: linear-gradient(150deg, #f5f7fa 0%, #eff2f7 56%, #e8ecf3 100%); box-shadow: inset 0 0 0 1px #cdd9e8; }
+    body.ink-friendly .unit-card.faction-terran { border-color: #1052cc; }
+    body.ink-friendly .unit-card.faction-zerg { border-color: #c41e5a; }
+    body.ink-friendly .unit-card.faction-protoss { border-color: #b8860b; }
+    body.ink-friendly .unit-title { color: #1a1a1a; }
+    body.ink-friendly .unit-card.faction-terran .unit-title { color: #1052cc; }
+    body.ink-friendly .unit-card.faction-zerg .unit-title { color: #c41e5a; }
+    body.ink-friendly .unit-card.faction-protoss .unit-title { color: #b8860b; }
+    body.ink-friendly .deck-section-title { color: #1052cc; }
+    body.ink-friendly .deck-title { color: #1052cc; }
+    body.ink-friendly .unit-stat-table { border-color: #99aac4; background: #ffffff; }
+    body.ink-friendly .unit-stat-table th { background: #e8ecf3; color: #222; border-color: #99aac4; }
+    body.ink-friendly .unit-stat-table td { background: #f9f9f9; color: #111; border-color: #e0e8f2; }
+    body.ink-friendly .unit-stat-table td.highlighted { color: #1a6b2f; background: #e8f5e9; }
+    body.ink-friendly .unit-weapons-table { border-color: #99aac4; }
+    body.ink-friendly .unit-weapons-table th { background: #e8ecf3; color: #222; border-color: #99aac4; }
+    body.ink-friendly .unit-weapons-table td { color: #111; border-color: #e0e8f2; }
+    body.ink-friendly .unit-weapons-table td.is-highlighted { color: #1a6b2f; font-weight: 700; }
+    body.ink-friendly .unit-weapons-table tr.is-active td { color: #1a6b2f; }
+    body.ink-friendly .unit-ability { border-color: #99aac4; background: #f5f7fa; }
+    body.ink-friendly .unit-ability.is-active { border-color: #1a6b2f; background: #e8f5e9; }
+    body.ink-friendly .unit-ability-title { color: #111; }
+    body.ink-friendly .unit-ability.is-active .unit-ability-title { color: #1a6b2f; }
+    body.ink-friendly .unit-ability-text { color: #333; }
+    body.ink-friendly .unit-ability-chip { border-color: #99aac4; background: #eff2f7; color: #333; }
+    body.ink-friendly .unit-ability-chip.active { border-color: #1a6b2f; color: #1a6b2f; }
+    body.ink-friendly .unit-ability-chip.passive { border-color: #666; color: #333; }
+    body.ink-friendly .unit-ability-chip.phase-movement { color: #1052cc; border-color: #4da6ff; }
+    body.ink-friendly .unit-ability-chip.phase-assault { color: #c41e5a; border-color: #ff4d8f; }
+    body.ink-friendly .unit-ability-chip.phase-combat { color: #b8860b; border-color: #ffd700; }
+    body.ink-friendly .unit-ability-chip.phase-scoring { color: #1a6b2f; border-color: #66bb6a; }
+    body.ink-friendly .unit-upgrade-pill { color: #1a6b2f; background: #e8f5e9; border-color: #66bb6a; }
+    body.ink-friendly .tac-card { background: linear-gradient(150deg, #f5f7fa 0%, #eff2f7 56%, #e8ecf3 100%); box-shadow: inset 0 0 0 1px #cdd9e8; }
+    body.ink-friendly .tac-card.faction-terran { border-color: #1052cc; }
+    body.ink-friendly .tac-card.faction-zerg { border-color: #c41e5a; }
+    body.ink-friendly .tac-card.faction-protoss { border-color: #b8860b; }
+    body.ink-friendly .tac-title { color: #1a1a1a; }
+    body.ink-friendly .tac-card.faction-terran .tac-title { color: #1052cc; }
+    body.ink-friendly .tac-card.faction-zerg .tac-title { color: #c41e5a; }
+    body.ink-friendly .tac-card.faction-protoss .tac-title { color: #b8860b; }
+    body.ink-friendly .tac-meta-table { border-color: #99aac4; }
+    body.ink-friendly .tac-meta-table th { background: #e8ecf3; color: #222; border-color: #99aac4; }
+    body.ink-friendly .tac-meta-table td { background: #f9f9f9; color: #111; border-color: #e0e8f2; }
+    body.ink-friendly .tac-meta-value-resource { color: #111; }
+    body.ink-friendly .tac-card.faction-terran .tac-meta-value-resource { color: #1052cc; }
+    body.ink-friendly .tac-card.faction-zerg .tac-meta-value-resource { color: #c41e5a; }
+    body.ink-friendly .tac-card.faction-protoss .tac-meta-value-resource { color: #b8860b; }
+    body.ink-friendly .tac-ability { border-color: #99aac4; background: #f5f7fa; }
+    body.ink-friendly .tac-ability-title { color: #111; }
+    body.ink-friendly .tac-ability-text { color: #333; }
+    body.ink-friendly .tac-ability-pill { border-color: #99aac4; background: #eff2f7; color: #333; }
+    body.ink-friendly .tac-ability-pill.resource { color: #b8860b; border-color: #ffd700; background: #fffbf0; }
+
     @page { margin: 10mm; }
     @media print { body { padding: 0; } .deck-header { margin-bottom: 4mm; } }
   </style>
 </head>
-<body>
+<body class="${inkFriendlyClass}">
   <div class="deck-header">
     <div class="deck-title">Player Aid Card Deck · ${escapeHtml(roster.faction)} · ${escapeHtml(roster.factionCard)}</div>
     <div class="deck-subtitle">Seed ${escapeHtml(seed)} · Two-sided Tarot (units) + MTG (tacticals)</div>
