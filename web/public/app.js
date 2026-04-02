@@ -1259,6 +1259,7 @@ function renderPlayerAid(roster, opts = {}) {
     const weaponProfiles  = resolveLinkedWeaponReplacements(
       upgradeList
         .filter(isWeaponProfile)
+        .filter(ug => isNaturalAbility(ug) || ug.active)
         .map(parseWeaponProfile),
       u.models
     ).sort(compareAidWeaponProfiles);
