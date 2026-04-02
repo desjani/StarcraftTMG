@@ -1,0 +1,3947 @@
+StarCraft TMG Live API Dump
+Generated: 2026-04-01T13:34:36.862Z
+Seed: VNIEMU
+
+This file includes:
+- Raw Firestore roster document (typed values)
+- Flattened roster document
+- Raw+flattened tactical card documents referenced by this seed
+
+
+====================================================================================================
+RAW shared_rosters/VNIEMU (Firestore typed document)
+====================================================================================================
+{
+  "name": "projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents/shared_rosters/VNIEMU",
+  "fields": {
+    "id": {
+      "stringValue": "VNIEMU"
+    },
+    "createdAt": {
+      "timestampValue": "2026-03-31T06:35:51.043Z"
+    },
+    "state": {
+      "mapValue": {
+        "fields": {
+          "factionCardId": {
+            "stringValue": "terran_armed_forces"
+          },
+          "mineralsLimit": {
+            "integerValue": "2000"
+          },
+          "slotsUsed": {
+            "mapValue": {
+              "fields": {
+                "Support": {
+                  "integerValue": "2"
+                },
+                "Core": {
+                  "integerValue": "4"
+                },
+                "Air": {
+                  "integerValue": "0"
+                },
+                "Hero": {
+                  "integerValue": "0"
+                },
+                "Elite": {
+                  "integerValue": "8"
+                }
+              }
+            }
+          },
+          "slotsAvailable": {
+            "mapValue": {
+              "fields": {
+                "Elite": {
+                  "integerValue": "8"
+                },
+                "Hero": {
+                  "integerValue": "0"
+                },
+                "Air": {
+                  "integerValue": "0"
+                },
+                "Core": {
+                  "integerValue": "5"
+                },
+                "Support": {
+                  "integerValue": "2"
+                }
+              }
+            }
+          },
+          "resourceTotal": {
+            "integerValue": "7"
+          },
+          "supplyUsed": {
+            "integerValue": "14"
+          },
+          "mineralsUsed": {
+            "integerValue": "2000"
+          },
+          "roster": {
+            "arrayValue": {
+              "values": [
+                {
+                  "mapValue": {
+                    "fields": {
+                      "baseCost": {
+                        "integerValue": "190"
+                      },
+                      "supply": {
+                        "integerValue": "2"
+                      },
+                      "id": {
+                        "stringValue": "goliath"
+                      },
+                      "name": {
+                        "stringValue": "Goliath"
+                      },
+                      "uid": {
+                        "doubleValue": 1774938850055.3892
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "armor": {
+                              "stringValue": "4+"
+                            },
+                            "shield": {
+                              "stringValue": "-"
+                            },
+                            "evade": {
+                              "stringValue": "-"
+                            },
+                            "speed": {
+                              "stringValue": "7"
+                            },
+                            "size": {
+                              "stringValue": "3"
+                            },
+                            "hp": {
+                              "stringValue": "10"
+                            }
+                          }
+                        }
+                      },
+                      "models": {
+                        "integerValue": "1"
+                      },
+                      "unitType": {
+                        "stringValue": "Elite"
+                      },
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "6"
+                            }
+                          ]
+                        }
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1)."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "20"
+                                  },
+                                  "name": {
+                                    "stringValue": "Ares-Class Targeting System"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1."
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Target Lock"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Indomitable"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks."
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Autocannon"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Underbelly Machine Gun"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Scatter Missiles"
+                                  },
+                                  "costS": {
+                                    "integerValue": "30"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costL": {
+                                    "integerValue": "30"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "costS": {
+                                    "integerValue": "40"
+                                  },
+                                  "name": {
+                                    "stringValue": "Haywire Missiles"
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Devastating Charge"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect."
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "name": {
+                                    "stringValue": "Stomp"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "size": {
+                        "stringValue": "small"
+                      }
+                    }
+                  }
+                },
+                {
+                  "mapValue": {
+                    "fields": {
+                      "models": {
+                        "integerValue": "1"
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "shield": {
+                              "stringValue": "-"
+                            },
+                            "evade": {
+                              "stringValue": "-"
+                            },
+                            "armor": {
+                              "stringValue": "4+"
+                            },
+                            "size": {
+                              "stringValue": "3"
+                            },
+                            "hp": {
+                              "stringValue": "10"
+                            },
+                            "speed": {
+                              "stringValue": "7"
+                            }
+                          }
+                        }
+                      },
+                      "uid": {
+                        "doubleValue": 1774938850426.5466
+                      },
+                      "name": {
+                        "stringValue": "Goliath"
+                      },
+                      "id": {
+                        "stringValue": "goliath"
+                      },
+                      "supply": {
+                        "integerValue": "2"
+                      },
+                      "baseCost": {
+                        "integerValue": "190"
+                      },
+                      "size": {
+                        "stringValue": "small"
+                      },
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "6"
+                            }
+                          ]
+                        }
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Ares-Class Targeting System"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1)."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "20"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "name": {
+                                    "stringValue": "Target Lock"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Indomitable"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "name": {
+                                    "stringValue": "Autocannon"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Underbelly Machine Gun"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "name": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costL": {
+                                    "integerValue": "30"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM"
+                                  },
+                                  "costS": {
+                                    "integerValue": "30"
+                                  },
+                                  "name": {
+                                    "stringValue": "Scatter Missiles"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM"
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "name": {
+                                    "stringValue": "Haywire Missiles"
+                                  },
+                                  "costS": {
+                                    "integerValue": "40"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Devastating Charge"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect."
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Stomp"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "unitType": {
+                        "stringValue": "Elite"
+                      }
+                    }
+                  }
+                },
+                {
+                  "mapValue": {
+                    "fields": {
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "6"
+                            }
+                          ]
+                        }
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "20"
+                                  },
+                                  "name": {
+                                    "stringValue": "Ares-Class Targeting System"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "20"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1)."
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Target Lock"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1."
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Indomitable"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks."
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Autocannon"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Underbelly Machine Gun"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "name": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "30"
+                                  },
+                                  "name": {
+                                    "stringValue": "Scatter Missiles"
+                                  },
+                                  "costL": {
+                                    "integerValue": "30"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM"
+                                  },
+                                  "costS": {
+                                    "integerValue": "40"
+                                  },
+                                  "name": {
+                                    "stringValue": "Haywire Missiles"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Devastating Charge"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "name": {
+                                    "stringValue": "Stomp"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "unitType": {
+                        "stringValue": "Elite"
+                      },
+                      "size": {
+                        "stringValue": "small"
+                      },
+                      "name": {
+                        "stringValue": "Goliath"
+                      },
+                      "supply": {
+                        "integerValue": "2"
+                      },
+                      "baseCost": {
+                        "integerValue": "190"
+                      },
+                      "id": {
+                        "stringValue": "goliath"
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "size": {
+                              "stringValue": "3"
+                            },
+                            "hp": {
+                              "stringValue": "10"
+                            },
+                            "speed": {
+                              "stringValue": "7"
+                            },
+                            "armor": {
+                              "stringValue": "4+"
+                            },
+                            "evade": {
+                              "stringValue": "-"
+                            },
+                            "shield": {
+                              "stringValue": "-"
+                            }
+                          }
+                        }
+                      },
+                      "uid": {
+                        "doubleValue": 1774938850731.3484
+                      },
+                      "models": {
+                        "integerValue": "1"
+                      }
+                    }
+                  }
+                },
+                {
+                  "mapValue": {
+                    "fields": {
+                      "id": {
+                        "stringValue": "goliath"
+                      },
+                      "supply": {
+                        "integerValue": "2"
+                      },
+                      "baseCost": {
+                        "integerValue": "190"
+                      },
+                      "name": {
+                        "stringValue": "Goliath"
+                      },
+                      "models": {
+                        "integerValue": "1"
+                      },
+                      "uid": {
+                        "doubleValue": 1774938851015.4922
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "size": {
+                              "stringValue": "3"
+                            },
+                            "hp": {
+                              "stringValue": "10"
+                            },
+                            "speed": {
+                              "stringValue": "7"
+                            },
+                            "shield": {
+                              "stringValue": "-"
+                            },
+                            "evade": {
+                              "stringValue": "-"
+                            },
+                            "armor": {
+                              "stringValue": "4+"
+                            }
+                          }
+                        }
+                      },
+                      "unitType": {
+                        "stringValue": "Elite"
+                      },
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "6"
+                            }
+                          ]
+                        }
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1)."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "20"
+                                  },
+                                  "name": {
+                                    "stringValue": "Ares-Class Targeting System"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  },
+                                  "description": {
+                                    "stringValue": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1."
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "name": {
+                                    "stringValue": "Target Lock"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Indomitable"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks."
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Autocannon"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Underbelly Machine Gun"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "name": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "name": {
+                                    "stringValue": "Scatter Missiles"
+                                  },
+                                  "costS": {
+                                    "integerValue": "30"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "costL": {
+                                    "integerValue": "30"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "Hellfire Missiles"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM"
+                                  },
+                                  "costS": {
+                                    "integerValue": "40"
+                                  },
+                                  "name": {
+                                    "stringValue": "Haywire Missiles"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect."
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "name": {
+                                    "stringValue": "Devastating Charge"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "name": {
+                                    "stringValue": "Stomp"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "size": {
+                        "stringValue": "small"
+                      }
+                    }
+                  }
+                },
+                {
+                  "mapValue": {
+                    "fields": {
+                      "size": {
+                        "stringValue": "large"
+                      },
+                      "unitType": {
+                        "stringValue": "Core"
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "description": {
+                                    "stringValue": "While this Unit is Within 3\" of a Mission Marker, its Armour characteristic is increased by 1."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "name": {
+                                    "stringValue": "Veteran of Tarsonis"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "description": {
+                                    "stringValue": "Increase this Unit's Hit Points characteristic by 1."
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  },
+                                  "name": {
+                                    "stringValue": "Kinetic Foam"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its Quad K12 and all Close Combat Weapons gain PRECISION (2)."
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Stimpack"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Quad K12"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (2)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Concusive Shells"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "When an Enemy declares a Charge against a Friendly Unit Within 8\", that Enemy gains DEBUFF Speed (2)."
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Reaction>\n(1 Command Point)"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "20"
+                                  },
+                                  "name": {
+                                    "stringValue": "Laser Targeting Systems"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit’s Quad K12 weapon gains LONG RANGE (16\")."
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Strike"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "1"
+                            },
+                            {
+                              "integerValue": "0"
+                            }
+                          ]
+                        }
+                      },
+                      "models": {
+                        "integerValue": "4"
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "size": {
+                              "stringValue": "2"
+                            },
+                            "hp": {
+                              "stringValue": "5"
+                            },
+                            "speed": {
+                              "stringValue": "4/7"
+                            },
+                            "evade": {
+                              "stringValue": "6+"
+                            },
+                            "shield": {
+                              "stringValue": "-"
+                            },
+                            "armor": {
+                              "stringValue": "4+"
+                            }
+                          }
+                        }
+                      },
+                      "uid": {
+                        "doubleValue": 1774938858661.553
+                      },
+                      "id": {
+                        "stringValue": "marauder"
+                      },
+                      "baseCost": {
+                        "integerValue": "280"
+                      },
+                      "supply": {
+                        "integerValue": "2"
+                      },
+                      "name": {
+                        "stringValue": "Marauder"
+                      }
+                    }
+                  }
+                },
+                {
+                  "mapValue": {
+                    "fields": {
+                      "size": {
+                        "stringValue": "small"
+                      },
+                      "unitType": {
+                        "stringValue": "Support"
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "Use when another Friendly Biological Unit suffers Damage Within 4\". Reduce the Total Damage before allocation by 1 for each model in this Unit that is Within 4\" of the damaged Unit."
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "name": {
+                                    "stringValue": "Life Support"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Reaction>\n(1 Command Point)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "costS": {
+                                    "integerValue": "60"
+                                  },
+                                  "name": {
+                                    "stringValue": "Advanced Medic Facilities"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "60"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit’s Supply Value counts as 0 when calculating the Supply Pool."
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Restoration"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Reaction>\n(1 Command Point)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "A-13 Flash Grenade Launcher"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  },
+                                  "description": {
+                                    "stringValue": "Increase the Optical Flare special ability's Range to 16\"."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "20"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "name": {
+                                    "stringValue": "Stabilizer Medpacks"
+                                  },
+                                  "costS": {
+                                    "integerValue": "30"
+                                  },
+                                  "description": {
+                                    "stringValue": "When this Unit resolves a Life Support or Medpack ability, treat it as having 1 additional model Within Range for calculating that ability's effects."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "30"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "Select another Friendly Biological Unit Within 4\". Resolve the HEAL (X) effect for the targeted Unit, where X is the number of models in this Unit that are Within 4\" of the target Unit."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Medpack"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "Select one Enemy Unit Within 12\". Until the End of the Round, apply DEBUFF Range (4) to that Unit’s Ranged Weapons. That Unit cannot benefit from LONG RANGE."
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Optical Flare"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(2 Command Point)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "name": {
+                                    "stringValue": "Strike"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "1"
+                            },
+                            {
+                              "integerValue": "4"
+                            }
+                          ]
+                        }
+                      },
+                      "models": {
+                        "integerValue": "3"
+                      },
+                      "uid": {
+                        "doubleValue": 1774938860179.4875
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "speed": {
+                              "stringValue": "4/7"
+                            },
+                            "size": {
+                              "stringValue": "2"
+                            },
+                            "hp": {
+                              "stringValue": "2"
+                            },
+                            "armor": {
+                              "stringValue": "5+"
+                            },
+                            "shield": {
+                              "stringValue": "-"
+                            },
+                            "evade": {
+                              "stringValue": "5+"
+                            }
+                          }
+                        }
+                      },
+                      "id": {
+                        "stringValue": "medic"
+                      },
+                      "supply": {
+                        "integerValue": "1"
+                      },
+                      "baseCost": {
+                        "integerValue": "110"
+                      },
+                      "name": {
+                        "stringValue": "Medic"
+                      }
+                    }
+                  }
+                },
+                {
+                  "mapValue": {
+                    "fields": {
+                      "supply": {
+                        "integerValue": "2"
+                      },
+                      "baseCost": {
+                        "integerValue": "280"
+                      },
+                      "id": {
+                        "stringValue": "marauder"
+                      },
+                      "name": {
+                        "stringValue": "Marauder"
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "armor": {
+                              "stringValue": "4+"
+                            },
+                            "evade": {
+                              "stringValue": "6+"
+                            },
+                            "shield": {
+                              "stringValue": "-"
+                            },
+                            "size": {
+                              "stringValue": "2"
+                            },
+                            "hp": {
+                              "stringValue": "5"
+                            },
+                            "speed": {
+                              "stringValue": "4/7"
+                            }
+                          }
+                        }
+                      },
+                      "uid": {
+                        "doubleValue": 1774938864018.075
+                      },
+                      "models": {
+                        "integerValue": "4"
+                      },
+                      "unitType": {
+                        "stringValue": "Core"
+                      },
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "0"
+                            },
+                            {
+                              "integerValue": "1"
+                            }
+                          ]
+                        }
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "description": {
+                                    "stringValue": "While this Unit is Within 3\" of a Mission Marker, its Armour characteristic is increased by 1."
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "name": {
+                                    "stringValue": "Veteran of Tarsonis"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "description": {
+                                    "stringValue": "Increase this Unit's Hit Points characteristic by 1."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "name": {
+                                    "stringValue": "Kinetic Foam"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its Quad K12 and all Close Combat Weapons gain PRECISION (2)."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Stimpack"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (2)"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Quad K12"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Reaction>\n(1 Command Point)"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "When an Enemy declares a Charge against a Friendly Unit Within 8\", that Enemy gains DEBUFF Speed (2)."
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Concusive Shells"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Assault Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit’s Quad K12 weapon gains LONG RANGE (16\")."
+                                  },
+                                  "costL": {
+                                    "integerValue": "40"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "name": {
+                                    "stringValue": "Laser Targeting Systems"
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Strike"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "size": {
+                        "stringValue": "large"
+                      }
+                    }
+                  }
+                },
+                {
+                  "mapValue": {
+                    "fields": {
+                      "supply": {
+                        "integerValue": "1"
+                      },
+                      "baseCost": {
+                        "integerValue": "110"
+                      },
+                      "id": {
+                        "stringValue": "medic"
+                      },
+                      "name": {
+                        "stringValue": "Medic"
+                      },
+                      "uid": {
+                        "doubleValue": 1774938865003.8455
+                      },
+                      "stats": {
+                        "mapValue": {
+                          "fields": {
+                            "size": {
+                              "stringValue": "2"
+                            },
+                            "hp": {
+                              "stringValue": "2"
+                            },
+                            "speed": {
+                              "stringValue": "4/7"
+                            },
+                            "shield": {
+                              "stringValue": "-"
+                            },
+                            "evade": {
+                              "stringValue": "5+"
+                            },
+                            "armor": {
+                              "stringValue": "5+"
+                            }
+                          }
+                        }
+                      },
+                      "models": {
+                        "integerValue": "3"
+                      },
+                      "unitType": {
+                        "stringValue": "Support"
+                      },
+                      "availableUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "name": {
+                                    "stringValue": "Life Support"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "description": {
+                                    "stringValue": "Use when another Friendly Biological Unit suffers Damage Within 4\". Reduce the Total Damage before allocation by 1 for each model in this Unit that is Within 4\" of the damaged Unit."
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Reaction>\n(1 Command Point)"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  },
+                                  "description": {
+                                    "stringValue": "This Unit’s Supply Value counts as 0 when calculating the Supply Pool."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "60"
+                                  },
+                                  "name": {
+                                    "stringValue": "Advanced Medic Facilities"
+                                  },
+                                  "costS": {
+                                    "integerValue": "60"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it."
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Restoration"
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Reaction>\n(1 Command Point)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "costL": {
+                                    "integerValue": "20"
+                                  },
+                                  "description": {
+                                    "stringValue": "Increase the Optical Flare special ability's Range to 16\"."
+                                  },
+                                  "costS": {
+                                    "integerValue": "20"
+                                  },
+                                  "name": {
+                                    "stringValue": "A-13 Flash Grenade Launcher"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "description": {
+                                    "stringValue": "When this Unit resolves a Life Support or Medpack ability, treat it as having 1 additional model Within Range for calculating that ability's effects."
+                                  },
+                                  "costL": {
+                                    "integerValue": "30"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "name": {
+                                    "stringValue": "Stabilizer Medpacks"
+                                  },
+                                  "costS": {
+                                    "integerValue": "30"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Any Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Passive>"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "Select another Friendly Biological Unit Within 4\". Resolve the HEAL (X) effect for the targeted Unit, where X is the number of models in this Unit that are Within 4\" of the target Unit."
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Medpack"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(1 Command Point)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": ""
+                                  },
+                                  "description": {
+                                    "stringValue": "Select one Enemy Unit Within 12\". Until the End of the Round, apply DEBUFF Range (4) to that Unit’s Ranged Weapons. That Unit cannot benefit from LONG RANGE."
+                                  },
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Optical Flare"
+                                  },
+                                  "phase": {
+                                    "stringValue": "Movement Phase"
+                                  },
+                                  "activation": {
+                                    "stringValue": "<Active>\n(2 Command Point)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "mapValue": {
+                                "fields": {
+                                  "costS": {
+                                    "integerValue": "0"
+                                  },
+                                  "name": {
+                                    "stringValue": "Strike"
+                                  },
+                                  "costL": {
+                                    "integerValue": "0"
+                                  },
+                                  "linkedTo": {
+                                    "stringValue": "-"
+                                  },
+                                  "description": {
+                                    "stringValue": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -"
+                                  },
+                                  "activation": {
+                                    "stringValue": ""
+                                  },
+                                  "phase": {
+                                    "stringValue": "Combat Phase"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "activeUpgrades": {
+                        "arrayValue": {
+                          "values": [
+                            {
+                              "integerValue": "1"
+                            },
+                            {
+                              "integerValue": "4"
+                            }
+                          ]
+                        }
+                      },
+                      "size": {
+                        "stringValue": "small"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "gasUsed": {
+            "integerValue": "200"
+          },
+          "missionIds": {
+            "arrayValue": {}
+          },
+          "faction": {
+            "stringValue": "Terran"
+          },
+          "gasLimit": {
+            "integerValue": "200"
+          },
+          "deploymentIds": {
+            "arrayValue": {}
+          },
+          "tacticalCardIds": {
+            "arrayValue": {
+              "values": [
+                {
+                  "stringValue": "factory"
+                },
+                {
+                  "stringValue": "factory"
+                },
+                {
+                  "stringValue": "factory"
+                },
+                {
+                  "stringValue": "armory"
+                },
+                {
+                  "stringValue": "orbital_command"
+                },
+                {
+                  "stringValue": "dropship"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "createTime": "2026-03-31T06:35:51.582224Z",
+  "updateTime": "2026-03-31T06:35:51.582224Z"
+}
+
+
+====================================================================================================
+FLATTENED shared_rosters/VNIEMU
+====================================================================================================
+{
+  "id": "VNIEMU",
+  "createdAt": "2026-03-31T06:35:51.043Z",
+  "state": {
+    "factionCardId": "terran_armed_forces",
+    "mineralsLimit": 2000,
+    "slotsUsed": {
+      "Support": 2,
+      "Core": 4,
+      "Air": 0,
+      "Hero": 0,
+      "Elite": 8
+    },
+    "slotsAvailable": {
+      "Elite": 8,
+      "Hero": 0,
+      "Air": 0,
+      "Core": 5,
+      "Support": 2
+    },
+    "resourceTotal": 7,
+    "supplyUsed": 14,
+    "mineralsUsed": 2000,
+    "roster": [
+      {
+        "baseCost": 190,
+        "supply": 2,
+        "id": "goliath",
+        "name": "Goliath",
+        "uid": 1774938850055.3892,
+        "stats": {
+          "armor": "4+",
+          "shield": "-",
+          "evade": "-",
+          "speed": "7",
+          "size": "3",
+          "hp": "10"
+        },
+        "models": 1,
+        "unitType": "Elite",
+        "activeUpgrades": [
+          6
+        ],
+        "availableUpgrades": [
+          {
+            "phase": "Any Phase",
+            "activation": "<Passive>",
+            "description": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1).",
+            "linkedTo": "",
+            "costL": 20,
+            "name": "Ares-Class Targeting System",
+            "costS": 20
+          },
+          {
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Command Point)",
+            "costL": 0,
+            "linkedTo": "",
+            "description": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1.",
+            "costS": 0,
+            "name": "Target Lock"
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Assault Phase",
+            "name": "Indomitable",
+            "costS": 0,
+            "description": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks.",
+            "costL": 0,
+            "linkedTo": ""
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "name": "Autocannon",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")"
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "name": "Underbelly Machine Gun",
+            "costL": 0,
+            "linkedTo": "-",
+            "description": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM"
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "name": "Hellfire Missiles",
+            "costS": 0,
+            "description": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM",
+            "linkedTo": "-",
+            "costL": 0
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "name": "Scatter Missiles",
+            "costS": 30,
+            "description": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM",
+            "linkedTo": "Hellfire Missiles",
+            "costL": 30
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "costS": 40,
+            "name": "Haywire Missiles",
+            "costL": 40,
+            "linkedTo": "Hellfire Missiles",
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM"
+          },
+          {
+            "costS": 0,
+            "name": "Devastating Charge",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
+            "activation": "<Passive>",
+            "phase": "Assault Phase"
+          },
+          {
+            "name": "Stomp",
+            "costS": 0,
+            "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "costL": 0,
+            "linkedTo": "-",
+            "activation": "",
+            "phase": "Combat Phase"
+          }
+        ],
+        "size": "small"
+      },
+      {
+        "models": 1,
+        "stats": {
+          "shield": "-",
+          "evade": "-",
+          "armor": "4+",
+          "size": "3",
+          "hp": "10",
+          "speed": "7"
+        },
+        "uid": 1774938850426.5466,
+        "name": "Goliath",
+        "id": "goliath",
+        "supply": 2,
+        "baseCost": 190,
+        "size": "small",
+        "activeUpgrades": [
+          6
+        ],
+        "availableUpgrades": [
+          {
+            "activation": "<Passive>",
+            "phase": "Any Phase",
+            "name": "Ares-Class Targeting System",
+            "costS": 20,
+            "description": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1).",
+            "linkedTo": "",
+            "costL": 20
+          },
+          {
+            "name": "Target Lock",
+            "costS": 0,
+            "description": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1.",
+            "linkedTo": "",
+            "costL": 0,
+            "activation": "<Active>\n(1 Command Point)",
+            "phase": "Movement Phase"
+          },
+          {
+            "description": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks.",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Indomitable",
+            "costS": 0,
+            "phase": "Assault Phase",
+            "activation": "<Passive>"
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "",
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")",
+            "costL": 0,
+            "linkedTo": "-",
+            "name": "Autocannon",
+            "costS": 0
+          },
+          {
+            "costS": 0,
+            "name": "Underbelly Machine Gun",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM",
+            "activation": "",
+            "phase": "Assault Phase"
+          },
+          {
+            "name": "Hellfire Missiles",
+            "costS": 0,
+            "description": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM",
+            "linkedTo": "-",
+            "costL": 0,
+            "activation": "",
+            "phase": "Assault Phase"
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "",
+            "linkedTo": "Hellfire Missiles",
+            "costL": 30,
+            "description": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM",
+            "costS": 30,
+            "name": "Scatter Missiles"
+          },
+          {
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM",
+            "costL": 40,
+            "linkedTo": "Hellfire Missiles",
+            "name": "Haywire Missiles",
+            "costS": 40,
+            "phase": "Assault Phase",
+            "activation": ""
+          },
+          {
+            "costS": 0,
+            "name": "Devastating Charge",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
+            "activation": "<Passive>",
+            "phase": "Assault Phase"
+          },
+          {
+            "costS": 0,
+            "name": "Stomp",
+            "costL": 0,
+            "linkedTo": "-",
+            "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "activation": "",
+            "phase": "Combat Phase"
+          }
+        ],
+        "unitType": "Elite"
+      },
+      {
+        "activeUpgrades": [
+          6
+        ],
+        "availableUpgrades": [
+          {
+            "costS": 20,
+            "name": "Ares-Class Targeting System",
+            "linkedTo": "",
+            "costL": 20,
+            "description": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1).",
+            "activation": "<Passive>",
+            "phase": "Any Phase"
+          },
+          {
+            "activation": "<Active>\n(1 Command Point)",
+            "phase": "Movement Phase",
+            "costS": 0,
+            "name": "Target Lock",
+            "costL": 0,
+            "linkedTo": "",
+            "description": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1."
+          },
+          {
+            "costS": 0,
+            "name": "Indomitable",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks.",
+            "activation": "<Passive>",
+            "phase": "Assault Phase"
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")",
+            "costS": 0,
+            "name": "Autocannon"
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "name": "Underbelly Machine Gun",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM"
+          },
+          {
+            "name": "Hellfire Missiles",
+            "costS": 0,
+            "description": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM",
+            "linkedTo": "-",
+            "costL": 0,
+            "activation": "",
+            "phase": "Assault Phase"
+          },
+          {
+            "costS": 30,
+            "name": "Scatter Missiles",
+            "costL": 30,
+            "linkedTo": "Hellfire Missiles",
+            "description": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM",
+            "activation": "",
+            "phase": "Assault Phase"
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "",
+            "linkedTo": "Hellfire Missiles",
+            "costL": 40,
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM",
+            "costS": 40,
+            "name": "Haywire Missiles"
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Assault Phase",
+            "name": "Devastating Charge",
+            "costS": 0,
+            "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
+            "linkedTo": "",
+            "costL": 0
+          },
+          {
+            "phase": "Combat Phase",
+            "activation": "",
+            "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "costL": 0,
+            "linkedTo": "-",
+            "name": "Stomp",
+            "costS": 0
+          }
+        ],
+        "unitType": "Elite",
+        "size": "small",
+        "name": "Goliath",
+        "supply": 2,
+        "baseCost": 190,
+        "id": "goliath",
+        "stats": {
+          "size": "3",
+          "hp": "10",
+          "speed": "7",
+          "armor": "4+",
+          "evade": "-",
+          "shield": "-"
+        },
+        "uid": 1774938850731.3484,
+        "models": 1
+      },
+      {
+        "id": "goliath",
+        "supply": 2,
+        "baseCost": 190,
+        "name": "Goliath",
+        "models": 1,
+        "uid": 1774938851015.4922,
+        "stats": {
+          "size": "3",
+          "hp": "10",
+          "speed": "7",
+          "shield": "-",
+          "evade": "-",
+          "armor": "4+"
+        },
+        "unitType": "Elite",
+        "activeUpgrades": [
+          6
+        ],
+        "availableUpgrades": [
+          {
+            "description": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1).",
+            "linkedTo": "",
+            "costL": 20,
+            "name": "Ares-Class Targeting System",
+            "costS": 20,
+            "phase": "Any Phase",
+            "activation": "<Passive>"
+          },
+          {
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Command Point)",
+            "description": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1.",
+            "costL": 0,
+            "linkedTo": "",
+            "name": "Target Lock",
+            "costS": 0
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Assault Phase",
+            "name": "Indomitable",
+            "costS": 0,
+            "description": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks.",
+            "costL": 0,
+            "linkedTo": ""
+          },
+          {
+            "costL": 0,
+            "linkedTo": "-",
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")",
+            "costS": 0,
+            "name": "Autocannon",
+            "phase": "Assault Phase",
+            "activation": ""
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "name": "Underbelly Machine Gun",
+            "costS": 0,
+            "description": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM",
+            "linkedTo": "-",
+            "costL": 0
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "",
+            "description": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM",
+            "costL": 0,
+            "linkedTo": "-",
+            "name": "Hellfire Missiles",
+            "costS": 0
+          },
+          {
+            "name": "Scatter Missiles",
+            "costS": 30,
+            "description": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM",
+            "linkedTo": "Hellfire Missiles",
+            "costL": 30,
+            "activation": "",
+            "phase": "Assault Phase"
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "",
+            "costL": 40,
+            "linkedTo": "Hellfire Missiles",
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM",
+            "costS": 40,
+            "name": "Haywire Missiles"
+          },
+          {
+            "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
+            "costL": 0,
+            "linkedTo": "",
+            "name": "Devastating Charge",
+            "costS": 0,
+            "phase": "Assault Phase",
+            "activation": "<Passive>"
+          },
+          {
+            "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "costL": 0,
+            "linkedTo": "-",
+            "name": "Stomp",
+            "costS": 0,
+            "phase": "Combat Phase",
+            "activation": ""
+          }
+        ],
+        "size": "small"
+      },
+      {
+        "size": "large",
+        "unitType": "Core",
+        "availableUpgrades": [
+          {
+            "phase": "Any Phase",
+            "activation": "<Passive>",
+            "description": "While this Unit is Within 3\" of a Mission Marker, its Armour characteristic is increased by 1.",
+            "linkedTo": "",
+            "costL": 40,
+            "name": "Veteran of Tarsonis",
+            "costS": 20
+          },
+          {
+            "phase": "Any Phase",
+            "activation": "<Passive>",
+            "linkedTo": "",
+            "costL": 40,
+            "description": "Increase this Unit's Hit Points characteristic by 1.",
+            "costS": 20,
+            "name": "Kinetic Foam"
+          },
+          {
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Command Point)",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its Quad K12 and all Close Combat Weapons gain PRECISION (2).",
+            "costS": 0,
+            "name": "Stimpack"
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "name": "Quad K12",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (2)"
+          },
+          {
+            "costS": 0,
+            "name": "Concusive Shells",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "When an Enemy declares a Charge against a Friendly Unit Within 8\", that Enemy gains DEBUFF Speed (2).",
+            "activation": "<Reaction>\n(1 Command Point)",
+            "phase": "Assault Phase"
+          },
+          {
+            "costS": 20,
+            "name": "Laser Targeting Systems",
+            "linkedTo": "",
+            "costL": 40,
+            "description": "This Unit’s Quad K12 weapon gains LONG RANGE (16\").",
+            "activation": "<Passive>",
+            "phase": "Assault Phase"
+          },
+          {
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
+            "costS": 0,
+            "name": "Strike",
+            "phase": "Combat Phase",
+            "activation": ""
+          }
+        ],
+        "activeUpgrades": [
+          1,
+          0
+        ],
+        "models": 4,
+        "stats": {
+          "size": "2",
+          "hp": "5",
+          "speed": "4/7",
+          "evade": "6+",
+          "shield": "-",
+          "armor": "4+"
+        },
+        "uid": 1774938858661.553,
+        "id": "marauder",
+        "baseCost": 280,
+        "supply": 2,
+        "name": "Marauder"
+      },
+      {
+        "size": "small",
+        "unitType": "Support",
+        "availableUpgrades": [
+          {
+            "description": "Use when another Friendly Biological Unit suffers Damage Within 4\". Reduce the Total Damage before allocation by 1 for each model in this Unit that is Within 4\" of the damaged Unit.",
+            "costL": 0,
+            "linkedTo": "",
+            "name": "Life Support",
+            "costS": 0,
+            "phase": "Any Phase",
+            "activation": "<Reaction>\n(1 Command Point)"
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Any Phase",
+            "costS": 60,
+            "name": "Advanced Medic Facilities",
+            "linkedTo": "",
+            "costL": 60,
+            "description": "This Unit’s Supply Value counts as 0 when calculating the Supply Pool."
+          },
+          {
+            "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it.",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Restoration",
+            "costS": 0,
+            "phase": "Any Phase",
+            "activation": "<Reaction>\n(1 Command Point)"
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Any Phase",
+            "name": "A-13 Flash Grenade Launcher",
+            "costS": 20,
+            "description": "Increase the Optical Flare special ability's Range to 16\".",
+            "linkedTo": "",
+            "costL": 20
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Any Phase",
+            "name": "Stabilizer Medpacks",
+            "costS": 30,
+            "description": "When this Unit resolves a Life Support or Medpack ability, treat it as having 1 additional model Within Range for calculating that ability's effects.",
+            "linkedTo": "",
+            "costL": 30
+          },
+          {
+            "description": "Select another Friendly Biological Unit Within 4\". Resolve the HEAL (X) effect for the targeted Unit, where X is the number of models in this Unit that are Within 4\" of the target Unit.",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Medpack",
+            "costS": 0,
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Command Point)"
+          },
+          {
+            "linkedTo": "",
+            "costL": 0,
+            "description": "Select one Enemy Unit Within 12\". Until the End of the Round, apply DEBUFF Range (4) to that Unit’s Ranged Weapons. That Unit cannot benefit from LONG RANGE.",
+            "costS": 0,
+            "name": "Optical Flare",
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(2 Command Point)"
+          },
+          {
+            "name": "Strike",
+            "costS": 0,
+            "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "linkedTo": "-",
+            "costL": 0,
+            "activation": "",
+            "phase": "Combat Phase"
+          }
+        ],
+        "activeUpgrades": [
+          1,
+          4
+        ],
+        "models": 3,
+        "uid": 1774938860179.4875,
+        "stats": {
+          "speed": "4/7",
+          "size": "2",
+          "hp": "2",
+          "armor": "5+",
+          "shield": "-",
+          "evade": "5+"
+        },
+        "id": "medic",
+        "supply": 1,
+        "baseCost": 110,
+        "name": "Medic"
+      },
+      {
+        "supply": 2,
+        "baseCost": 280,
+        "id": "marauder",
+        "name": "Marauder",
+        "stats": {
+          "armor": "4+",
+          "evade": "6+",
+          "shield": "-",
+          "size": "2",
+          "hp": "5",
+          "speed": "4/7"
+        },
+        "uid": 1774938864018.075,
+        "models": 4,
+        "unitType": "Core",
+        "activeUpgrades": [
+          0,
+          1
+        ],
+        "availableUpgrades": [
+          {
+            "phase": "Any Phase",
+            "activation": "<Passive>",
+            "description": "While this Unit is Within 3\" of a Mission Marker, its Armour characteristic is increased by 1.",
+            "costL": 40,
+            "linkedTo": "",
+            "name": "Veteran of Tarsonis",
+            "costS": 20
+          },
+          {
+            "phase": "Any Phase",
+            "activation": "<Passive>",
+            "description": "Increase this Unit's Hit Points characteristic by 1.",
+            "linkedTo": "",
+            "costL": 40,
+            "name": "Kinetic Foam",
+            "costS": 20
+          },
+          {
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Command Point)",
+            "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its Quad K12 and all Close Combat Weapons gain PRECISION (2).",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Stimpack",
+            "costS": 0
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (2)",
+            "costS": 0,
+            "name": "Quad K12"
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "<Reaction>\n(1 Command Point)",
+            "costL": 0,
+            "linkedTo": "",
+            "description": "When an Enemy declares a Charge against a Friendly Unit Within 8\", that Enemy gains DEBUFF Speed (2).",
+            "costS": 0,
+            "name": "Concusive Shells"
+          },
+          {
+            "phase": "Assault Phase",
+            "activation": "<Passive>",
+            "description": "This Unit’s Quad K12 weapon gains LONG RANGE (16\").",
+            "costL": 40,
+            "linkedTo": "",
+            "name": "Laser Targeting Systems",
+            "costS": 20
+          },
+          {
+            "phase": "Combat Phase",
+            "activation": "",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
+            "costS": 0,
+            "name": "Strike"
+          }
+        ],
+        "size": "large"
+      },
+      {
+        "supply": 1,
+        "baseCost": 110,
+        "id": "medic",
+        "name": "Medic",
+        "uid": 1774938865003.8455,
+        "stats": {
+          "size": "2",
+          "hp": "2",
+          "speed": "4/7",
+          "shield": "-",
+          "evade": "5+",
+          "armor": "5+"
+        },
+        "models": 3,
+        "unitType": "Support",
+        "availableUpgrades": [
+          {
+            "name": "Life Support",
+            "costS": 0,
+            "description": "Use when another Friendly Biological Unit suffers Damage Within 4\". Reduce the Total Damage before allocation by 1 for each model in this Unit that is Within 4\" of the damaged Unit.",
+            "costL": 0,
+            "linkedTo": "",
+            "activation": "<Reaction>\n(1 Command Point)",
+            "phase": "Any Phase"
+          },
+          {
+            "phase": "Any Phase",
+            "activation": "<Passive>",
+            "description": "This Unit’s Supply Value counts as 0 when calculating the Supply Pool.",
+            "linkedTo": "",
+            "costL": 60,
+            "name": "Advanced Medic Facilities",
+            "costS": 60
+          },
+          {
+            "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it.",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Restoration",
+            "costS": 0,
+            "phase": "Any Phase",
+            "activation": "<Reaction>\n(1 Command Point)"
+          },
+          {
+            "linkedTo": "",
+            "costL": 20,
+            "description": "Increase the Optical Flare special ability's Range to 16\".",
+            "costS": 20,
+            "name": "A-13 Flash Grenade Launcher",
+            "phase": "Any Phase",
+            "activation": "<Passive>"
+          },
+          {
+            "description": "When this Unit resolves a Life Support or Medpack ability, treat it as having 1 additional model Within Range for calculating that ability's effects.",
+            "costL": 30,
+            "linkedTo": "",
+            "name": "Stabilizer Medpacks",
+            "costS": 30,
+            "phase": "Any Phase",
+            "activation": "<Passive>"
+          },
+          {
+            "costL": 0,
+            "linkedTo": "",
+            "description": "Select another Friendly Biological Unit Within 4\". Resolve the HEAL (X) effect for the targeted Unit, where X is the number of models in this Unit that are Within 4\" of the target Unit.",
+            "costS": 0,
+            "name": "Medpack",
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Command Point)"
+          },
+          {
+            "costL": 0,
+            "linkedTo": "",
+            "description": "Select one Enemy Unit Within 12\". Until the End of the Round, apply DEBUFF Range (4) to that Unit’s Ranged Weapons. That Unit cannot benefit from LONG RANGE.",
+            "costS": 0,
+            "name": "Optical Flare",
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(2 Command Point)"
+          },
+          {
+            "costS": 0,
+            "name": "Strike",
+            "costL": 0,
+            "linkedTo": "-",
+            "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "activation": "",
+            "phase": "Combat Phase"
+          }
+        ],
+        "activeUpgrades": [
+          1,
+          4
+        ],
+        "size": "small"
+      }
+    ],
+    "gasUsed": 200,
+    "missionIds": [],
+    "faction": "Terran",
+    "gasLimit": 200,
+    "deploymentIds": [],
+    "tacticalCardIds": [
+      "factory",
+      "factory",
+      "factory",
+      "armory",
+      "orbital_command",
+      "dropship"
+    ]
+  }
+}
+
+
+====================================================================================================
+TACTICAL CARD IDS FROM ROSTER
+====================================================================================================
+[
+  "factory",
+  "factory",
+  "factory",
+  "armory",
+  "orbital_command",
+  "dropship"
+]
+
+
+====================================================================================================
+RAW + FLATTENED tactical_cards docs
+====================================================================================================
+[
+  {
+    "id": "factory",
+    "ok": true,
+    "raw": {
+      "name": "projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents/tactical_cards/factory",
+      "fields": {
+        "tags": {
+          "stringValue": ""
+        },
+        "boosts": {
+          "arrayValue": {
+            "values": [
+              {
+                "mapValue": {
+                  "fields": {
+                    "name": {
+                      "stringValue": "Field Repair"
+                    },
+                    "description": {
+                      "stringValue": "Field Repair <Active> <Movement Phase>: The active Mechanical Unit resolves the HEAL (2) effect."
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "slots": {
+          "mapValue": {
+            "fields": {
+              "Support": {
+                "integerValue": "0"
+              },
+              "Air": {
+                "integerValue": "0"
+              },
+              "Hero": {
+                "integerValue": "0"
+              },
+              "Elite": {
+                "integerValue": "2"
+              },
+              "Core": {
+                "integerValue": "0"
+              }
+            }
+          }
+        },
+        "timestamp": {
+          "timestampValue": "2026-03-09T17:52:34.196Z"
+        },
+        "faction": {
+          "stringValue": "Terran"
+        },
+        "resource": {
+          "integerValue": "1"
+        },
+        "factionTags": {
+          "arrayValue": {}
+        },
+        "id": {
+          "stringValue": "factory"
+        },
+        "name": {
+          "stringValue": "Factory"
+        },
+        "isFactionCard": {
+          "booleanValue": false
+        },
+        "isUnique": {
+          "booleanValue": false
+        },
+        "cost": {
+          "integerValue": "35"
+        }
+      },
+      "createTime": "2026-03-09T17:52:34.274314Z",
+      "updateTime": "2026-03-09T17:52:34.274314Z"
+    },
+    "flat": {
+      "tags": "",
+      "boosts": [
+        {
+          "name": "Field Repair",
+          "description": "Field Repair <Active> <Movement Phase>: The active Mechanical Unit resolves the HEAL (2) effect."
+        }
+      ],
+      "slots": {
+        "Support": 0,
+        "Air": 0,
+        "Hero": 0,
+        "Elite": 2,
+        "Core": 0
+      },
+      "timestamp": "2026-03-09T17:52:34.196Z",
+      "faction": "Terran",
+      "resource": 1,
+      "factionTags": [],
+      "id": "factory",
+      "name": "Factory",
+      "isFactionCard": false,
+      "isUnique": false,
+      "cost": 35
+    }
+  },
+  {
+    "id": "armory",
+    "ok": true,
+    "raw": {
+      "name": "projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents/tactical_cards/armory",
+      "fields": {
+        "id": {
+          "stringValue": "armory"
+        },
+        "name": {
+          "stringValue": "Armory"
+        },
+        "isUnique": {
+          "booleanValue": false
+        },
+        "factionTags": {
+          "arrayValue": {}
+        },
+        "cost": {
+          "integerValue": "30"
+        },
+        "timestamp": {
+          "timestampValue": "2026-03-09T17:52:34.196Z"
+        },
+        "slots": {
+          "mapValue": {
+            "fields": {
+              "Core": {
+                "integerValue": "0"
+              },
+              "Support": {
+                "integerValue": "0"
+              },
+              "Air": {
+                "integerValue": "0"
+              },
+              "Elite": {
+                "integerValue": "1"
+              },
+              "Hero": {
+                "integerValue": "0"
+              }
+            }
+          }
+        },
+        "tags": {
+          "stringValue": ""
+        },
+        "boosts": {
+          "arrayValue": {
+            "values": [
+              {
+                "mapValue": {
+                  "fields": {
+                    "name": {
+                      "stringValue": "Vehicle Weapons"
+                    },
+                    "description": {
+                      "stringValue": "Vehicle Weapons <Active> <Assault Phase>: The active Mechanical Unit’s first Ranged Weapon used gain CRITICAL HIT (1)."
+                    }
+                  }
+                }
+              },
+              {
+                "mapValue": {
+                  "fields": {
+                    "name": {
+                      "stringValue": "Vehicle Plating"
+                    },
+                    "description": {
+                      "stringValue": "Vehicle Plating <Reaction> <Any Phase>: Use before a Friendly Mechanical Unit makes an Armour Roll. That Unit gains TOUGH (1) for this roll."
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "faction": {
+          "stringValue": "Terran"
+        },
+        "isFactionCard": {
+          "booleanValue": false
+        },
+        "resource": {
+          "integerValue": "1"
+        }
+      },
+      "createTime": "2026-03-09T17:52:34.274314Z",
+      "updateTime": "2026-03-09T17:52:34.274314Z"
+    },
+    "flat": {
+      "id": "armory",
+      "name": "Armory",
+      "isUnique": false,
+      "factionTags": [],
+      "cost": 30,
+      "timestamp": "2026-03-09T17:52:34.196Z",
+      "slots": {
+        "Core": 0,
+        "Support": 0,
+        "Air": 0,
+        "Elite": 1,
+        "Hero": 0
+      },
+      "tags": "",
+      "boosts": [
+        {
+          "name": "Vehicle Weapons",
+          "description": "Vehicle Weapons <Active> <Assault Phase>: The active Mechanical Unit’s first Ranged Weapon used gain CRITICAL HIT (1)."
+        },
+        {
+          "name": "Vehicle Plating",
+          "description": "Vehicle Plating <Reaction> <Any Phase>: Use before a Friendly Mechanical Unit makes an Armour Roll. That Unit gains TOUGH (1) for this roll."
+        }
+      ],
+      "faction": "Terran",
+      "isFactionCard": false,
+      "resource": 1
+    }
+  },
+  {
+    "id": "orbital_command",
+    "ok": true,
+    "raw": {
+      "name": "projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents/tactical_cards/orbital_command",
+      "fields": {
+        "resource": {
+          "integerValue": "1"
+        },
+        "isUnique": {
+          "booleanValue": true
+        },
+        "factionTags": {
+          "arrayValue": {}
+        },
+        "name": {
+          "stringValue": "Orbital Command"
+        },
+        "boosts": {
+          "arrayValue": {
+            "values": [
+              {
+                "mapValue": {
+                  "fields": {
+                    "name": {
+                      "stringValue": "ComSat Station"
+                    },
+                    "description": {
+                      "stringValue": "ComSat Station <Active> <Movement Phase>: Select one table edge that is not a player’s Entry Edge. Until the End of the Round, Enemy Units cannot Deploy from that edge."
+                    }
+                  }
+                }
+              },
+              {
+                "mapValue": {
+                  "fields": {
+                    "name": {
+                      "stringValue": "Scanner Sweep"
+                    },
+                    "description": {
+                      "stringValue": "Scanner Sweep <Active> <Movement Phase>: Place a Faction Indicator anywhere on the battlefield. While Enemy Units are Within 6\" of this Faction Indicator, they lose HIDDEN."
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "frontUrl": {
+          "stringValue": "https://firebasestorage.googleapis.com/v0/b/starcrafttmgbeta.firebasestorage.app/o/faction_art%2F1773092342368_cc.jpg?alt=media&token=540c96b9-690b-4307-98d6-2e13d95fb9f6"
+        },
+        "tags": {
+          "stringValue": ""
+        },
+        "slots": {
+          "mapValue": {
+            "fields": {
+              "Support": {
+                "integerValue": "0"
+              },
+              "Air": {
+                "integerValue": "0"
+              },
+              "Elite": {
+                "integerValue": "0"
+              },
+              "Core": {
+                "integerValue": "1"
+              },
+              "Hero": {
+                "integerValue": "0"
+              }
+            }
+          }
+        },
+        "timestamp": {
+          "timestampValue": "2026-03-09T17:52:34.196Z"
+        },
+        "id": {
+          "stringValue": "orbital_command"
+        },
+        "faction": {
+          "stringValue": "Terran"
+        },
+        "cost": {
+          "integerValue": "25"
+        },
+        "isFactionCard": {
+          "booleanValue": false
+        }
+      },
+      "createTime": "2026-03-09T17:52:34.274314Z",
+      "updateTime": "2026-03-09T21:39:03.006554Z"
+    },
+    "flat": {
+      "resource": 1,
+      "isUnique": true,
+      "factionTags": [],
+      "name": "Orbital Command",
+      "boosts": [
+        {
+          "name": "ComSat Station",
+          "description": "ComSat Station <Active> <Movement Phase>: Select one table edge that is not a player’s Entry Edge. Until the End of the Round, Enemy Units cannot Deploy from that edge."
+        },
+        {
+          "name": "Scanner Sweep",
+          "description": "Scanner Sweep <Active> <Movement Phase>: Place a Faction Indicator anywhere on the battlefield. While Enemy Units are Within 6\" of this Faction Indicator, they lose HIDDEN."
+        }
+      ],
+      "frontUrl": "https://firebasestorage.googleapis.com/v0/b/starcrafttmgbeta.firebasestorage.app/o/faction_art%2F1773092342368_cc.jpg?alt=media&token=540c96b9-690b-4307-98d6-2e13d95fb9f6",
+      "tags": "",
+      "slots": {
+        "Support": 0,
+        "Air": 0,
+        "Elite": 0,
+        "Core": 1,
+        "Hero": 0
+      },
+      "timestamp": "2026-03-09T17:52:34.196Z",
+      "id": "orbital_command",
+      "faction": "Terran",
+      "cost": 25,
+      "isFactionCard": false
+    }
+  },
+  {
+    "id": "dropship",
+    "ok": true,
+    "raw": {
+      "name": "projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents/tactical_cards/dropship",
+      "fields": {
+        "isFactionCard": {
+          "booleanValue": false
+        },
+        "name": {
+          "stringValue": "Dropship"
+        },
+        "resource": {
+          "integerValue": "1"
+        },
+        "frontUrl": {
+          "stringValue": "https://firebasestorage.googleapis.com/v0/b/starcrafttmgbeta.firebasestorage.app/o/faction_art%2F1773092126772_dropship.jpg?alt=media&token=00a5b0b7-dad3-45a0-b8af-0fe53ef0715c"
+        },
+        "isUnique": {
+          "booleanValue": true
+        },
+        "cost": {
+          "integerValue": "40"
+        },
+        "id": {
+          "stringValue": "dropship"
+        },
+        "factionTags": {
+          "arrayValue": {}
+        },
+        "timestamp": {
+          "timestampValue": "2026-03-09T17:52:34.196Z"
+        },
+        "faction": {
+          "stringValue": "Terran"
+        },
+        "boosts": {
+          "arrayValue": {
+            "values": [
+              {
+                "mapValue": {
+                  "fields": {
+                    "name": {
+                      "stringValue": "Strap in!"
+                    },
+                    "description": {
+                      "stringValue": "Strap in! <Active> <Movement Phase>: The active, Unengaged Ground Unit is placed in Reserves instead of performing an action."
+                    }
+                  }
+                }
+              },
+              {
+                "mapValue": {
+                  "fields": {
+                    "name": {
+                      "stringValue": "Ready For Dust-off"
+                    },
+                    "description": {
+                      "stringValue": "Ready For Dust-off <Active> <Movement Phase>: Place a Faction Indicator anywhere on the battlefield more than 10\" away from any Enemy model. At the End of the Round, the controlling player may Deploy one Ground Unit from Reserves in base-to-base contact with this Faction Indicator."
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "tags": {
+          "stringValue": ""
+        },
+        "slots": {
+          "mapValue": {
+            "fields": {
+              "Elite": {
+                "integerValue": "0"
+              },
+              "Core": {
+                "integerValue": "1"
+              },
+              "Hero": {
+                "integerValue": "0"
+              },
+              "Support": {
+                "integerValue": "1"
+              },
+              "Air": {
+                "integerValue": "0"
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-03-09T17:52:34.274314Z",
+      "updateTime": "2026-03-09T21:35:27.444672Z"
+    },
+    "flat": {
+      "isFactionCard": false,
+      "name": "Dropship",
+      "resource": 1,
+      "frontUrl": "https://firebasestorage.googleapis.com/v0/b/starcrafttmgbeta.firebasestorage.app/o/faction_art%2F1773092126772_dropship.jpg?alt=media&token=00a5b0b7-dad3-45a0-b8af-0fe53ef0715c",
+      "isUnique": true,
+      "cost": 40,
+      "id": "dropship",
+      "factionTags": [],
+      "timestamp": "2026-03-09T17:52:34.196Z",
+      "faction": "Terran",
+      "boosts": [
+        {
+          "name": "Strap in!",
+          "description": "Strap in! <Active> <Movement Phase>: The active, Unengaged Ground Unit is placed in Reserves instead of performing an action."
+        },
+        {
+          "name": "Ready For Dust-off",
+          "description": "Ready For Dust-off <Active> <Movement Phase>: Place a Faction Indicator anywhere on the battlefield more than 10\" away from any Enemy model. At the End of the Round, the controlling player may Deploy one Ground Unit from Reserves in base-to-base contact with this Faction Indicator."
+        }
+      ],
+      "tags": "",
+      "slots": {
+        "Elite": 0,
+        "Core": 1,
+        "Hero": 0,
+        "Support": 1,
+        "Air": 0
+      }
+    }
+  }
+]

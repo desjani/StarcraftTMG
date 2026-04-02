@@ -16,7 +16,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname   = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_DIR = join(__dirname, 'fixtures');
-const SEEDS       = ['VNIEMU', 'IWMZ7C', 'TTPIBA'];
+const SEEDS       = ['VNIEMU', 'IWMZ7C', 'TTPIBA', '58WS1N', 'KPKC0V', 'U093PL'];
 
 // ── Auto-capture fixtures if missing ─────────────────────────────────────────
 
@@ -55,6 +55,7 @@ const SUITES = [
   { label: 'Parser',    path: './parser.test.mjs'    },
   { label: 'Formatter', path: './formatter.test.mjs' },
   { label: 'App Utils', path: './app-utils.test.mjs' },
+  { label: 'Card Deck Layout', path: './card-deck-layout.test.mjs' },
 ];
 
 for (const { label, path } of SUITES) {

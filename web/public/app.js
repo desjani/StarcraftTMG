@@ -71,6 +71,7 @@ const aidCardEl      = document.getElementById('aid-card');
 const aidPrintBar    = document.getElementById('aid-print-bar');
 const aidCollapseAllBtn = document.getElementById('aid-collapse-all-btn');
 const aidExpandAllBtn = document.getElementById('aid-expand-all-btn');
+const aidPrintCardDeckBtn = document.getElementById('aid-print-carddeck-btn');
 const aidPrintBtn    = document.getElementById('aid-print-btn');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
@@ -534,11 +535,22 @@ function getFactionResourceLabelConfig(faction, factionClass) {
   return {
     icon: RESOURCE_ICON[faction] ?? '◈',
     className: `resource-${factionClass}`,
-    patterns: faction === 'Terran'
-      ? ['Command Point']
+    short: faction === 'Terran' ? 'CP' : faction === 'Zerg' ? 'BM' : 'PE',
+    label: faction === 'Terran'
+      ? 'Command Point'
       : faction === 'Zerg'
-        ? ['Biomass']
-        : ['Psionic Energy'],
+        ? 'Biomass'
+        : 'Psionic Energy',
+    labelPlural: faction === 'Terran'
+      ? 'Command Points'
+      : faction === 'Zerg'
+        ? 'Biomass'
+        : 'Psionic Energy',
+    patterns: faction === 'Terran'
+      ? ['Command Point', 'CP']
+      : faction === 'Zerg'
+        ? ['Biomass', 'BM']
+        : ['Psionic Energy', 'PE'],
   };
 }
 
@@ -607,6 +619,14 @@ function getPhaseTag(phaseLabel) {
   return PHASE_TAG[normalized] ?? 'ANY';
 }
 
+function getAbilityPhaseMeta(phaseLabel) {
+  const normalized = normalizePhaseLabel(phaseLabel);
+  return {
+    label: PHASE_TAG[normalized] ?? 'ANY',
+    className: normalized.toLowerCase(),
+  };
+}
+
 function parseAidActivation(upgrade) {
   const activationParts = String(upgrade?.activation || '')
     .split(/\r?\n/)
@@ -637,6 +657,23 @@ function parseAidActivation(upgrade) {
     state: activationParts[0] ? activationParts[0].replace(/[<>]/g, '') : '',
     resource: activationParts[1] ? activationParts[1].replace(/[()]/g, '') : '',
   };
+}
+
+function extractAidFactionResourceCost(resourceText, faction, factionClass) {
+  if (!resourceText || !faction || !factionClass) return null;
+  const resourceConfig = getFactionResourceLabelConfig(faction, factionClass);
+  for (const pattern of resourceConfig.patterns) {
+    const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = String(resourceText).match(new RegExp(`\\b(\\d+)\\s*${escapedPattern}\\b`, 'i'));
+    if (match) {
+      return {
+        amount: Number(match[1]),
+        icon: resourceConfig.icon,
+        className: resourceConfig.className,
+      };
+    }
+  }
+  return null;
 }
 
 function groupAbilitiesByPhase(abilities = []) {
@@ -2318,7 +2355,1206 @@ function openAidPrintWindow() {
   win.document.close();
 }
 
+function estimateAidDeckCardDensity({ weapons = [], abilities = [], text = '' } = {}) {
+  const chars = String(text || '').length;
+  return (weapons.length * 2.2) + (abilities.length * 1.8) + (chars / 180);
+}
+
+function getAidDeckCardSize(density) {
+  return density > 7.2 ? 'tarot' : 'mtg';
+}
+
+function normalizeAidDeckText(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
+function estimateAidDeckAbilityUnits(ability, { size = 'mtg', charsPerLine = null } = {}) {
+  const baseCharsPerLine = charsPerLine ?? (size === 'tarot' ? 72 : 36);
+  const name = normalizeAidDeckText(ability?.name || 'Ability');
+  const description = normalizeAidDeckText(ability?.description || ability?.text || '');
+  const headerLines = Math.max(1, Math.ceil((name.length + 18) / baseCharsPerLine));
+  const bodyLines = description ? Math.max(1, Math.ceil(description.length / baseCharsPerLine)) : 0;
+  if (size === 'tarot') {
+    return (headerLines * 0.8) + (bodyLines * 0.82) + 0.45;
+  }
+  return (headerLines * 1.0) + (bodyLines * 1.12) + 0.7;
+}
+
+function splitAidDeckAbilitiesForSides(abilities, { size = 'mtg', frontBudget = 6 } = {}) {
+  const front = [];
+  const back = [];
+  let used = 0;
+
+  for (const ability of abilities) {
+    const units = estimateAidDeckAbilityUnits(ability, { size });
+    if (!front.length || (used + units) <= frontBudget) {
+      front.push(ability);
+      used += units;
+    } else {
+      back.push(ability);
+    }
+  }
+
+  return { front, back };
+}
+
+function getAidDeckUnitFrontBudget(size, weaponCount, weaponTraitLines = 0) {
+  if (size === 'tarot') {
+    return Math.max(18.5, 26.5 - (weaponCount * 0.75) - (weaponTraitLines * 0.45));
+  }
+  return Math.max(3.4, 7.6 - (weaponCount * 0.85));
+}
+
+function getAidDeckTacticalFrontBudget(size, abilityCount = 0) {
+  if (size === 'tarot') return Math.max(19, 28 - (abilityCount * 0.1));
+  return 6.8;
+}
+
+function renderAidDeckAbilityBubble(ability, { faction, factionClass, phaseTag = '', active = false, natural = false } = {}) {
+  const activation = parseAidActivation(ability);
+  const resourceCost = extractAidFactionResourceCost(activation.resource, faction, factionClass);
+  const description = normalizeAidDeckText(ability?.description || ability?.text || '');
+  const classes = ['deck-ability'];
+  if (active) classes.push('is-active');
+  else if (natural) classes.push('is-natural');
+  else classes.push('is-inactive');
+
+  return `
+    <div class="${classes.join(' ')}">
+      <div class="deck-ability-top">
+        <strong>${escapeHtml(ability?.name || 'Ability')}</strong>
+        ${activation.state ? `<span class="deck-chip deck-chip-activation">${escapeHtml(activation.state)}</span>` : ''}
+        ${resourceCost ? `<span class="deck-chip deck-chip-resource">${escapeHtml(String(resourceCost.amount))} <span class="resource-icon ${escapeHtml(resourceCost.className)}">${escapeHtml(resourceCost.icon)}</span></span>` : ''}
+        ${phaseTag ? `<span class="deck-chip deck-chip-phase phase-${escapeHtml(String(ability?.phase || '').toLowerCase())}">${escapeHtml(phaseTag)}</span>` : ''}
+      </div>
+      ${description ? `<div class="deck-ability-text">${formatAidRichText(description, { faction, factionClass, allowLineBreaks: false })}</div>` : ''}
+    </div>`;
+}
+
+function renderAidDeckUnitFrontCard(unit, { faction, factionClass } = {}) {
+  const upgrades = sortUpgradesForDisplay(unit.allUpgrades ?? []);
+  const weapons = resolveLinkedWeaponReplacements(
+    upgrades
+      .filter(isWeaponProfile)
+      .filter(ug => isNaturalAbility(ug) || ug.active)
+      .map(parseWeaponProfile),
+    unit.models
+  ).sort(compareAidWeaponProfiles);
+  const abilities = upgrades
+    .filter(ug => !isWeaponProfile(ug))
+    .filter(ug => isNaturalAbility(ug) || ug.active);
+  const density = estimateAidDeckCardDensity({
+    weapons,
+    abilities,
+    text: abilities.map(a => a.description || '').join(' '),
+  });
+  const models = Number(unit.models ?? 1) > 1 ? ` ×${unit.models}` : '';
+  const typeAbbr = TYPE_ABBR[unit.type] ?? '?';
+  const statTokens = [
+    ['HP', unit?.stats?.hp],
+    ['ARM', unit?.stats?.armor],
+    ['EVD', unit?.stats?.evade],
+    ['SPD', unit?.stats?.speed],
+    ['SH', unit?.stats?.shield],
+  ]
+    .filter(([, value]) => hasStatValue(value))
+    .map(([label, value]) => `<span class="deck-chip">${escapeHtml(label)} ${escapeHtml(String(value))}</span>`)
+    .join('');
+  const supplyToken = `<span class="deck-chip deck-chip-supply">◆ ${escapeHtml(String(unit.supply ?? 0))}</span>`;
+  const renderWeaponTable = (weaponRows, { compact = false } = {}) => {
+    if (!weaponRows.length) return '';
+    return `
+      <div class="deck-table-wrap">
+        <table class="deck-weapons-table${compact ? ' compact' : ''}">
+          <thead>
+            <tr>
+              <th>Weapon</th>
+              <th>Rng</th>
+              <th>RoA</th>
+              <th>Hit</th>
+              <th>Dmg</th>
+              <th>Surge</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${weaponRows.map(w => `<tr class="${w.active ? 'is-active' : 'is-natural'}"><td class="deck-weapon-name"><div class="deck-weapon-title">${escapeHtml(w.name)}</div>${w.traits ? `<div class="deck-weapon-traits">${escapeHtml(w.traits)}</div>` : ''}</td><td>${escapeHtml(String(w.range))}</td><td>${escapeHtml(String(w.roa))}</td><td>${escapeHtml(String(w.hit))}</td><td>${escapeHtml(String(w.damage))}</td><td>${escapeHtml(String(w.surge))}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  };
+  const allFrontWeapons = weapons;
+  const visibleAbilities = abilities.filter(ability => !isWeaponProfile(ability));
+
+  const mtgSplit = splitAidDeckAbilitiesForSides(visibleAbilities, {
+    size: 'mtg',
+    frontBudget: getAidDeckUnitFrontBudget('mtg', allFrontWeapons.length, allFrontWeapons.filter(w => w.traits).length),
+  });
+  const tarotSplit = splitAidDeckAbilitiesForSides(visibleAbilities, {
+    size: 'tarot',
+    frontBudget: getAidDeckUnitFrontBudget('tarot', allFrontWeapons.length, allFrontWeapons.filter(w => w.traits).length),
+  });
+
+  const useMtg = density <= 7.2 && mtgSplit.back.length === 0;
+  const size = useMtg ? 'mtg' : 'tarot';
+  const tarotMode = size === 'tarot';
+  const splitAbilities = useMtg ? mtgSplit : tarotSplit;
+  const frontWeapons = allFrontWeapons;
+  const frontAbilities = splitAbilities.front;
+  const backAbilities = splitAbilities.back;
+  const hasOverflow = backAbilities.length > 0;
+  const needsBack = hasOverflow;
+  const weaponTraitCount = frontWeapons.filter(w => w.traits).length;
+
+  const frontHtml = `
+    <article class="deck-card ${size} unit-card ${escapeHtml(factionClass)}">
+      <header class="deck-card-header">
+        <span class="deck-type-badge badge-${escapeHtml(unit.type)}">${escapeHtml(typeAbbr)}</span>
+        <div class="deck-title-wrap">
+          <div class="deck-title">${escapeHtml(unit.name)}${escapeHtml(models)}</div>
+        </div>
+        <div class="deck-cost">💎 ${escapeHtml(String(unit.totalCost ?? 0))}m</div>
+      </header>
+      <div class="deck-statline">
+        ${statTokens}
+        ${supplyToken}
+      </div>
+      ${frontWeapons.length ? `<section class="deck-block">${renderWeaponTable(frontWeapons, { compact: !tarotMode })}</section>` : ''}
+      ${frontAbilities.length ? `<section class="deck-block">${frontAbilities.map(a => renderAidDeckAbilityBubble(a, {
+        faction,
+        factionClass,
+        phaseTag: a.phase ? getPhaseTag(a.phase) : '',
+        active: !isNaturalAbility(a) && !!a.active,
+        natural: isNaturalAbility(a),
+      })).join('')}</section>` : ''}
+      ${hasOverflow ? `<div class="deck-overflow-note">Additional ability bubbles continue on the back.</div>` : ''}
+    </article>`;
+
+  if (!needsBack) {
+    return { frontHtml, backHtml: '', size };
+  }
+
+  const fullWeapons = renderWeaponTable(weapons);
+  const fullAbilities = backAbilities.map(a => renderAidDeckAbilityBubble(a, {
+    faction,
+    factionClass,
+    phaseTag: a.phase ? getPhaseTag(a.phase) : '',
+    active: !isNaturalAbility(a) && !!a.active,
+    natural: isNaturalAbility(a),
+  })).join('');
+
+  const backHtml = `
+    <article class="deck-card ${size} unit-card ${escapeHtml(factionClass)} back-face">
+      <header class="deck-card-header">
+        <div class="deck-title-wrap">
+          <div class="deck-title">${escapeHtml(unit.name)}${escapeHtml(models)} · Back</div>
+          <div class="deck-subtitle">Full Rules</div>
+        </div>
+      </header>
+      ${fullWeapons ? `<section class="deck-block"><h4>Weapons</h4>${fullWeapons}</section>` : ''}
+      ${fullAbilities ? `<section class="deck-block"><h4>Abilities</h4>${fullAbilities}</section>` : ''}
+    </article>`;
+
+  return { frontHtml, backHtml, size };
+}
+
+function renderAidDeckTacticalFrontCard(card, { faction, factionClass } = {}) {
+  const abilities = Array.isArray(card.abilities) ? card.abilities.map(parseAidTacticalAbility) : [];
+  const abilityText = abilities.map(a => a.description || '').join(' ');
+  const density = estimateAidDeckCardDensity({ abilities, text: abilityText });
+  const supplyLetters = formatTacticalSupplyTypes(card.slots ?? {});
+  const resourceConfig = getFactionResourceLabelConfig(faction, factionClass);
+  const metaParts = [];
+  if (card.count > 1) metaParts.push(`<span class="deck-chip">x${card.count}</span>`);
+  if (card.isUnique) metaParts.push('<span class="deck-chip">Unique</span>');
+  if (typeof card.resource === 'number') metaParts.push(`<span class="deck-chip deck-chip-resource">${card.resource} ${escapeHtml(resourceConfig.icon)}</span>`);
+  if (typeof card.gasCost === 'number') metaParts.push(`<span class="deck-chip deck-chip-gas">⛽ ${card.gasCost}g</span>`);
+  if (supplyLetters.length) metaParts.push(`<span class="deck-chip">${supplyLetters.map(({ letter }) => `<span class="deck-slot">${escapeHtml(letter)}</span>`).join('')}</span>`);
+
+  const mtgSplit = splitAidDeckAbilitiesForSides(abilities, {
+    size: 'mtg',
+    frontBudget: getAidDeckTacticalFrontBudget('mtg', abilities.length),
+  });
+  const tarotSplit = splitAidDeckAbilitiesForSides(abilities, {
+    size: 'tarot',
+    frontBudget: getAidDeckTacticalFrontBudget('tarot', abilities.length),
+  });
+  const useMtg = density <= 7.2 && mtgSplit.back.length === 0;
+  const size = useMtg ? 'mtg' : 'tarot';
+  const tarotMode = size === 'tarot';
+  const splitAbilities = useMtg ? mtgSplit : tarotSplit;
+  const frontAbilities = splitAbilities.front;
+  const backAbilities = splitAbilities.back;
+  const hasOverflow = backAbilities.length > 0;
+  const needsBack = hasOverflow;
+  const frontHtml = `
+    <article class="deck-card ${size} tactical-card ${escapeHtml(factionClass)}">
+      <header class="deck-card-header">
+        <div class="deck-title-wrap">
+          <div class="deck-title">${escapeHtml(card.name)}</div>
+          <div class="deck-subtitle">Tactical Card</div>
+        </div>
+      </header>
+      ${metaParts.length ? `<div class="deck-meta-chips">${metaParts.join('')}</div>` : ''}
+      ${card.tags ? `<div class="deck-tags">${escapeHtml(card.tags)}</div>` : ''}
+      <section class="deck-block">
+        ${frontAbilities.map(a => renderAidDeckAbilityBubble(a, {
+          faction,
+          factionClass,
+          phaseTag: a.phase ? getPhaseTag(a.phase) : '',
+          natural: true,
+        })).join('')}
+      </section>
+      ${hasOverflow ? `<div class="deck-overflow-note">Additional ability bubbles continue on the back.</div>` : ''}
+    </article>`;
+
+  if (!needsBack) return { frontHtml, backHtml: '', size };
+
+  const backHtml = `
+    <article class="deck-card ${size} tactical-card ${escapeHtml(factionClass)} back-face">
+      <header class="deck-card-header">
+        <div class="deck-title-wrap">
+          <div class="deck-title">${escapeHtml(card.name)} · Back</div>
+          <div class="deck-subtitle">Full Rules</div>
+        </div>
+      </header>
+      <section class="deck-block">
+        <h4>Abilities</h4>
+        ${backAbilities.map(a => renderAidDeckAbilityBubble(a, {
+          faction,
+          factionClass,
+          phaseTag: a.phase ? getPhaseTag(a.phase) : '',
+          natural: true,
+        })).join('')}
+      </section>
+    </article>`;
+
+  return { frontHtml, backHtml, size };
+}
+
+function openAidCardDeckPrintWindow() {
+  if (!currentRoster) return;
+  const seed = getSeed();
+  const roster = currentRoster;
+  const factionClass = `faction-${String(roster.faction).toLowerCase()}`;
+
+  const seenUnitKeys = new Set();
+  const dedupedUnits = (roster.units ?? []).filter((u) => {
+    const key = getAidUnitKey(u);
+    if (seenUnitKeys.has(key)) return false;
+    seenUnitKeys.add(key);
+    return true;
+  });
+
+  // Render all units with front/back pairs (Tarot landscape)
+  const unitPairs = dedupedUnits.map(unit => {
+    const front = renderNewAidDeckUnitFront(unit, { faction: roster.faction, factionClass });
+    const back = renderNewAidDeckUnitBack(unit, { faction: roster.faction, factionClass });
+    return { front, back };
+  });
+
+  // Render tactical cards as front-only for now; keep back renderer available for quick re-enable.
+  const includeTacticalBacks = false;
+  const tacticalGroups = groupAidTacticalCards(roster.tacticalCardDetails ?? []);
+  const tacticalPairs = tacticalGroups.map(card => {
+    const front = renderNewAidDeckTacticalCardFront(card, { faction: roster.faction, factionClass });
+    const back = includeTacticalBacks
+      ? renderNewAidDeckTacticalCardBack(card, { faction: roster.faction, factionClass })
+      : '';
+    return { front, back };
+  });
+
+  // Build interleaved layout with sections
+  let unitsContent = '';
+  for (const pair of unitPairs) {
+    unitsContent += `<div class="unit-pair">${pair.front}${pair.back}</div>`;
+  }
+  let tacticalContent = '';
+  for (const pair of tacticalPairs) {
+    tacticalContent += `<div class="tac-pair">${pair.front}${pair.back || ''}</div>`;
+  }
+
+  const win = window.open('', '_blank', 'width=1100,height=900');
+  win.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Player Aid Card Deck — ${seed}</title>
+  <style>
+    *,*::before,*::after { box-sizing: border-box; }
+    :root { font-family: Arial, sans-serif; }
+    body { margin: 0; padding: 12mm; background: #fff; color: #111; }
+    .deck-header { margin-bottom: 8mm; border-bottom: 1px solid #314563; padding-bottom: 3mm; }
+    .deck-section-title { font-size: 14px; font-weight: 700; margin: 8mm 0 6mm; color: #66b6ff; text-transform: uppercase; }
+    .deck-title { font-size: 16px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #66b6ff; }
+    .deck-subtitle { font-size: 10px; color: #93a8c4; margin-top: 1mm; }
+
+    /* UNITS: Tarot Landscape */
+    .units-section { page-break-after: always; }
+    .unit-pair {
+      display: flex;
+      gap: 3.4mm;
+      margin-bottom: 8mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .unit-card {
+      width: 120mm;
+      height: 70mm;
+      border: 2.4px solid;
+      border-radius: 3.2mm;
+      padding: 2.3mm;
+      background:
+        radial-gradient(circle at 78% 10%, rgba(102, 182, 255, .12), transparent 42%),
+        linear-gradient(150deg, #1b2e47 0%, #132135 56%, #0d1728 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2mm;
+      font-size: 8.2pt;
+      line-height: 1.22;
+      box-shadow: inset 0 0 0 1px rgba(125, 180, 255, .08);
+    }
+    .unit-card.faction-terran { border-color: #7db4ff; }
+    .unit-card.faction-zerg { border-color: #f76db2; }
+    .unit-card.faction-protoss { border-color: #f1bf59; }
+    .unit-card-front { display: grid; grid-template-rows: auto auto 1fr auto; gap: 1mm; }
+    .unit-card-back { display: grid; grid-template-rows: 1fr; gap: .8mm; }
+    .unit-main { display: flex; flex-direction: column; gap: 1mm; }
+    .unit-header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1.2mm; }
+    .unit-badge { min-width: 8mm; height: 8mm; border-radius: 1.5mm; display: inline-flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 700; flex-shrink: 0; font-family: Orbitron, sans-serif; letter-spacing: .05em; }
+    .badge-Hero { color: #f1bf59; background: rgba(241, 191, 89, .15); border: 1px solid #f1bf59; }
+    .badge-Core { color: #66b6ff; background: rgba(102, 182, 255, .15); border: 1px solid #66b6ff; }
+    .badge-Elite { color: #ff626b; background: rgba(255, 98, 107, .15); border: 1px solid #ff626b; }
+    .badge-Support { color: #46d48a; background: rgba(70, 212, 138, .15); border: 1px solid #46d48a; }
+    .badge-Air { color: #66b6ff; background: rgba(102, 182, 255, .15); border: 1px solid #66b6ff; }
+    .badge-Other { color: #93a8c4; background: rgba(147, 168, 196, .12); border: 1px solid #93a8c4; }
+    .unit-name-wrap {
+      min-width: 0;
+      height: 8mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .unit-title {
+      font-size: 11.4pt;
+      font-weight: 700;
+      color: #d4deed;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+    .unit-card.faction-terran .unit-title { color: #7db4ff; }
+    .unit-card.faction-zerg .unit-title { color: #f76db2; }
+    .unit-card.faction-protoss .unit-title { color: #f1bf59; }
+    .unit-cost-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 1.1mm;
+      white-space: nowrap;
+    }
+    .unit-cost { font-size: 10pt; font-weight: 700; font-family: Orbitron, sans-serif; white-space: nowrap; }
+    .unit-supply-cost { font-size: 8.6pt; font-weight: 700; font-family: Orbitron, sans-serif; color: #ff626b; white-space: nowrap; }
+    .unit-cost { color: #f1bf59; }
+    .unit-stats { margin-top: .4mm; }
+    .unit-stat-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; border: 1px solid #314563; border-radius: 1.2mm; overflow: hidden; }
+    .unit-stat-table th,
+    .unit-stat-table td { text-align: center; border-right: 1px solid #314563; }
+    .unit-stat-table th:last-child,
+    .unit-stat-table td:last-child { border-right: none; }
+    .unit-stat-table th {
+      font-size: 6.3pt;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-family: Orbitron, sans-serif;
+      color: #93a8c4;
+      background: rgba(20, 34, 54, .92);
+      padding: 0.75mm 0.35mm;
+      border-bottom: 1px solid #314563;
+    }
+    .unit-stat-table td {
+      padding: 1.05mm 0.35mm 1.2mm;
+      background: rgba(11, 23, 39, .9);
+      color: #d4deed;
+      font-family: Orbitron, sans-serif;
+      font-size: 11.4pt;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .unit-stat-table td.highlighted { color: #46d48a; background: rgba(70, 212, 138, .11); }
+    .unit-stat-delta {
+      font-size: 6.5pt;
+      margin-left: .45mm;
+      color: #9df5c8;
+      vertical-align: top;
+    }
+    .unit-section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .unit-front-bottom {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    .unit-front-bottom.compact-weapons .unit-upgrade-section {
+      padding-top: 0.45mm;
+    }
+    .unit-section-title { font-size: 7.2pt; font-weight: 700; text-transform: uppercase; color: #66b6ff; margin-bottom: 0.7mm; letter-spacing: .08em; font-family: Orbitron, sans-serif; }
+    .unit-weapons-table { width: 100%; border-collapse: collapse; font-size: 7.3pt; table-layout: fixed; }
+    .unit-weapons-table th { font-size: 6.2pt; text-transform: uppercase; color: #66b6ff; background: rgba(102, 182, 255, .08); padding: 0.7mm 0.8mm; border-bottom: 0.9px solid #314563; font-family: Orbitron, sans-serif; letter-spacing: .06em; }
+    .unit-weapons-table th,
+    .unit-weapons-table td { text-align: center; border-right: 0.8px solid #233650; }
+    .unit-weapons-table th:last-child,
+    .unit-weapons-table td:last-child { border-right: none; }
+    .unit-weapons-table td { padding: 0.68mm 0.8mm; border-bottom: 0.8px solid #233650; color: #d4deed; }
+    .unit-weapons-table td.is-highlighted { color: #46d48a; font-weight: 700; }
+    .unit-weapons-table tr.is-active td { color: #46d48a; }
+    .unit-weapons-table .weapon-name {
+      font-weight: 700;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      word-break: break-word;
+      line-height: 1.14;
+    }
+    .unit-weapons-table .weapon-name.is-highlighted { color: #46d48a; }
+    .unit-weapons-table th:last-child,
+    .unit-weapons-table td:last-child { text-align: left; }
+    .unit-weapons-table .weapon-traits-cell {
+      text-align: left;
+      font-size: 6.9pt;
+      line-height: 1.12;
+    }
+    .unit-weapons-table .weapon-traits-text {
+      display: block;
+      overflow: visible;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .unit-weapons-table.compact {
+      font-size: 6.65pt;
+    }
+    .unit-weapons-table.compact th {
+      font-size: 5.8pt;
+      padding: 0.52mm 0.6mm;
+    }
+    .unit-weapons-table.compact td {
+      padding: 0.45mm 0.52mm;
+      line-height: 1.05;
+    }
+    .unit-weapons-table.compact .weapon-name {
+      font-size: 6.9pt;
+      line-height: 1.04;
+    }
+    .unit-weapons-table.compact .weapon-traits-cell {
+      font-size: 6.05pt;
+      line-height: 1.03;
+    }
+    .unit-upgrade-section {
+      margin-top: auto;
+      border-top: 0.8px solid rgba(49, 69, 99, .38);
+      padding-top: 0.7mm;
+    }
+    .unit-upgrade-header {
+      color: #66b6ff;
+      font-family: Orbitron, sans-serif;
+      font-size: 6.2pt;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 0.45mm;
+    }
+    .unit-upgrade-row { display: flex; flex-wrap: wrap; gap: 0.6mm; align-items: center; min-height: 5mm; }
+    .unit-upgrade-pill { display: inline-block; padding: 0.7mm 1.5mm; background: rgba(70, 212, 138, .14); border: 0.8px solid #46d48a; border-radius: 999px; color: #9df5c8; font-size: 7.1pt; font-weight: 700; line-height: 1; }
+
+    .unit-back-columns { display: grid; grid-template-columns: 1fr; gap: 1mm; min-height: 0; }
+    .unit-back-columns.two-column { grid-template-columns: 1fr 1fr; }
+    .unit-col { min-height: 0; }
+    .unit-ability { border: 0.9px solid #233650; border-radius: 1.3mm; padding: 0.8mm 1mm; background: rgba(31, 59, 88, .4); margin-bottom: 0.65mm; font-size: 7pt; }
+    .unit-ability.is-active { border-color: rgba(70, 212, 138, .68); background: rgba(70, 212, 138, .1); }
+    .unit-ability-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8mm;
+      margin-bottom: .45mm;
+      min-width: 0;
+      flex-wrap: nowrap;
+    }
+    .unit-ability-title {
+      font-weight: 700;
+      color: #d4deed;
+      font-size: 8pt;
+      line-height: 1.05;
+      margin-bottom: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .unit-ability.is-active .unit-ability-title { color: #46d48a; }
+    .unit-ability-text { color: #d4deed; line-height: 1.17; font-size: 6.6pt; }
+    .unit-ability-chip-row { display: flex; flex-wrap: nowrap; gap: 0.45mm; margin-bottom: 0; flex-shrink: 0; }
+    .unit-ability-chip { display: inline-flex; align-items: center; padding: 0.5mm 1.1mm; border-radius: 999px; border: 0.8px solid rgba(49, 69, 99, .65); background: rgba(19, 31, 50, .75); color: #93a8c4; font-size: 6.1pt; font-family: Orbitron, sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+    .unit-ability-chip.active { border-color: rgba(70, 212, 138, .55); color: #46d48a; }
+    .unit-ability-chip.passive { border-color: rgba(147, 168, 196, .55); color: #93a8c4; }
+    .unit-ability-chip.phase-any { color: #93a8c4; border-color: rgba(147, 168, 196, .48); }
+    .unit-ability-chip.phase-movement { color: #66b6ff; border-color: rgba(102, 182, 255, .58); }
+    .unit-ability-chip.phase-assault { color: #ff626b; border-color: rgba(255, 98, 107, .58); }
+    .unit-ability-chip.phase-combat { color: #f1bf59; border-color: rgba(241, 191, 89, .58); }
+    .unit-ability-chip.phase-scoring { color: #46d48a; border-color: rgba(70, 212, 138, .58); }
+    .unit-ability-chip.phase-cleanup { color: #d4deed; border-color: rgba(212, 222, 237, .55); }
+    .unit-ability-chip.resource {
+      border-color: rgba(241, 191, 89, .58);
+      color: #f1bf59;
+      background: rgba(241, 191, 89, .12);
+      text-transform: none;
+      letter-spacing: .02em;
+    }
+
+    /* Global pill centering baseline */
+    .unit-upgrade-pill,
+    .unit-ability-chip,
+    .tac-chip,
+    .tac-ability-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    /* TACTICALS: MTG Portrait */
+    .tacticals-section { page-break-before: always; }
+    .tac-pair {
+      display: inline-flex;
+      gap: 3.2mm;
+      margin: 0 3.2mm 4mm 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      vertical-align: top;
+    }
+    .tac-card {
+      width: 63mm;
+      height: 88mm;
+      border: 2.4px solid;
+      border-radius: 3.2mm;
+      padding: 2.1mm;
+      background:
+        radial-gradient(circle at 80% 8%, rgba(102, 182, 255, .14), transparent 38%),
+        linear-gradient(150deg, #1b2e47 0%, #132135 56%, #0d1728 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 1mm;
+      font-size: 7.3pt;
+      line-height: 1.18;
+      box-shadow: inset 0 0 0 1px rgba(125, 180, 255, .08);
+    }
+    .tac-card.faction-terran { border-color: #7db4ff; }
+    .tac-card.faction-zerg { border-color: #f76db2; }
+    .tac-card.faction-protoss { border-color: #f1bf59; }
+    .tac-title { font-size: 11pt; font-weight: 700; color: #d4deed; line-height: 1.12; text-align: center; }
+    .tac-card.faction-terran .tac-title { color: #7db4ff; }
+    .tac-card.faction-zerg .tac-title { color: #f76db2; }
+    .tac-card.faction-protoss .tac-title { color: #f1bf59; }
+    .tac-title-sep {
+      height: 0;
+      border-top: 0.9px solid rgba(49, 69, 99, .48);
+      margin: 0.35mm 0 0.65mm;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .tac-meta-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      border: 1px solid #314563;
+      border-radius: 1.2mm;
+      overflow: hidden;
+      margin-bottom: 0.6mm;
+    }
+    .tac-meta-table th,
+    .tac-meta-table td {
+      text-align: center;
+      border-right: 1px solid #314563;
+      white-space: nowrap;
+    }
+    .tac-meta-table th:last-child,
+    .tac-meta-table td:last-child { border-right: none; }
+    .tac-meta-table th {
+      font-size: 6.2pt;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-family: Orbitron, sans-serif;
+      color: #93a8c4;
+      background: rgba(20, 34, 54, .92);
+      padding: 0.6mm 0.3mm;
+      border-bottom: 1px solid #314563;
+    }
+    .tac-meta-table td {
+      padding: 0.85mm 0.35mm;
+      background: rgba(11, 23, 39, .9);
+      color: #d4deed;
+      font-family: Orbitron, sans-serif;
+      font-size: 8.4pt;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .tac-meta-slot-letters {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.12em;
+    }
+    .tac-meta-value-resource { font-weight: 700; }
+    .tac-card.faction-terran .tac-meta-value-resource { color: #7db4ff; }
+    .tac-card.faction-zerg .tac-meta-value-resource { color: #f76db2; }
+    .tac-card.faction-protoss .tac-meta-value-resource { color: #f1bf59; }
+    .tac-meta-value-gas { color: #f1bf59; }
+    .tac-slot-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      font-weight: 700;
+    }
+    .tac-slot-letter.slot-hero { color: #f1bf59; }
+    .tac-slot-letter.slot-core { color: #45f2ff; }
+    .tac-slot-letter.slot-elite { color: #ff626b; }
+    .tac-slot-letter.slot-support { color: #46d48a; }
+    .tac-slot-letter.slot-air { color: #66b6ff; }
+    .tac-slot-letter.slot-other { color: #93a8c4; }
+    .tac-ability-list { flex: 1; min-height: 0; }
+    .tac-ability { border: 0.9px solid #233650; border-radius: 1.2mm; padding: 0.9mm 1.1mm; background: rgba(31, 59, 88, .4); margin-bottom: 0.7mm; font-size: 7.1pt; }
+    .tac-ability-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.7mm;
+      margin-bottom: 0.35mm;
+    }
+    .tac-ability-title { font-weight: 700; color: #d4deed; font-size: 7.9pt; margin-bottom: 0; min-width: 0; }
+    .tac-ability-pills {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45mm;
+      flex-shrink: 1;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .tac-ability-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.75mm 1.5mm;
+      border-radius: 999px;
+      border: 0.8px solid rgba(49, 69, 99, .65);
+      background: rgba(19, 31, 50, .75);
+      color: #93a8c4;
+      font-size: 8.85pt;
+      font-family: Orbitron, sans-serif;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .tac-ability-pill.resource {
+      border-color: rgba(241, 191, 89, .58);
+      color: #f1bf59;
+      background: rgba(241, 191, 89, .12);
+      text-transform: none;
+      letter-spacing: .02em;
+    }
+    .tac-ability-text { color: #d4deed; line-height: 1.2; }
+    .tac-card-back {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .tac-back-title {
+      width: 100%;
+      text-align: center;
+      margin-top: 0.2mm;
+    }
+    .tac-card-back::before {
+      content: '';
+      position: absolute;
+      inset: -15%;
+      background: radial-gradient(circle at center, rgba(102, 182, 255, .18), transparent 62%);
+      pointer-events: none;
+    }
+    .tac-back-resource {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2mm;
+      width: 100%;
+      height: 100%;
+    }
+    .tac-back-icon {
+      font-size: 36mm;
+      line-height: .9;
+      font-family: Orbitron, sans-serif;
+      text-shadow: 0 0 22px rgba(102, 182, 255, .45);
+    }
+    .tac-back-value {
+      font-size: 18pt;
+      font-weight: 700;
+      font-family: Orbitron, sans-serif;
+      letter-spacing: .06em;
+      color: #d4deed;
+      background: rgba(10, 18, 31, .7);
+      border: 1px solid rgba(125, 180, 255, .4);
+      border-radius: 999px;
+      padding: 1mm 3.2mm;
+    }
+    .tac-back-label {
+      font-size: 7pt;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #93a8c4;
+      font-family: Orbitron, sans-serif;
+    }
+    .tac-card-back.faction-terran .tac-back-icon,
+    .tac-card-back.faction-terran .tac-back-value,
+    .tac-card-back.faction-terran .tac-back-label {
+      color: #7db4ff;
+    }
+    .tac-card-back.faction-zerg .tac-back-icon,
+    .tac-card-back.faction-zerg .tac-back-value,
+    .tac-card-back.faction-zerg .tac-back-label {
+      color: #f76db2;
+    }
+    .tac-card-back.faction-protoss .tac-back-icon,
+    .tac-card-back.faction-protoss .tac-back-value,
+    .tac-card-back.faction-protoss .tac-back-label {
+      color: #f1bf59;
+    }
+    .tac-card-back.faction-terran .tac-back-value { border-color: rgba(125, 180, 255, .45); background: rgba(125, 180, 255, .14); }
+    .tac-card-back.faction-zerg .tac-back-value { border-color: rgba(247, 109, 178, .45); background: rgba(247, 109, 178, .14); }
+    .tac-card-back.faction-protoss .tac-back-value { border-color: rgba(241, 191, 89, .45); background: rgba(241, 191, 89, .14); }
+
+    @page { margin: 10mm; }
+    @media print { body { padding: 0; } .deck-header { margin-bottom: 4mm; } }
+  </style>
+</head>
+<body>
+  <div class="deck-header">
+    <div class="deck-title">Player Aid Card Deck · ${escapeHtml(roster.faction)} · ${escapeHtml(roster.factionCard)}</div>
+    <div class="deck-subtitle">Seed ${escapeHtml(seed)} · Two-sided Tarot (units) + MTG (tacticals)</div>
+  </div>
+
+  <section class="units-section">
+    <h2 class="deck-section-title">Unit Cards (Tarot Landscape, Double-Sided)</h2>
+    ${unitsContent}
+  </section>
+
+  <section class="tacticals-section">
+    <h2 class="deck-section-title">Tactical Cards (MTG Portrait)</h2>
+    <div>${tacticalContent}</div>
+  </section>
+
+  <script>
+    window.addEventListener('load', () => {
+      window.print();
+    });
+  <\/script>
+</body>
+</html>`);
+  win.document.close();
+}
+
+// UNIT CARDS: Tarot Landscape Pipeline
+function renderNewAidDeckUnitFront(unit, { faction, factionClass } = {}) {
+  const typeAbbr = TYPE_ABBR[unit.type] ?? '?';
+  const models = Number(unit.models ?? 1) > 1 ? ` ×${unit.models}` : '';
+  const upgrades = sortUpgradesForDisplay(unit.allUpgrades ?? []);
+  const weaponProfiles = resolveLinkedWeaponReplacements(
+    upgrades.filter(isWeaponProfile).filter(ug => isNaturalAbility(ug) || ug.active).map(parseWeaponProfile),
+    unit.models
+  ).sort(compareAidWeaponProfiles);
+  const visibleUpgrades = upgrades.filter(ug => !isWeaponProfile(ug)).filter(ug => isNaturalAbility(ug) || ug.active);
+  const formatWeaponTraitsForDisplay = (traitsText) => {
+    const tokens = splitTraitTokens(traitsText);
+    if (!tokens.length) return '-';
+    return tokens.join(', ');
+  };
+
+  // Merged mode analysis
+  const mergedBuffEntries = [];
+  const weaponBuffMap = new Map();
+  const unitStatDeltas = {};
+  for (const ability of visibleUpgrades) {
+    const detected = detectUnconditionalPassiveBuff(ability, weaponProfiles);
+    if ((detected?.highlights?.length ?? 0) > 0 || (detected?.weaponApplications?.length ?? 0) > 0 || (detected?.unitStatApplications?.length ?? 0) > 0) {
+      const weaponEffects = (detected.weaponApplications ?? []).map(e => String(e.effect || '').trim());
+      const weaponEffectSet = new Set(weaponEffects.map(e => e.toLowerCase()));
+      const nonWeaponHighlights = (detected.highlights ?? []).filter(h => !weaponEffectSet.has(String(h || '').trim().toLowerCase()));
+      if (nonWeaponHighlights.length) {
+        mergedBuffEntries.push({ name: ability.name, highlights: nonWeaponHighlights });
+      }
+      for (const entry of detected.weaponApplications ?? []) {
+        const key = String(entry.weaponName || '').toLowerCase();
+        if (!key) continue;
+        if (!weaponBuffMap.has(key)) weaponBuffMap.set(key, { statDeltas: {}, fieldReplacements: {}, traits: [] });
+        const target = weaponBuffMap.get(key);
+        if (entry.parsed?.kind === 'stat-delta' && entry.parsed.field) {
+          target.statDeltas[entry.parsed.field] = Number(target.statDeltas[entry.parsed.field] ?? 0) + Number(entry.parsed.delta ?? 0);
+        } else if (entry.parsed?.kind === 'field-replacement' && entry.parsed.field) {
+          target.fieldReplacements[entry.parsed.field] = entry.parsed.value;
+        } else if (entry.parsed?.kind === 'trait' && entry.parsed.trait) {
+          target.traits.push(entry.parsed.trait);
+        }
+      }
+      for (const entry of detected.unitStatApplications ?? []) {
+        const field = String(entry?.field || '').trim();
+        if (field) unitStatDeltas[field] = Number(unitStatDeltas[field] ?? 0) + Number(entry?.delta ?? 0);
+      }
+    }
+  }
+
+  // Apply merged stat deltas to displayed stats and highlight changed fields.
+  const buffedUnitStats = {
+    hp: unit?.stats?.hp,
+    armor: unit?.stats?.armor,
+    evade: unit?.stats?.evade,
+    speed: unit?.stats?.speed,
+    shield: unit?.stats?.shield,
+  };
+  const unitStatHighlights = {};
+  for (const [field, deltaRaw] of Object.entries(unitStatDeltas)) {
+    if (field === 'supply') continue;
+    const delta = Number(deltaRaw ?? 0);
+    if (!delta) continue;
+    const applied = applyNumericDelta(buffedUnitStats[field], delta);
+    buffedUnitStats[field] = applied.value;
+    unitStatHighlights[field] = applied.changed;
+  }
+
+  // Stats table
+  const statsParts = [];
+  const statsMap = {
+    hp: buffedUnitStats.hp,
+    armor: buffedUnitStats.armor,
+    evade: buffedUnitStats.evade,
+    speed: buffedUnitStats.speed,
+    shield: buffedUnitStats.shield,
+  };
+  for (const [field, value] of Object.entries(statsMap)) {
+    if (hasStatValue(value)) {
+      statsParts.push({
+        field: field.toUpperCase(),
+        value: String(value),
+        highlighted: !!unitStatHighlights[field],
+      });
+    }
+  }
+  const statsHtml = statsParts.length
+    ? `<div class="unit-stats"><table class="unit-stat-table"><thead><tr>${statsParts.map(s => `<th>${escapeHtml(s.field)}</th>`).join('')}</tr></thead><tbody><tr>${statsParts.map(s => `<td class="${s.highlighted ? 'highlighted' : ''}">${escapeHtml(s.value)}</td>`).join('')}</tr></tbody></table></div>`
+    : '';
+
+  // Apply merged weapon deltas/replacements/traits to displayed profiles.
+  const buffedWeaponProfiles = weaponProfiles.map(weapon => {
+    const key = String(weapon.name || '').toLowerCase();
+    const applied = weaponBuffMap.get(key);
+    if (!applied) return weapon;
+
+    const fieldHighlights = {};
+    let nextRange = weapon.range;
+    let nextRoa = weapon.roa;
+    let nextHit = weapon.hit;
+    let nextDamage = weapon.damage;
+    let nextSurge = weapon.surge;
+
+    const applyField = (field, currentValue) => {
+      const delta = Number(applied.statDeltas?.[field] ?? 0);
+      if (!delta) return { value: currentValue, changed: false };
+      return applyNumericDelta(currentValue, delta);
+    };
+
+    const rangeApplied = applyField('range', nextRange);
+    nextRange = rangeApplied.value;
+    fieldHighlights.range = rangeApplied.changed;
+
+    const roaApplied = applyField('roa', nextRoa);
+    nextRoa = roaApplied.value;
+    fieldHighlights.roa = roaApplied.changed;
+
+    const hitApplied = applyField('hit', nextHit);
+    nextHit = hitApplied.value;
+    fieldHighlights.hit = hitApplied.changed;
+
+    const damageApplied = applyField('damage', nextDamage);
+    nextDamage = damageApplied.value;
+    fieldHighlights.damage = damageApplied.changed;
+
+    if (typeof applied.fieldReplacements?.surge === 'string' && applied.fieldReplacements.surge.trim()) {
+      const normalizedSurge = applied.fieldReplacements.surge.trim();
+      fieldHighlights.surge = normalizedSurge !== String(weapon.surge ?? '').trim();
+      nextSurge = normalizedSurge;
+    } else {
+      fieldHighlights.surge = false;
+    }
+
+    const baseTraits = splitTraitTokens(weapon.traits);
+    const addedTraits = [...new Set((applied.traits ?? []).map(t => String(t).trim()).filter(Boolean))];
+    const mergedTraitsResult = mergeWeaponTraits(baseTraits, addedTraits);
+    const mergedTraits = mergedTraitsResult.merged.join(' | ');
+
+    const hasChanges = Object.values(fieldHighlights).some(Boolean) || mergedTraitsResult.highlights.length;
+    if (!hasChanges) return weapon;
+
+    return {
+      ...weapon,
+      range: nextRange,
+      roa: nextRoa,
+      hit: nextHit,
+      damage: nextDamage,
+      surge: nextSurge,
+      traits: mergedTraits,
+      fieldHighlights,
+      traitHighlights: mergedTraitsResult.highlights,
+      nameHighlighted: !!weapon.active || hasChanges,
+    };
+  });
+
+  const needsCompactWeapons =
+    buffedWeaponProfiles.length >= 3 ||
+    buffedWeaponProfiles.some(w => formatWeaponTraitsForDisplay(w?.traits).length > 44);
+
+  const computeWeaponTableColgroup = (rows) => {
+    const maxLen = (selector) => rows.reduce((m, row) => Math.max(m, String(selector(row) ?? '').trim().length), 0);
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+    const namePct = clamp(16 + (maxLen(r => r.name) * 0.45), 18, 28);
+    const rPct = clamp(4.4 + (maxLen(r => r.range) * 0.42), 4.6, 8.2);
+    const roaPct = clamp(4.8 + (maxLen(r => r.roa) * 0.48), 5.0, 9.0);
+    const hPct = clamp(4.0 + (maxLen(r => r.hit) * 0.42), 4.2, 7.2);
+    const dPct = clamp(4.0 + (maxLen(r => r.damage) * 0.42), 4.2, 7.2);
+    const sPct = clamp(6.2 + (maxLen(r => r.surge) * 0.36), 7.0, 14.5);
+
+    const fixed = [namePct, rPct, roaPct, hPct, dPct, sPct];
+    const fixedTotal = fixed.reduce((sum, n) => sum + n, 0);
+    const maxFixedTotal = 72;
+
+    let adjustedFixed = fixed;
+    if (fixedTotal > maxFixedTotal) {
+      const scale = maxFixedTotal / fixedTotal;
+      adjustedFixed = fixed.map(n => n * scale);
+    }
+
+    const traitsPct = clamp(100 - adjustedFixed.reduce((sum, n) => sum + n, 0), 28, 54);
+    const finalName = adjustedFixed[0];
+    const finalR = adjustedFixed[1];
+    const finalRoa = adjustedFixed[2];
+    const finalH = adjustedFixed[3];
+    const finalD = adjustedFixed[4];
+    const finalS = adjustedFixed[5];
+
+    return `<colgroup><col style="width:${finalName.toFixed(2)}%"><col style="width:${finalR.toFixed(2)}%"><col style="width:${finalRoa.toFixed(2)}%"><col style="width:${finalH.toFixed(2)}%"><col style="width:${finalD.toFixed(2)}%"><col style="width:${finalS.toFixed(2)}%"><col style="width:${traitsPct.toFixed(2)}%"></colgroup>`;
+  };
+
+  // Weapons
+  let weaponsHtml = '';
+  if (buffedWeaponProfiles.length) {
+      const rows = buffedWeaponProfiles.map(w => {
+      const hl = w.fieldHighlights ?? {};
+      const traitsChanged = (w.traitHighlights?.length ?? 0) > 0;
+      const displayTraits = formatWeaponTraitsForDisplay(w.traits);
+      return `<tr class="${!isNaturalAbility(w) && w.active ? 'is-active' : ''}"><td class="weapon-name${w.nameHighlighted ? ' is-highlighted' : ''}">${escapeHtml(w.name)}</td><td class="${hl.range ? 'is-highlighted' : ''}">${escapeHtml(String(w.range))}</td><td class="${hl.roa ? 'is-highlighted' : ''}">${escapeHtml(String(w.roa))}</td><td class="${hl.hit ? 'is-highlighted' : ''}">${escapeHtml(String(w.hit))}</td><td class="${hl.damage ? 'is-highlighted' : ''}">${escapeHtml(String(w.damage))}</td><td class="${hl.surge ? 'is-highlighted' : ''}">${escapeHtml(String(w.surge))}</td><td class="weapon-traits-cell${traitsChanged ? ' is-highlighted' : ''}"><span class="weapon-traits-text">${formatAidRichText(displayTraits, { faction, factionClass, allowLineBreaks: false, highlightTerms: w.traitHighlights ?? [] })}</span></td></tr>`;
+    });
+    const colgroupHtml = computeWeaponTableColgroup(buffedWeaponProfiles);
+    weaponsHtml = `<div class="unit-section"><div class="unit-section-title">Weapons</div><table class="unit-weapons-table${needsCompactWeapons ? ' compact' : ''}">${colgroupHtml}<thead><tr><th>Name</th><th>R</th><th>RoA</th><th>H</th><th>D</th><th>S</th><th>Traits</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+  }
+
+  // Purchased upgrades as pills
+  let upgradesHtml = '';
+  const purchased = [...new Set(visibleUpgrades
+    .filter(ug => !isNaturalAbility(ug) && ug.active)
+    .map(ug => String(ug?.name || '').trim())
+    .filter(Boolean))];
+  if (purchased.length) {
+    const pills = purchased.map(name => `<span class="unit-upgrade-pill">+${escapeHtml(name)}</span>`).join('');
+    upgradesHtml = `<div class="unit-upgrade-section"><div class="unit-upgrade-header">Purchased Upgrades</div><div class="unit-upgrade-row">${pills}</div></div>`;
+  } else if (mergedBuffEntries.length) {
+    const pills = mergedBuffEntries.map(e => `<span class="unit-upgrade-pill">+${escapeHtml(e.name)}</span>`).join('');
+    upgradesHtml = `<div class="unit-upgrade-section"><div class="unit-upgrade-header">Purchased Upgrades</div><div class="unit-upgrade-row">${pills}</div></div>`;
+  }
+
+  return `<div class="unit-card unit-card-front ${factionClass}">
+    <div class="unit-main">
+      <div class="unit-header">
+        <span class="unit-badge badge-${escapeHtml(unit.type)}">${typeAbbr}</span>
+        <div class="unit-name-wrap"><div class="unit-title">${escapeHtml(unit.name)}${models ? ` ${escapeHtml(models.trim())}` : ''}</div></div>
+        <div class="unit-cost-wrap">
+          <div class="unit-cost">${unit.totalCost}m</div>
+          <div class="unit-supply-cost">◆ ${escapeHtml(String(unit?.supply ?? 0))}</div>
+        </div>
+      </div>
+      ${statsHtml}
+    </div>
+    <div class="unit-front-bottom${needsCompactWeapons ? ' compact-weapons' : ''}">${weaponsHtml}${upgradesHtml}</div>
+  </div>`;
+}
+
+function renderNewAidDeckUnitBack(unit, { faction, factionClass } = {}) {
+  const upgrades = sortUpgradesForDisplay(unit.allUpgrades ?? []);
+  const weaponProfiles = resolveLinkedWeaponReplacements(
+    upgrades.filter(isWeaponProfile).filter(ug => isNaturalAbility(ug) || ug.active).map(parseWeaponProfile),
+    unit.models
+  ).sort(compareAidWeaponProfiles);
+  const visibleAbilities = upgrades
+    .filter(ug => !isWeaponProfile(ug))
+    .filter(ug => isNaturalAbility(ug) || ug.active)
+    // Print deck always runs merged mode, so hide passives that are merged into stats/weapons.
+    .filter(ability => {
+      const detected = detectUnconditionalPassiveBuff(ability, weaponProfiles);
+      const hasDetectedHighlights = (detected?.highlights?.length ?? 0) > 0;
+      const hasWeaponApplications = (detected?.weaponApplications?.length ?? 0) > 0;
+      const hasUnitStatApplications = (detected?.unitStatApplications?.length ?? 0) > 0;
+      return !(hasDetectedHighlights || hasWeaponApplications || hasUnitStatApplications);
+    });
+  const groupedByPhase = groupAbilitiesByPhase(visibleAbilities);
+
+  const abilitiesWithWeight = [];
+  for (const group of groupedByPhase) {
+    const phaseMeta = getAbilityPhaseMeta(group.phase);
+    for (const ability of group.abilities) {
+      const natural = isNaturalAbility(ability);
+      const active = !natural && ability.active;
+      const cls = active ? 'is-active' : 'is-natural';
+      const desc = String(ability.description || '').trim();
+      const activationMeta = parseAidActivation(ability);
+      const resourceCost = extractAidFactionResourceCost(
+        activationMeta.resource || activationMeta.state || ability?.activation,
+        faction,
+        factionClass
+      );
+      const chips = [
+        `<span class="unit-ability-chip phase-${escapeHtml(phaseMeta.className)}">${escapeHtml(phaseMeta.label)}</span>`,
+        `<span class="unit-ability-chip ${active ? 'active' : 'passive'}">${active ? 'Active' : 'Passive'}</span>`,
+        resourceCost ? `<span class="unit-ability-chip resource">${resourceCost.amount} ${escapeHtml(resourceCost.icon)}</span>` : ''
+      ].join('');
+      const abilityHtml = `<div class="unit-ability ${cls}"><div class="unit-ability-header"><div class="unit-ability-title">${escapeHtml(ability.name)}</div><div class="unit-ability-chip-row">${chips}</div></div><div class="unit-ability-text">${formatAidRichText(desc, { faction, factionClass, allowLineBreaks: false })}</div></div>`;
+      const weight = desc.length + String(ability?.name || '').length * 2 + 60;
+      abilitiesWithWeight.push({ html: abilityHtml, weight });
+    }
+  }
+
+  // Start with single-column for readability; switch to two-column only if content likely overflows.
+  const totalWeight = abilitiesWithWeight.reduce((sum, item) => sum + item.weight, 0);
+  const useTwoColumns = totalWeight > 1500 || abilitiesWithWeight.length > 4;
+
+  let col1 = '';
+  let col2 = '';
+  if (useTwoColumns) {
+    const colA = [];
+    const colB = [];
+    let weightA = 0;
+    let weightB = 0;
+    for (const item of abilitiesWithWeight) {
+      if (weightA <= weightB) {
+        colA.push(item.html);
+        weightA += item.weight;
+      } else {
+        colB.push(item.html);
+        weightB += item.weight;
+      }
+    }
+    col1 = colA.join('');
+    col2 = colB.join('');
+  } else {
+    col1 = abilitiesWithWeight.map(item => item.html).join('');
+  }
+
+  return `<div class="unit-card unit-card-back ${factionClass}">
+    <div class="unit-back-columns${useTwoColumns ? ' two-column' : ''}">
+      <div class="unit-col">${col1}</div>
+      ${useTwoColumns ? `<div class="unit-col">${col2}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+// TACTICAL CARDS: MTG Portrait Pipeline
+function renderNewAidDeckTacticalCardFront(card, { faction, factionClass } = {}) {
+  const resourceConfig = getFactionResourceLabelConfig(faction, factionClass);
+  const slotLetters = formatTacticalSupplyTypes(card.slots ?? {});
+  const abilities = Array.isArray(card.abilities) ? card.abilities.map(parseAidTacticalAbility) : [];
+  const metaCells = [];
+  if (slotLetters.length) {
+    const slotLettersHtml = slotLetters
+      .map(({ type, letter }) => `<span class="tac-slot-letter slot-${escapeHtml(String(type).toLowerCase())}">${escapeHtml(letter)}</span>`)
+      .join('');
+    metaCells.push({
+      label: 'Slots',
+      value: `<span class="tac-meta-slot-letters">${slotLettersHtml}</span>`,
+      valueClass: '',
+    });
+  }
+  if (typeof card.resource === 'number') {
+    metaCells.push({
+      label: resourceConfig.short,
+      value: `${escapeHtml(String(card.resource))} ${escapeHtml(resourceConfig.icon)}`,
+      valueClass: 'tac-meta-value-resource',
+    });
+  }
+  if (typeof card.gasCost === 'number') {
+    metaCells.push({
+      label: 'Gas',
+      value: `${escapeHtml(String(card.gasCost))}g`,
+      valueClass: 'tac-meta-value-gas',
+    });
+  }
+  if (card.count > 1) {
+    metaCells.push({
+      label: 'Count',
+      value: `x${escapeHtml(String(card.count))}`,
+      valueClass: '',
+    });
+  }
+  const metaHtml = metaCells.length
+    ? `<table class="tac-meta-table"><thead><tr>${metaCells.map(cell => `<th>${escapeHtml(cell.label)}</th>`).join('')}</tr></thead><tbody><tr>${metaCells.map(cell => `<td${cell.valueClass ? ` class="${cell.valueClass}"` : ''}>${cell.value}</td>`).join('')}</tr></tbody></table>`
+    : '';
+  const abilityHtml = abilities.map(a => {
+    const desc = String(a.description || '').trim();
+    const abilityResourceCost = extractAidFactionResourceCost(a.activation, faction, factionClass);
+    const pills = [
+      abilityResourceCost ? `<span class="tac-ability-pill resource">${abilityResourceCost.amount} ${escapeHtml(abilityResourceCost.icon)}</span>` : ''
+    ].join('');
+    return `<div class="tac-ability"><div class="tac-ability-top"><div class="tac-ability-title">${escapeHtml(a.name)}</div>${pills ? `<div class="tac-ability-pills">${pills}</div>` : ''}</div><div class="tac-ability-text">${formatAidRichText(desc, { faction, factionClass, allowLineBreaks: false })}</div></div>`;
+  }).join('');
+  return `<article class="tac-card ${factionClass}">
+    <div class="tac-title">${escapeHtml(card.name)}</div>
+    <div class="tac-title-sep"></div>
+    ${metaHtml}
+    <div class="tac-ability-list">${abilityHtml}</div>
+  </article>`;
+}
+
+function renderNewAidDeckTacticalCardBack(card, { faction, factionClass } = {}) {
+  const resourceConfig = getFactionResourceLabelConfig(faction, factionClass);
+  const resourceValue = typeof card.resource === 'number' ? card.resource : 0;
+  const resourceLabel = resourceValue === 1 ? resourceConfig.label : resourceConfig.labelPlural;
+  return `<article class="tac-card tac-card-back ${factionClass}">
+    <div class="tac-title tac-back-title">${escapeHtml(card.name)}</div>
+    <div class="tac-title-sep"></div>
+    <div class="tac-back-resource">
+      <div class="tac-back-icon">${escapeHtml(resourceConfig.icon)}</div>
+      <div class="tac-back-value">${resourceValue}</div>
+      <div class="tac-back-label">${escapeHtml(resourceLabel)}</div>
+    </div>
+  </article>`;
+}
+
 aidPrintBtn.addEventListener('click', () => openAidPrintWindow());
+aidPrintCardDeckBtn.addEventListener('click', () => openAidCardDeckPrintWindow());
 aidCollapseAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(true));
 aidExpandAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(false));
 aidCardEl.addEventListener('click', e => {

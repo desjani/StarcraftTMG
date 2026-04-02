@@ -1,5 +1,5 @@
 /**
- * Fetch live roster data for all three test seeds and save as JSON fixture files.
+ * Fetch live roster data for all test seeds and save as JSON fixture files.
  *
  * Usage:
  *   node tests/capture-fixtures.mjs
@@ -17,15 +17,18 @@ const __dirname  = dirname(__filename);
 
 export const FIXTURE_DIR = join(__dirname, 'fixtures');
 
-/** Terran, Zerg, and Protoss representative seeds. */
+/** Baseline and worst-case seeds across all factions. */
 export const TEST_SEEDS = [
   { seed: 'VNIEMU', faction: 'Terran'  },
   { seed: 'IWMZ7C', faction: 'Zerg'    },
   { seed: 'TTPIBA', faction: 'Protoss' },
+  { seed: '58WS1N', faction: 'Terran'  },
+  { seed: 'KPKC0V', faction: 'Zerg'    },
+  { seed: 'U093PL', faction: 'Protoss' },
 ];
 
 /**
- * Fetch all three seeds from the Firestore REST API and write them to
+ * Fetch all test seeds from the Firestore REST API and write them to
  * `tests/fixtures/<SEED>.json` as flattened documents.
  */
 export async function captureFixtures() {

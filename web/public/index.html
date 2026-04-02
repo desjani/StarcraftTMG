@@ -1212,6 +1212,274 @@
       }
     }
 
+    /* ── Unit Card Styles (Tarot Landscape Mode) ──────────────────────── */
+    .unit-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6mm;
+      border: 1px solid rgba(102, 182, 255, 0.35);
+      border-radius: 4px;
+      padding: 2mm;
+      background: linear-gradient(180deg, rgba(22, 38, 63, 0.96), rgba(13, 22, 36, 0.96));
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      font-size: 8pt;
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+    }
+    
+    .unit-card-front {
+      width: 96mm;
+      height: 41mm;
+    }
+    
+    .unit-card-back {
+      width: 96mm;
+      height: 76mm;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6mm;
+    }
+
+    .unit-main {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6mm;
+    }
+
+    .unit-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8mm;
+      width: 100%;
+    }
+
+    .unit-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 4.5mm;
+      height: 4.5mm;
+      border-radius: 0.8mm;
+      border: 1px solid rgba(102, 182, 255, 0.55);
+      background: rgba(102, 182, 255, 0.14);
+      color: var(--accent);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 6pt;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .badge-Hero    { border-color: rgba(241, 191, 89, 0.65); background: rgba(241, 191, 89, 0.14); color: var(--yellow); }
+    .badge-Core    { border-color: rgba(69, 242, 255, 0.58); background: rgba(69, 242, 255, 0.14); color: var(--accent-2); }
+    .badge-Elite   { border-color: rgba(255, 98, 107, 0.62); background: rgba(255, 98, 107, 0.12); color: var(--red); }
+    .badge-Support { border-color: rgba(70, 212, 138, 0.62); background: rgba(70, 212, 138, 0.13); color: var(--green); }
+    .badge-Air     { border-color: rgba(102, 182, 255, 0.62); background: rgba(102, 182, 255, 0.13); color: var(--accent); }
+    .badge-Other   { border-color: rgba(147, 168, 196, 0.5); background: rgba(147, 168, 196, 0.12); color: var(--muted); }
+
+    .unit-title {
+      font-size: 9pt;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .unit-cost {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7pt;
+      font-weight: 700;
+      color: var(--protoss);
+      white-space: nowrap;
+    }
+
+    .unit-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6mm;
+      font-size: 7pt;
+    }
+
+    .unit-stat {
+      border: 1px solid rgba(49, 69, 99, 0.4);
+      border-radius: 1.2mm;
+      padding: 0.8mm 1.4mm;
+      background: rgba(19, 31, 50, 0.6);
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.05em;
+    }
+
+    .unit-stat.highlighted {
+      border-color: rgba(70, 212, 138, 0.52);
+      background: rgba(70, 212, 138, 0.12);
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .unit-section {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .unit-section-title {
+      color: var(--muted);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 6pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.5mm;
+    }
+
+    .unit-weapons-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 7pt;
+    }
+
+    .unit-weapons-table th {
+      background: rgba(18, 31, 50, 0.8);
+      border-bottom: 1px solid rgba(49, 69, 99, 0.4);
+      padding: 0.8mm;
+      color: var(--muted);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 6pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: left;
+    }
+
+    .unit-weapons-table td {
+      border-bottom: 1px solid rgba(49, 69, 99, 0.25);
+      padding: 0.8mm;
+      color: var(--text);
+    }
+
+    .unit-weapons-table tbody tr.is-active td {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .weapon-name {
+      font-weight: 600;
+    }
+
+    .unit-upgrade-pill {
+      display: inline-block;
+      border: 1px solid rgba(70, 212, 138, 0.44);
+      border-radius: 999px;
+      background: rgba(70, 212, 138, 0.08);
+      color: var(--green);
+      padding: 0.6mm 1.2mm;
+      font-size: 6pt;
+      font-weight: 600;
+    }
+
+    .unit-ability {
+      padding: 1.2mm;
+      margin-bottom: 0.6mm;
+      border: 1px solid rgba(49, 69, 99, 0.32);
+      border-radius: 1.2mm;
+      background: rgba(14, 24, 40, 0.5);
+    }
+
+    .unit-ability.is-natural {
+      border-color: rgba(49, 69, 99, 0.24);
+      background: rgba(12, 21, 34, 0.48);
+    }
+
+    .unit-ability.is-active {
+      border-color: rgba(70, 212, 138, 0.28);
+      background: rgba(70, 212, 138, 0.08);
+    }
+
+    .unit-ability-title {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 7pt;
+      margin-bottom: 0.4mm;
+    }
+
+    .unit-ability.is-active .unit-ability-title {
+      color: var(--green);
+    }
+
+    .unit-ability-text {
+      color: var(--text);
+      font-size: 6.5pt;
+      line-height: 1.3;
+      opacity: 0.9;
+    }
+
+    /* ── Tactical Card Styles (MTG Portrait Mode) ────────────────────────── */
+    .tac-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5mm;
+      width: 62mm;
+      height: 88mm;
+      border: 1px solid rgba(102, 182, 255, 0.35);
+      border-radius: 3mm;
+      padding: 2mm;
+      background: linear-gradient(180deg, rgba(22, 38, 63, 0.96), rgba(13, 22, 36, 0.96));
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .tac-title {
+      font-size: 9pt;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .tac-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4mm;
+      font-size: 6pt;
+    }
+
+    .tac-chip {
+      display: inline-block;
+      border: 1px solid rgba(49, 69, 99, 0.4);
+      border-radius: 1mm;
+      background: rgba(19, 31, 50, 0.7);
+      color: var(--text);
+      padding: 0.5mm 1mm;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 5pt;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .tac-ability {
+      border: 1px solid rgba(49, 69, 99, 0.32);
+      border-radius: 1mm;
+      background: rgba(14, 24, 40, 0.5);
+      padding: 1mm;
+      font-size: 6pt;
+      margin-bottom: 0.4mm;
+    }
+
+    .tac-ability-title {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 6.5pt;
+      margin-bottom: 0.3mm;
+    }
+
+    .tac-ability-text {
+      color: var(--text);
+      font-size: 5.5pt;
+      line-height: 1.3;
+      opacity: 0.88;
+    }
+
     /* ── Player Aid print styles ─────────────────────────────────────────── */
     @media print {
       body { background: #fff !important; color: #000 !important; }
@@ -1394,6 +1662,7 @@
         <div id="aid-print-bar" style="display:none;gap:10px;margin-bottom:14px;">
           <button class="btn ghost" id="aid-collapse-all-btn">Collapse All Units</button>
           <button class="btn ghost" id="aid-expand-all-btn">Expand All Units</button>
+          <button class="btn ghost" id="aid-print-carddeck-btn">🃏 Print Card Deck (MTG/Tarot)</button>
           <button class="btn" id="aid-print-btn">🖨 Print / Save as PDF</button>
         </div>
         <div id="aid-card"></div>
