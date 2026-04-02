@@ -1659,12 +1659,16 @@
             </div>
           </div>
         </div>
-        <div id="aid-print-bar" style="display:none;gap:10px;margin-bottom:14px;">
-          <button class="btn ghost" id="aid-collapse-all-btn">Collapse All Units</button>
-          <button class="btn ghost" id="aid-expand-all-btn">Expand All Units</button>
-          <label class="opt-label" style="margin: 0; white-space: nowrap;"><input type="checkbox" id="aid-print-ink-friendly"> Ink Friendly</label>
-          <button class="btn ghost" id="aid-print-carddeck-btn">🃏 Print Card Deck (MTG/Tarot)</button>
-          <button class="btn" id="aid-print-btn">🖨 Print / Save as PDF</button>
+        <div id="aid-print-bar" style="display:none;flex-direction:column;gap:10px;margin-bottom:14px;">
+          <div style="display:flex;gap:10px;">
+            <button class="btn ghost" id="aid-collapse-all-btn">Collapse All Units</button>
+            <button class="btn ghost" id="aid-expand-all-btn">Expand All Units</button>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn" id="aid-print-btn">🖨 Print / Save as PDF</button>
+            <button class="btn ghost" id="aid-print-carddeck-btn">🃏 Print Card Deck (MTG/Tarot)</button>
+            <label class="opt-label" style="margin: 0; white-space: nowrap;"><input type="checkbox" id="aid-print-ink-friendly"> Ink Friendly</label>
+          </div>
         </div>
         <div id="aid-card"></div>
       </div>
