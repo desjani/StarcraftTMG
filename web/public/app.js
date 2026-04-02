@@ -2754,7 +2754,12 @@ function openAidCardDeckPrintWindow() {
     body.ink-friendly .unit-card.faction-terran .unit-title { color: #0d38a0; }
     body.ink-friendly .unit-card.faction-zerg .unit-title { color: #8b1845; }
     body.ink-friendly .unit-card.faction-protoss .unit-title { color: #704600; }
-    body.ink-friendly .deck-section-title { color: #0d38a0; }
+    body.ink-friendly .deck-section-title { color: #333; }
+    body.ink-friendly .deck-title { color: #333; }
+    body.ink-friendly .unit-section-title { color: #333; }
+    body.ink-friendly .unit-weapons-table th { color: #333; }
+    body.ink-friendly .badge-Core { color: #0052a3; }
+    body.ink-friendly .badge-Air { color: #0052a3; }
     body.ink-friendly .unit-stat-table { border-color: #c0c8d0; background: #ffffff; }
     body.ink-friendly .unit-stat-table th { background: #f0f2f6; color: #1a1a1a; border-color: #c0c8d0; }
     body.ink-friendly .unit-stat-table td { background: #fafbfc; color: #1a1a1a; border-color: #e8eef5; }
@@ -3294,6 +3299,10 @@ function openAidCardDeckPrintWindow() {
     body.ink-friendly .aid-tact-phase-chip.phase-combat { background: #faf6f0; border-color: #c9b084; color: #704600; }
     body.ink-friendly .aid-tact-phase-chip.phase-scoring { background: #ecf4ee; border-color: #8db899; color: #0d5a1a; }
     body.ink-friendly .aid-tact-phase-chip.phase-cleanup { background: #f2edff; border-color: #cfc0db; color: #6a4aa8; }
+    body.ink-friendly .badge-Core { color: #0052a3; }
+    body.ink-friendly .badge-Air { color: #0052a3; }
+    body.ink-friendly .aid-section-title { color: #333; }
+    body.ink-friendly .aid-weapons-table th { color: #333; }
 
     @page { margin: 10mm; }
     @media print { body { padding: 0; } .deck-header { margin-bottom: 4mm; } }
