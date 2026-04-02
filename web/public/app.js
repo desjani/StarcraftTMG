@@ -2760,6 +2760,9 @@ function openAidCardDeckPrintWindow() {
     body.ink-friendly .unit-weapons-table th { color: #333; }
     body.ink-friendly .badge-Core { color: #0052a3; }
     body.ink-friendly .badge-Air { color: #0052a3; }
+    body.ink-friendly .unit-upgrade-header { color: #333; }
+    body.ink-friendly .tac-slot-letter.slot-core { color: #0052a3; }
+    body.ink-friendly .tac-slot-letter.slot-air { color: #0052a3; }
     body.ink-friendly .unit-stat-table { border-color: #c0c8d0; background: #ffffff; }
     body.ink-friendly .unit-stat-table th { background: #f0f2f6; color: #1a1a1a; border-color: #c0c8d0; }
     body.ink-friendly .unit-stat-table td { background: #fafbfc; color: #1a1a1a; border-color: #e8eef5; }
@@ -3303,6 +3306,9 @@ function openAidCardDeckPrintWindow() {
     body.ink-friendly .badge-Air { color: #0052a3; }
     body.ink-friendly .aid-section-title { color: #333; }
     body.ink-friendly .aid-weapons-table th { color: #333; }
+    body.ink-friendly .unit-upgrade-header { color: #333; }
+    body.ink-friendly .tac-slot-letter.slot-core { color: #0052a3; }
+    body.ink-friendly .tac-slot-letter.slot-air { color: #0052a3; }
 
     @page { margin: 10mm; }
     @media print { body { padding: 0; } .deck-header { margin-bottom: 4mm; } }
