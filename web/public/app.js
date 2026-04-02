@@ -74,9 +74,32 @@ const aidExpandAllBtn = document.getElementById('aid-expand-all-btn');
 const aidPrintCardDeckBtn = document.getElementById('aid-print-carddeck-btn');
 const aidPrintInkFriendlyCheckbox = document.getElementById('aid-print-ink-friendly');
 const aidPrintBtn    = document.getElementById('aid-print-btn');
+// Play Mode controls
+const playCardEl = document.getElementById('play-card');
+const playDashboardEl = document.getElementById('play-dashboard');
+const playNewGameBtn = document.getElementById('play-new-game-btn');
+const playNewGameDialog = document.getElementById('play-new-game-dialog');
+const playNewGameForm = document.getElementById('play-new-game-form');
+const playPlayerNameInput = document.getElementById('play-player-name');
+const playOpponentNameInput = document.getElementById('play-opponent-name');
+const playOpponentFactionInput = document.getElementById('play-opponent-faction');
+const playPlayerSeedInput = document.getElementById('play-player-seed');
+const playOpponentSeedInput = document.getElementById('play-opponent-seed');
+const playMissionNameInput = document.getElementById('play-mission-name');
+const playGameLengthInput = document.getElementById('play-game-length');
+const playStartingSupplyInput = document.getElementById('play-starting-supply');
+const playSupplyPerRoundInput = document.getElementById('play-supply-per-round');
+const playGameSizeInput = document.getElementById('play-game-size');
+const playCancelBtn = document.getElementById('play-cancel-btn');
+const playResetGameDialog = document.getElementById('play-reset-game-dialog');
+const playResetGameCancelBtn = document.getElementById('play-reset-game-cancel-btn');
+const playResetGameConfirmBtn = document.getElementById('play-reset-game-confirm-btn');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
+let playModeState = null;
+
+const PLAY_PHASES = ['Movement', 'Assault', 'Combat', 'Scoring'];
 
 // Initialize ink-friendly preference from localStorage
 function initInkFriendlyPreference() {
@@ -1270,8 +1293,8 @@ function renderRosterCard(roster, opts = {}) {
           <span class="meta-supply">◆ ${supply} sup</span>
           <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
+          ${slotBreakdown ? `<span class="slot-breakdown-inline"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</span>` : ''}
         </div>
-        ${slotBreakdown ? `<div class="slot-breakdown"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</div>` : ''}
       </div>
       <div class="unit-list">${unitRows}</div>
       ${showTactical && tacticalItems.length ? `<div class="tact-section"><span class="tact-label">Tactical</span>${tactPills}</div>` : ''}
@@ -1286,22 +1309,33 @@ function renderPlayerAid(roster, opts = {}) {
     showActivation = true,
     showTactical   = true,
     mergedBuffs    = false,
+    dedupeUnits    = true,
+    playTrackers   = null,
+    unitKeyPrefix  = '',
+    rosterLabel    = '',
   } = opts;
   const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails, units, faction, factionCard, seed, slots } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
   const resourceIcon = RESOURCE_ICON[faction] ?? '◈';
   const factionClass = `faction-${String(faction).toLowerCase()}`;
   const slotBreakdown = formatSlotBreakdown(slots);
-  const seenUnitKeys = new Set();
-  const dedupedUnits = units.filter(u => {
-    const key = getAidUnitKey(u);
-    if (seenUnitKeys.has(key)) return false;
-    seenUnitKeys.add(key);
-    return true;
-  });
+  const unitsToRender = dedupeUnits
+    ? (() => {
+      const seenUnitKeys = new Set();
+      return units.filter(u => {
+        const key = getAidUnitKey(u);
+        if (seenUnitKeys.has(key)) return false;
+        seenUnitKeys.add(key);
+        return true;
+      });
+    })()
+    : [...units];
 
-  const unitBlocks = dedupedUnits.map(u => {
-    const unitKey = getAidUnitKey(u);
+  const unitBlocks = unitsToRender.map((u, unitIndex) => {
+    const rawUnitKey = dedupeUnits ? getAidUnitKey(u) : `${String(u?.id || 'unit')}-${unitIndex}`;
+    const unitKey = `${unitKeyPrefix}${rawUnitKey}`;
+    const tracker = playTrackers?.unitsByKey?.[unitKey] ?? null;
+    const isDead = !!tracker && (tracker.maxHealthPools?.length ?? 0) > 0 && getPlayTrackerCurrentHealth(tracker) <= 0;
     const isCollapsed = collapsedAidUnits.has(unitKey);
     const abbr   = TYPE_ABBR[u.type] ?? '?';
     const models = u.models > 1 ? ` ×${u.models}` : '';
@@ -1514,16 +1548,30 @@ function renderPlayerAid(roster, opts = {}) {
     const supplyHtml = mergedBuffs && supplyHighlighted
       ? `<span class="stat-chip stat-chip-supply">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
       : `<span class="stat-chip stat-chip-supply">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+    const mineralsHtml = `<span class="stat-chip stat-chip-minerals"><strong>${u.totalCost}m</strong></span>`;
+    const collapsedTrackerHtml = tracker ? `<div class="play-collapsed-trackers">
+      <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}">-</button>
+      <span class="play-health-value">${renderPlayHealthReadout(tracker)}</span>
+      <button class="btn ghost sm" type="button" data-play-action="hp-inc" data-unit-key="${escapeHtml(unitKey)}">+</button>
+      <button class="btn ghost sm play-activation-btn${tracker.activation?.movement ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="movement">M</button>
+      <button class="btn ghost sm play-activation-btn${tracker.activation?.assault ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="assault">A</button>
+      <button class="btn ghost sm play-activation-btn${tracker.activation?.combat ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="combat">C</button>
+      <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}">Dep</button>
+    </div>` : '';
+
     const collapsedStatlineHtml = showStats
-      ? `<div class="aid-collapsed-statline">${statChips}${supplyHtml}</div>`
+      ? `<div class="aid-collapsed-statline">${statChips}${supplyHtml}${mineralsHtml}${collapsedTrackerHtml}</div>`
       : '';
     const statsHtml = showStats ? `
       <div class="aid-stats-row">
         <div class="aid-stats">
           ${statChips}
           ${supplyHtml}
+          ${mineralsHtml}
         </div>
-        ${aidUpgradePills ? `<div class="unit-upgrades aid-upgrade-bubbles">${aidUpgradePills}</div>` : ''}
+        <div class="aid-stats-right">
+          ${aidUpgradePills ? `<div class="unit-upgrades aid-upgrade-bubbles">${aidUpgradePills}</div>` : ''}
+        </div>
       </div>` : '';
 
     const weaponsHtml     = renderAidWeaponsTable(buffedWeaponProfiles, { mergedBuffs });
@@ -1567,8 +1615,25 @@ function renderPlayerAid(roster, opts = {}) {
       : '';
 
     const hasBody = statsHtml || weaponsHtml || mergedBuffsHtml || upgradesHtml || tagsHtml;
+    const trackerHtml = tracker ? `
+      <div class="play-unit-trackers">
+        <div class="play-health-wrap">
+          <span class="play-stat-label">Health</span>
+          <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}">-</button>
+          <span class="play-health-value">${renderPlayHealthReadout(tracker)}</span>
+          <button class="btn ghost sm" type="button" data-play-action="hp-inc" data-unit-key="${escapeHtml(unitKey)}">+</button>
+        </div>
+        <div class="play-activation-wrap">
+          <span class="play-stat-label">Activated</span>
+          <button class="btn ghost sm play-activation-btn${tracker.activation?.movement ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="movement">Mov</button>
+          <button class="btn ghost sm play-activation-btn${tracker.activation?.assault ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="assault">Ass</button>
+          <button class="btn ghost sm play-activation-btn${tracker.activation?.combat ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="combat">Com</button>
+          <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}">Deployed</button>
+        </div>
+      </div>` : '';
+
     return `
-      <div class="aid-unit${isCollapsed ? ' is-collapsed' : ''}" data-aid-unit-key="${escapeHtml(unitKey)}">
+      <div class="aid-unit${isCollapsed ? ' is-collapsed' : ''}${isDead ? ' play-dead' : ''}" data-aid-unit-key="${escapeHtml(unitKey)}">
         <div class="aid-unit-header" role="button" tabindex="0" aria-expanded="${isCollapsed ? 'false' : 'true'}" aria-label="Toggle ${escapeHtml(u.name)} details">
           <div class="unit-type-badge badge-${escapeHtml(u.type)}">${abbr}</div>
           <div class="unit-info">
@@ -1577,10 +1642,10 @@ function renderPlayerAid(roster, opts = {}) {
               ${collapsedStatlineHtml}
             </div>
           </div>
-          <div class="unit-cost">${u.totalCost}m</div>
+          ${showStats ? '' : `<div class="unit-cost">${u.totalCost}m</div>`}
           <span class="aid-collapse-indicator" aria-hidden="true"></span>
         </div>
-        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${tagsHtml}${statsHtml}${mergedBuffsHtml}${weaponsHtml}${upgradesHtml}</div></div>` : ''}
+        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${tagsHtml}${statsHtml}${mergedBuffsHtml}${weaponsHtml}${upgradesHtml}</div></div>` : ''}
       </div>`;
   }).join('');
 
@@ -1591,22 +1656,530 @@ function renderPlayerAid(roster, opts = {}) {
   return `
     <div class="roster-card ${factionClass}">
       <div class="roster-header">
-        <div class="roster-faction ${escapeHtml(faction)}">${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
+        <div class="roster-faction ${escapeHtml(faction)}">${rosterLabel ? `${escapeHtml(rosterLabel)} · ` : ''}${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
           <span>💎 ${m.used}/${m.limit}m</span>
           <span>⛽ ${g.used}/${g.limit}g</span>
           <span class="meta-supply">◆ ${supply} sup</span>
           <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
+          ${slotBreakdown ? `<span class="slot-breakdown-inline"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</span>` : ''}
         </div>
-        ${slotBreakdown ? `<div class="slot-breakdown"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</div>` : ''}
       </div>
       <div class="unit-list">${unitBlocks}</div>
       ${tacticalHtml ? `<div class="aid-tactical-section">${tacticalHtml}</div>` : ''}
     </div>`;
 }
 
+function createPlayUnitsByKey(roster, side) {
+  const unitsByKey = {};
+  (roster.units ?? []).forEach((u, idx) => {
+    const key = `${side}:${String(u?.id || 'unit')}-${idx}`;
+    const hpPerModel = Number.parseInt(String(u?.stats?.hp ?? '0'), 10);
+    const shieldValue = Number.parseInt(String(u?.stats?.shield ?? '0'), 10);
+    const models = Number(u?.models ?? 1);
+    const maxHealthPools = [];
+    if (Number.isFinite(hpPerModel) && hpPerModel > 0) {
+      for (let index = 0; index < Math.max(1, models); index += 1) {
+        maxHealthPools.push({ type: 'hp', value: hpPerModel });
+      }
+    }
+    if (Number.isFinite(shieldValue) && shieldValue > 0) {
+      maxHealthPools.push({ type: 'shield', value: shieldValue });
+    }
+    unitsByKey[key] = {
+      key,
+      side,
+      maxHealthPools,
+      currentHealthPools: maxHealthPools.map(pool => ({ ...pool })),
+      supply: Number(u?.supply ?? 0) || 0,
+      deployed: false,
+      activation: {
+        movement: false,
+        assault: false,
+        combat: false,
+      },
+    };
+  });
+  return unitsByKey;
+}
+
+function getPlayTrackerCurrentHealth(tracker) {
+  return (tracker?.currentHealthPools ?? []).reduce((sum, pool) => sum + Number(pool?.value || 0), 0);
+}
+
+function renderPlayHealthReadout(tracker) {
+  const pools = tracker?.currentHealthPools ?? [];
+  const maxPools = tracker?.maxHealthPools ?? [];
+  if (!pools.length) return '<span class="play-health-empty">-</span>';
+  return pools.map((pool, index) => {
+    const value = Number(pool.value || 0);
+    const maxValue = Number(maxPools[index]?.value || 0);
+    const cls = [
+      'play-health-segment',
+      pool.type === 'shield' ? 'is-shield' : 'is-hp',
+      value <= 0 ? 'is-zero' : '',
+      pool.type !== 'shield' && value > 0 && maxValue > 0 && value >= maxValue ? 'is-full' : '',
+    ].filter(Boolean).join(' ');
+    const sep = index < pools.length - 1 ? '<span class="play-health-sep">/</span>' : '';
+    return `<span class="${cls}">${escapeHtml(String(pool.value))}</span>${sep}`;
+  }).join('');
+}
+
+function adjustPlayTrackerHealth(tracker, delta) {
+  if (!tracker || !delta) return;
+  const currentPools = tracker.currentHealthPools ?? [];
+  const maxPools = tracker.maxHealthPools ?? [];
+  if (!currentPools.length || !maxPools.length) return;
+
+  if (delta < 0) {
+    for (let remaining = Math.abs(delta); remaining > 0; remaining -= 1) {
+      const targetIndex = currentPools.map(pool => Number(pool.value || 0)).reduceRight((found, value, index) => {
+        if (found !== -1) return found;
+        return value > 0 ? index : -1;
+      }, -1);
+      if (targetIndex === -1) break;
+      currentPools[targetIndex].value = Math.max(0, Number(currentPools[targetIndex].value || 0) - 1);
+    }
+    return;
+  }
+
+  for (let remaining = delta; remaining > 0; remaining -= 1) {
+    const targetIndex = currentPools.reduce((found, pool, index) => {
+      if (found !== -1) return found;
+      return Number(pool.value || 0) < Number(maxPools[index]?.value || 0) ? index : -1;
+    }, -1);
+    if (targetIndex === -1) break;
+    currentPools[targetIndex].value = Math.min(
+      Number(maxPools[targetIndex]?.value || 0),
+      Number(currentPools[targetIndex].value || 0) + 1,
+    );
+  }
+}
+
+function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
+  const parsedGameSize = Number.parseInt(String(setup.gameSize ?? 2000), 10);
+  const gameSize = Math.min(100000, Math.max(1, Number.isFinite(parsedGameSize) ? parsedGameSize : 2000));
+  const parsedGameLength = Number.parseInt(String(setup.gameLength ?? 5), 10);
+  const gameLength = Math.min(20, Math.max(1, Number.isFinite(parsedGameLength) ? parsedGameLength : 5));
+  const parsedStartingSupply = Number.parseInt(String(setup.startingSupply ?? 10), 10);
+  const startingSupply = Math.min(200, Math.max(0, Number.isFinite(parsedStartingSupply) ? parsedStartingSupply : 10));
+  const parsedSupplyPerRound = Number.parseInt(String(setup.supplyPerRound ?? 2), 10);
+  const supplyPerRound = Math.min(50, Math.max(0, Number.isFinite(parsedSupplyPerRound) ? parsedSupplyPerRound : 2));
+  const playerSeed = sanitizeSeed(setup.playerSeed || playerRoster?.seed || currentRoster?.seed || '');
+  const opponentSeed = sanitizeSeed(setup.opponentSeed || opponentRoster?.seed || '');
+  const unitsByKey = {
+    ...createPlayUnitsByKey(playerRoster, 'player'),
+    ...(opponentRoster ? createPlayUnitsByKey(opponentRoster, 'opponent') : {}),
+  };
+
+  return {
+    playerSeed,
+    opponentSeed,
+    playerRoster,
+    opponentRoster,
+    playerName: String(setup.playerName || 'Player').trim() || 'Player',
+    opponentName: String(setup.opponentName || 'Opponent').trim() || 'Opponent',
+    opponentFaction: setup.opponentFaction || 'Terran',
+    missionName: String(setup.missionName || 'Mission').trim() || 'Mission',
+    gameLength,
+    startingSupply,
+    supplyPerRound,
+    gameSize,
+    hasStarted: !!setup.hasStarted,
+    playerScore: 0,
+    opponentScore: 0,
+    playerResource: 0,
+    opponentResource: 0,
+    round: 1,
+    phaseIndex: 0,
+    firstPlayer: 'player',
+    activeBoardSide: 'player',
+    collapsedHealthWidthBySide: {
+      player: null,
+      opponent: null,
+    },
+    collapsedNameWidthBySide: {
+      player: null,
+      opponent: null,
+    },
+    unitsByKey,
+    history: [],
+  };
+}
+
+function ensurePlayModeState(roster) {
+  if (!roster) return;
+  if (!playModeState || playModeState.playerSeed !== roster.seed) {
+    playModeState = createPlayModeState(roster, null, { playerSeed: roster.seed });
+    applyDefaultPlayCollapsedUnits(playModeState);
+  }
+}
+
+async function loadRosterForPlay(seed) {
+  const normalizedSeed = sanitizeSeed(seed);
+  if (!normalizedSeed) return null;
+  if (currentRoster && currentRoster.seed === normalizedSeed) return currentRoster;
+  const flat = await fetchRoster(normalizedSeed);
+  const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
+  return parseRoster(flat, { tacticalCards });
+}
+
+function getPlayCurrentPhase() {
+  return PLAY_PHASES[playModeState?.phaseIndex ?? 0] ?? PLAY_PHASES[0];
+}
+
+function clonePlaySnapshot() {
+  if (!playModeState) return null;
+  return {
+    round: playModeState.round,
+    phaseIndex: playModeState.phaseIndex,
+    firstPlayer: playModeState.firstPlayer,
+    playerResource: playModeState.playerResource,
+    opponentResource: playModeState.opponentResource,
+    playerScore: playModeState.playerScore,
+    opponentScore: playModeState.opponentScore,
+    unitsByKey: JSON.parse(JSON.stringify(playModeState.unitsByKey)),
+  };
+}
+
+function restorePlaySnapshot(snapshot) {
+  if (!playModeState || !snapshot) return;
+  playModeState.round = snapshot.round;
+  playModeState.phaseIndex = snapshot.phaseIndex;
+  playModeState.firstPlayer = snapshot.firstPlayer;
+  playModeState.playerResource = snapshot.playerResource;
+  playModeState.opponentResource = snapshot.opponentResource;
+  playModeState.playerScore = snapshot.playerScore;
+  playModeState.opponentScore = snapshot.opponentScore;
+  playModeState.unitsByKey = snapshot.unitsByKey;
+}
+
+function resetRoundTrackers() {
+  if (!playModeState) return;
+  playModeState.playerResource = 0;
+  playModeState.opponentResource = 0;
+  for (const tracker of Object.values(playModeState.unitsByKey)) {
+    tracker.activation.movement = false;
+    tracker.activation.assault = false;
+    tracker.activation.combat = false;
+  }
+}
+
+function buildPlayDashboard() {
+  if (!playModeState?.playerRoster) {
+    return '<div class="play-name-line">Load a roster to start Play Mode.</div>';
+  }
+
+  const currentPhase = getPlayCurrentPhase();
+  const trackers = Object.values(playModeState.unitsByKey);
+  const supplyCap = playModeState.startingSupply + Math.max(0, playModeState.round - 1) * playModeState.supplyPerRound;
+  const getSupplyOnBoard = (side) => trackers
+    .filter(t => t.side === side && t.deployed && getPlayTrackerCurrentHealth(t) > 0)
+    .reduce((sum, t) => sum + Number(t.supply || 0), 0);
+  const playerSupplyOnBoard = getSupplyOnBoard('player');
+  const opponentSupplyOnBoard = getSupplyOnBoard('opponent');
+  const playerSupplyAvailable = Math.max(0, Number(supplyCap || 0) - playerSupplyOnBoard);
+  const opponentSupplyAvailable = Math.max(0, Number(supplyCap || 0) - opponentSupplyOnBoard);
+  const firstPlayerLabel = playModeState.firstPlayer === 'player' ? playModeState.playerName : playModeState.opponentName;
+  const playerFactionClass = `faction-${String(playModeState.playerRoster?.faction || 'terran').toLowerCase()}`;
+  const opponentFactionSource = playModeState.opponentRoster?.faction || playModeState.opponentFaction || 'terran';
+  const opponentFactionClass = `faction-${String(opponentFactionSource).toLowerCase()}`;
+  const firstPlayerFactionClass = playModeState.firstPlayer === 'player' ? playerFactionClass : opponentFactionClass;
+  const phaseClass = `phase-${String(currentPhase).toLowerCase()}`;
+  const hasOpponentBoard = !!playModeState.opponentRoster;
+  let nextLabel = 'Next Phase';
+  if (currentPhase === 'Scoring') {
+    nextLabel = playModeState.round >= playModeState.gameLength ? 'End Game' : 'Next Round';
+  }
+
+  return `
+    <div class="play-topbar">
+      <div class="play-name-line"><strong>${escapeHtml(playModeState.playerName)}</strong> vs <strong>${escapeHtml(playModeState.opponentName)}</strong> (${escapeHtml(playModeState.opponentFaction)}) · ${escapeHtml(String(playModeState.gameSize))}m · <strong>${escapeHtml(playModeState.missionName)}</strong> · ${playModeState.gameLength} rounds</div>
+    </div>
+    <div class="play-dashboard">
+      <div class="play-stat">
+        <div class="play-stat-label">Supply On Board</div>
+        <div class="play-resource-row"><span class="play-stat-label">${escapeHtml(playModeState.playerName)}</span><span class="play-stat-value play-side-value ${escapeHtml(playerFactionClass)}">${playerSupplyOnBoard}</span></div>
+        ${playModeState.opponentRoster ? `<div class="play-resource-row"><span class="play-stat-label">${escapeHtml(playModeState.opponentName)}</span><span class="play-stat-value play-side-value ${escapeHtml(opponentFactionClass)}">${opponentSupplyOnBoard}</span></div>` : ''}
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Supply Available</div>
+        <div class="play-resource-row"><span class="play-stat-label">${escapeHtml(playModeState.playerName)}</span><span class="play-stat-value play-side-value ${escapeHtml(playerFactionClass)}">${playerSupplyAvailable}</span></div>
+        ${playModeState.opponentRoster ? `<div class="play-resource-row"><span class="play-stat-label">${escapeHtml(playModeState.opponentName)}</span><span class="play-stat-value play-side-value ${escapeHtml(opponentFactionClass)}">${opponentSupplyAvailable}</span></div>` : ''}
+        <div class="play-stat-label">Cap ${supplyCap}</div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Faction Resource</div>
+        <div class="play-resource-row">
+          <span class="play-stat-label">${escapeHtml(playModeState.playerName)}</span>
+          <div class="play-score-controls">
+            <button class="btn ghost sm" type="button" data-play-action="resource-dec" data-side="player">-</button>
+            <span class="play-stat-value play-side-value ${escapeHtml(playerFactionClass)}">${playModeState.playerResource}</span>
+            <button class="btn ghost sm" type="button" data-play-action="resource-inc" data-side="player">+</button>
+          </div>
+        </div>
+        <div class="play-resource-row">
+          <span class="play-stat-label">${escapeHtml(playModeState.opponentName)}</span>
+          <div class="play-score-controls">
+            <button class="btn ghost sm" type="button" data-play-action="resource-dec" data-side="opponent">-</button>
+            <span class="play-stat-value play-side-value ${escapeHtml(opponentFactionClass)}">${playModeState.opponentResource}</span>
+            <button class="btn ghost sm" type="button" data-play-action="resource-inc" data-side="opponent">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Score</div>
+        <div class="play-score-row"><span class="play-stat-label">${escapeHtml(playModeState.playerName)}</span><div class="play-score-controls"><button class="btn ghost sm" type="button" data-play-action="score-dec" data-side="player">-</button><span class="play-stat-value play-side-value ${escapeHtml(playerFactionClass)}">${playModeState.playerScore}</span><button class="btn ghost sm" type="button" data-play-action="score-inc" data-side="player">+</button></div></div>
+        <div class="play-score-row"><span class="play-stat-label">${escapeHtml(playModeState.opponentName)}</span><div class="play-score-controls"><button class="btn ghost sm" type="button" data-play-action="score-dec" data-side="opponent">-</button><span class="play-stat-value play-side-value ${escapeHtml(opponentFactionClass)}">${playModeState.opponentScore}</span><button class="btn ghost sm" type="button" data-play-action="score-inc" data-side="opponent">+</button></div></div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Lists</div>
+        <div class="play-list-switches">
+          <button class="btn ghost sm play-list-btn ${escapeHtml(playerFactionClass)}${playModeState.activeBoardSide === 'player' ? ' is-active' : ''}" type="button" data-play-action="show-board" data-side="player">${escapeHtml(playModeState.playerName)}</button>
+          <button class="btn ghost sm play-list-btn ${escapeHtml(opponentFactionClass)}${playModeState.activeBoardSide === 'opponent' ? ' is-active' : ''}" type="button" data-play-action="show-board" data-side="opponent" ${hasOpponentBoard ? '' : 'disabled'}>${escapeHtml(playModeState.opponentName)}</button>
+        </div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">First Player</div>
+        <div class="play-inline-controls">
+          <button class="btn ghost play-first-player-btn ${escapeHtml(firstPlayerFactionClass)}" type="button" data-play-action="toggle-first-player">${escapeHtml(firstPlayerLabel)}</button>
+        </div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Round Tracker</div>
+        <div class="play-resource-row"><span class="play-stat-label">Round</span><span class="play-stat-value">${playModeState.round}</span></div>
+        <div class="play-resource-row"><span class="play-stat-label">Phase</span><span class="play-stat-value play-phase-readout ${escapeHtml(phaseClass)}">${escapeHtml(currentPhase)}</span></div>
+        <div class="play-inline-controls">
+          <button class="btn ghost sm" type="button" data-play-action="open-new-game-confirm" title="Start New Game">↻ New Game</button>
+        </div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Flow</div>
+        <div class="play-phase-actions">
+          <button class="btn ghost sm" type="button" data-play-action="phase-back">Back</button>
+          <button class="btn sm" type="button" data-play-action="phase-next">${escapeHtml(nextLabel)}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderPlayMode(roster) {
+  ensurePlayModeState(roster);
+  if (!playModeState?.playerRoster) return '';
+  const activeSide = playModeState.activeBoardSide === 'opponent' && playModeState.opponentRoster ? 'opponent' : 'player';
+  playModeState.activeBoardSide = activeSide;
+  const playerBoardHtml = renderPlayerAid(playModeState.playerRoster, {
+    showStats: true,
+    allUpgrades: true,
+    showActivation: true,
+    showTactical: true,
+    mergedBuffs: true,
+    dedupeUnits: false,
+    playTrackers: playModeState,
+    unitKeyPrefix: 'player:',
+    rosterLabel: playModeState.playerName,
+  });
+  const opponentBoardHtml = playModeState.opponentRoster
+    ? renderPlayerAid(playModeState.opponentRoster, {
+      showStats: true,
+      allUpgrades: true,
+      showActivation: true,
+      showTactical: true,
+      mergedBuffs: true,
+      dedupeUnits: false,
+      playTrackers: playModeState,
+      unitKeyPrefix: 'opponent:',
+      rosterLabel: playModeState.opponentName,
+    })
+    : '';
+  const activeBoardHtml = activeSide === 'opponent' ? opponentBoardHtml : playerBoardHtml;
+  const activeName = activeSide === 'opponent' ? playModeState.opponentName : playModeState.playerName;
+  const activePrefix = activeSide === 'opponent' ? 'opponent:' : 'player:';
+  return `
+    <div class="play-board-grid single">
+      <div class="play-board-column">
+        <div class="play-board-controls">
+          <div class="play-stat-label">${escapeHtml(activeName)} Controls</div>
+          <div class="play-side-actions">
+            <button class="btn ghost sm" type="button" data-play-action="collapse-side" data-side-prefix="${escapeHtml(activePrefix)}">Collapse All</button>
+            <button class="btn ghost sm" type="button" data-play-action="expand-side" data-side-prefix="${escapeHtml(activePrefix)}">Expand All</button>
+          </div>
+        </div>
+        ${activeBoardHtml}
+      </div>
+    </div>`;
+}
+
+function refreshPlayModeOutput() {
+  if (!playCardEl || !playDashboardEl) return;
+  if (!playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (playNewGameBtn) playNewGameBtn.style.display = playModeState?.hasStarted ? 'none' : '';
+  playDashboardEl.innerHTML = buildPlayDashboard();
+  playCardEl.innerHTML = renderPlayMode(currentRoster);
+  if (playModeState?.hasStarted) {
+    const side = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
+    const hpWidth = playModeState.collapsedHealthWidthBySide?.[side] ?? null;
+    if (hpWidth) {
+      playCardEl.style.setProperty('--play-collapsed-health-width', hpWidth);
+    } else {
+      playCardEl.style.removeProperty('--play-collapsed-health-width');
+      freezePlayCollapsedHealthWidth(side);
+    }
+
+    const nameWidth = playModeState.collapsedNameWidthBySide?.[side] ?? null;
+    if (nameWidth) {
+      playCardEl.style.setProperty('--aid-collapsed-name-width', nameWidth);
+      const titleRows = playCardEl.querySelectorAll('.aid-unit-title-row');
+      for (const row of titleRows) row.style.setProperty('--aid-collapsed-name-width', nameWidth);
+    } else {
+      playCardEl.style.removeProperty('--aid-collapsed-name-width');
+      scheduleAidCollapsedStatlineAlignment();
+    }
+  } else {
+    playCardEl.style.removeProperty('--play-collapsed-health-width');
+    playCardEl.style.removeProperty('--aid-collapsed-name-width');
+  }
+}
+
+function openPlayNewGameDialog() {
+  if (!playNewGameDialog) return;
+  if (!playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (playPlayerNameInput) playPlayerNameInput.value = playModeState?.playerName || 'Player';
+  if (playOpponentNameInput) playOpponentNameInput.value = playModeState?.opponentName || 'Opponent';
+  if (playOpponentFactionInput) playOpponentFactionInput.value = playModeState?.opponentFaction || 'Terran';
+  if (playPlayerSeedInput) playPlayerSeedInput.value = playModeState?.playerSeed || currentRoster?.seed || '';
+  if (playOpponentSeedInput) playOpponentSeedInput.value = playModeState?.opponentSeed || '';
+  if (playMissionNameInput) playMissionNameInput.value = playModeState?.missionName || 'Mission';
+  if (playGameLengthInput) playGameLengthInput.value = String(playModeState?.gameLength || 5);
+  if (playStartingSupplyInput) playStartingSupplyInput.value = String(playModeState?.startingSupply ?? 10);
+  if (playSupplyPerRoundInput) playSupplyPerRoundInput.value = String(playModeState?.supplyPerRound ?? 2);
+  if (playGameSizeInput) playGameSizeInput.value = String(playModeState?.gameSize || 2000);
+  playNewGameDialog.showModal();
+}
+
+function handlePlayNextStep() {
+  if (!playModeState) return;
+  const currentPhase = getPlayCurrentPhase();
+  if (currentPhase === 'Scoring' && playModeState.round >= playModeState.gameLength) {
+    const winner = playModeState.playerScore === playModeState.opponentScore
+      ? 'Draw'
+      : (playModeState.playerScore > playModeState.opponentScore ? playModeState.playerName : playModeState.opponentName);
+    window.alert(`Final Score\n${playModeState.playerName}: ${playModeState.playerScore}\n${playModeState.opponentName}: ${playModeState.opponentScore}\nWinner: ${winner}`);
+    return;
+  }
+
+  playModeState.history.push(clonePlaySnapshot());
+  if (currentPhase === 'Scoring') {
+    playModeState.round += 1;
+    playModeState.phaseIndex = 0;
+    resetRoundTrackers();
+  } else {
+    playModeState.phaseIndex = Math.min(playModeState.phaseIndex + 1, PLAY_PHASES.length - 1);
+  }
+  refreshPlayModeOutput();
+}
+
+function handlePlayBackStep() {
+  if (!playModeState?.history?.length) return;
+  const snapshot = playModeState.history.pop();
+  restorePlaySnapshot(snapshot);
+  refreshPlayModeOutput();
+}
+
+function handlePlayAction(actionEl) {
+  if (!playModeState) return;
+  const action = String(actionEl.dataset.playAction || '');
+  const side = String(actionEl.dataset.side || '');
+  const unitKey = String(actionEl.dataset.unitKey || '');
+  const phase = String(actionEl.dataset.phase || '').toLowerCase();
+  const tracker = unitKey ? playModeState.unitsByKey[unitKey] : null;
+
+  if (action === 'open-new-game') {
+    openPlayNewGameDialog();
+    return;
+  }
+  if (action === 'open-new-game-confirm') {
+    playResetGameDialog?.showModal();
+    return;
+  }
+  if (action === 'phase-next') {
+    handlePlayNextStep();
+    return;
+  }
+  if (action === 'collapse-side') {
+    setPlaySideUnitsCollapsed(String(actionEl.dataset.sidePrefix || ''), true);
+    return;
+  }
+  if (action === 'expand-side') {
+    setPlaySideUnitsCollapsed(String(actionEl.dataset.sidePrefix || ''), false);
+    return;
+  }
+  if (action === 'show-board') {
+    if (side === 'opponent' && !playModeState.opponentRoster) return;
+    playModeState.activeBoardSide = side === 'opponent' ? 'opponent' : 'player';
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'phase-back') {
+    handlePlayBackStep();
+    return;
+  }
+  if (action === 'toggle-first-player') {
+    playModeState.firstPlayer = playModeState.firstPlayer === 'player' ? 'opponent' : 'player';
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'toggle-deployed') {
+    if (!tracker) return;
+    tracker.deployed = !tracker.deployed;
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'score-inc' || action === 'score-dec') {
+    const delta = action === 'score-inc' ? 1 : -1;
+    if (side === 'player') playModeState.playerScore = Math.max(0, playModeState.playerScore + delta);
+    if (side === 'opponent') playModeState.opponentScore = Math.max(0, playModeState.opponentScore + delta);
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'resource-inc' || action === 'resource-dec') {
+    const delta = action === 'resource-inc' ? 1 : -1;
+    if (side === 'player') playModeState.playerResource = Math.max(0, playModeState.playerResource + delta);
+    if (side === 'opponent') playModeState.opponentResource = Math.max(0, playModeState.opponentResource + delta);
+    refreshPlayModeOutput();
+    return;
+  }
+  if (!tracker) return;
+  if (action === 'hp-inc') {
+    adjustPlayTrackerHealth(tracker, 1);
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'hp-dec') {
+    adjustPlayTrackerHealth(tracker, -1);
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'toggle-activation' && ['movement', 'assault', 'combat'].includes(phase)) {
+    tracker.activation[phase] = !tracker.activation[phase];
+    refreshPlayModeOutput();
+  }
+}
+
 const collapsedAidUnits = new Set();
+
+function applyDefaultPlayCollapsedUnits(state) {
+  if (!state?.unitsByKey) return;
+  for (const key of Array.from(collapsedAidUnits)) {
+    if (String(key).startsWith('player:') || String(key).startsWith('opponent:')) {
+      collapsedAidUnits.delete(key);
+    }
+  }
+  for (const unitKey of Object.keys(state.unitsByKey)) {
+    collapsedAidUnits.add(unitKey);
+  }
+}
 
 function syncAidUnitCollapsedState(unitEl, collapsed) {
   if (!unitEl) return;
@@ -1631,7 +2204,12 @@ function toggleAidUnitCollapsed(unitEl) {
 }
 
 function setAllAidUnitsCollapsed(collapsed) {
-  const unitEls = Array.from(aidCardEl.querySelectorAll('.aid-unit[data-aid-unit-key]'));
+  setAllAidUnitsCollapsedIn(aidCardEl, collapsed);
+}
+
+function setAllAidUnitsCollapsedIn(containerEl, collapsed) {
+  if (!containerEl) return;
+  const unitEls = Array.from(containerEl.querySelectorAll('.aid-unit[data-aid-unit-key]'));
   for (const unitEl of unitEls) {
     const unitKey = String(unitEl.dataset.aidUnitKey || '').trim();
     if (unitKey) {
@@ -1646,33 +2224,100 @@ function setAllAidUnitsCollapsed(collapsed) {
   scheduleAidCollapsedStatlineAlignment();
 }
 
+function setPlaySideUnitsCollapsed(sidePrefix, collapsed) {
+  if (!playCardEl) return;
+  const normalizedPrefix = String(sidePrefix || '').trim();
+  if (!normalizedPrefix) return;
+  const unitEls = Array.from(playCardEl.querySelectorAll('.aid-unit[data-aid-unit-key]'));
+  for (const unitEl of unitEls) {
+    const unitKey = String(unitEl.dataset.aidUnitKey || '').trim();
+    if (!unitKey.startsWith(normalizedPrefix)) continue;
+    if (collapsed) {
+      collapsedAidUnits.add(unitKey);
+    } else {
+      collapsedAidUnits.delete(unitKey);
+    }
+    syncAidUnitCollapsedState(unitEl, collapsed);
+  }
+  scheduleAidCollapsedStatlineAlignment();
+}
+
+function freezePlayCollapsedHealthWidth(side) {
+  if (!playModeState || !playCardEl) return;
+  const normalizedSide = side === 'opponent' ? 'opponent' : 'player';
+  if (playModeState.collapsedHealthWidthBySide?.[normalizedSide]) return;
+  const trackers = Object.values(playModeState.unitsByKey ?? {}).filter(t => t.side === normalizedSide);
+  if (!trackers.length) return;
+
+  let maxChars = 0;
+  for (const tracker of trackers) {
+    const maxPools = Array.isArray(tracker?.maxHealthPools) ? tracker.maxHealthPools : [];
+    if (!maxPools.length) continue;
+    const text = maxPools.map(pool => String(pool?.value ?? 0)).join('/');
+    const length = text.length;
+    if (Number.isFinite(length) && length > maxChars) maxChars = length;
+  }
+
+  if (maxChars > 0) {
+    const widthValue = `calc(${maxChars}ch + 24px)`;
+    if (!playModeState.collapsedHealthWidthBySide) {
+      playModeState.collapsedHealthWidthBySide = { player: null, opponent: null };
+    }
+    playModeState.collapsedHealthWidthBySide[normalizedSide] = widthValue;
+    if (playModeState.activeBoardSide === normalizedSide) {
+      playCardEl.style.setProperty('--play-collapsed-health-width', widthValue);
+    }
+  }
+}
+
 function syncAidCollapsedStatlineAlignment() {
-  const nameEls = Array.from(aidCardEl.querySelectorAll('.aid-unit .unit-name'));
-  if (!nameEls.length) {
-    aidCardEl.style.removeProperty('--aid-collapsed-name-width');
-    return;
-  }
+  const containers = [aidCardEl, playCardEl].filter(Boolean);
+  for (const containerEl of containers) {
+    const isPlayContainer = containerEl === playCardEl;
+    const playSide = isPlayContainer && playModeState
+      ? (playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player')
+      : null;
+    if (isPlayContainer && playModeState?.collapsedNameWidthBySide?.[playSide]) {
+      const fixedWidth = playModeState.collapsedNameWidthBySide[playSide];
+      containerEl.style.setProperty('--aid-collapsed-name-width', fixedWidth);
+      const titleRows = containerEl.querySelectorAll('.aid-unit-title-row');
+      for (const row of titleRows) row.style.setProperty('--aid-collapsed-name-width', fixedWidth);
+      continue;
+    }
 
-  let maxWidth = 0;
-  for (const nameEl of nameEls) {
-    const width = Math.ceil(
-      Number(nameEl.scrollWidth)
-      || Number(nameEl.offsetWidth)
-      || Number(nameEl.getBoundingClientRect().width)
-      || 0
-    );
-    if (Number.isFinite(width) && width > maxWidth) maxWidth = width;
-  }
+    const nameEls = Array.from(containerEl.querySelectorAll('.aid-unit .unit-name'));
+    if (!nameEls.length) {
+      containerEl.style.removeProperty('--aid-collapsed-name-width');
+      continue;
+    }
 
-  if (maxWidth > 0) {
-    const widthPx = `${maxWidth}px`;
-    aidCardEl.style.setProperty('--aid-collapsed-name-width', widthPx);
-    const titleRows = aidCardEl.querySelectorAll('.aid-unit-title-row');
-    for (const row of titleRows) row.style.setProperty('--aid-collapsed-name-width', widthPx);
-  } else {
-    aidCardEl.style.removeProperty('--aid-collapsed-name-width');
-    const titleRows = aidCardEl.querySelectorAll('.aid-unit-title-row');
-    for (const row of titleRows) row.style.removeProperty('--aid-collapsed-name-width');
+    let maxWidth = 0;
+    for (const nameEl of nameEls) {
+      const width = Math.ceil(
+        Number(nameEl.scrollWidth)
+        || Number(nameEl.offsetWidth)
+        || Number(nameEl.getBoundingClientRect().width)
+        || 0
+      );
+      if (Number.isFinite(width) && width > maxWidth) maxWidth = width;
+    }
+
+    if (maxWidth > 0) {
+      const widthPx = `${maxWidth}px`;
+      containerEl.style.setProperty('--aid-collapsed-name-width', widthPx);
+      const titleRows = containerEl.querySelectorAll('.aid-unit-title-row');
+      for (const row of titleRows) row.style.setProperty('--aid-collapsed-name-width', widthPx);
+      if (isPlayContainer && playSide && playModeState) {
+        if (!playModeState.collapsedNameWidthBySide) {
+          playModeState.collapsedNameWidthBySide = { player: null, opponent: null };
+        }
+        playModeState.collapsedNameWidthBySide[playSide] = widthPx;
+      }
+    } else {
+      containerEl.style.removeProperty('--aid-collapsed-name-width');
+      const titleRows = containerEl.querySelectorAll('.aid-unit-title-row');
+      for (const row of titleRows) row.style.removeProperty('--aid-collapsed-name-width');
+    }
   }
 }
 
@@ -1921,6 +2566,9 @@ function refreshOutput() {
   });
   scheduleAidCollapsedStatlineAlignment();
   aidPrintBar.style.display = 'flex';
+
+  // ── Play Mode ──────────────────────────────────────────────────────────────
+  refreshPlayModeOutput();
 
   // ── JSON ────────────────────────────────────────────────────────────────────
   jsonBox.textContent = formatJson(currentRoster);
@@ -3738,6 +4386,96 @@ aidCardEl.addEventListener('keydown', e => {
   e.preventDefault();
   toggleAidUnitCollapsed(header.closest('.aid-unit'));
 });
+
+if (playCardEl) {
+  playCardEl.addEventListener('click', e => {
+    const actionEl = e.target.closest('[data-play-action]');
+    if (actionEl && playCardEl.contains(actionEl)) {
+      e.preventDefault();
+      handlePlayAction(actionEl);
+      return;
+    }
+    const header = e.target.closest('.aid-unit-header');
+    if (!header || !playCardEl.contains(header)) return;
+    toggleAidUnitCollapsed(header.closest('.aid-unit'));
+  });
+  playCardEl.addEventListener('keydown', e => {
+    const header = e.target.closest('.aid-unit-header');
+    if (!header || !playCardEl.contains(header)) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    toggleAidUnitCollapsed(header.closest('.aid-unit'));
+  });
+}
+
+if (playDashboardEl) {
+  playDashboardEl.addEventListener('click', e => {
+    const actionEl = e.target.closest('[data-play-action]');
+    if (!actionEl || !playDashboardEl.contains(actionEl)) return;
+    e.preventDefault();
+    handlePlayAction(actionEl);
+  });
+}
+
+if (playNewGameBtn) {
+  playNewGameBtn.addEventListener('click', () => {
+    if (!currentRoster) return;
+    openPlayNewGameDialog();
+  });
+}
+
+if (playCancelBtn) {
+  playCancelBtn.addEventListener('click', () => {
+    playNewGameDialog?.close();
+  });
+}
+
+if (playResetGameCancelBtn) {
+  playResetGameCancelBtn.addEventListener('click', () => {
+    playResetGameDialog?.close();
+  });
+}
+
+if (playResetGameConfirmBtn) {
+  playResetGameConfirmBtn.addEventListener('click', () => {
+    playResetGameDialog?.close();
+    openPlayNewGameDialog();
+  });
+}
+
+if (playNewGameForm) {
+  playNewGameForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const playerSeed = sanitizeSeed(playPlayerSeedInput?.value || currentRoster?.seed || '');
+    const opponentSeed = sanitizeSeed(playOpponentSeedInput?.value || '');
+    if (!playerSeed) {
+      playNewGameDialog?.close();
+      return;
+    }
+    try {
+      const playerRoster = await loadRosterForPlay(playerSeed);
+      const opponentRoster = opponentSeed ? await loadRosterForPlay(opponentSeed) : null;
+      playModeState = createPlayModeState(playerRoster, opponentRoster, {
+        playerSeed,
+        opponentSeed,
+        playerName: playPlayerNameInput?.value,
+        opponentName: playOpponentNameInput?.value,
+        opponentFaction: playOpponentFactionInput?.value,
+        missionName: playMissionNameInput?.value,
+        gameLength: playGameLengthInput?.value,
+        startingSupply: playStartingSupplyInput?.value,
+        supplyPerRound: playSupplyPerRoundInput?.value,
+        gameSize: playGameSizeInput?.value,
+        hasStarted: true,
+      });
+      applyDefaultPlayCollapsedUnits(playModeState);
+      playNewGameDialog?.close();
+      refreshPlayModeOutput();
+    } catch (err) {
+      showToast(getUserFacingError('Start play game', err), 'error');
+    }
+  });
+}
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
 loadBtn.addEventListener('click', loadRoster);
