@@ -2058,7 +2058,7 @@ function openAidPrintWindow() {
       font-family: sans-serif;
       --print-terran: #1f5f9e;
       --print-zerg: #a12a6f;
-      --print-protoss: #6a4aa8;
+      --print-protoss: #8a6400;
       --print-supply: #b34747;
       --print-gold: #8a6400;
       --print-green: #1a7a40;
@@ -2115,7 +2115,7 @@ function openAidPrintWindow() {
       font-weight: 700;
     }
     .slot-chip.slot-hero { color: #8a6400; border-color: #d5be84; background: #fff8ea; }
-    .slot-chip.slot-core { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
+    .slot-chip.slot-core { color: #0f6f87; border-color: #8ac9d5; background: #eaf7fa; }
     .slot-chip.slot-elite { color: #a33846; border-color: #d8a2aa; background: #fff1f3; }
     .slot-chip.slot-support { color: #1a7a40; border-color: #a3cdb3; background: #effaf3; }
     .slot-chip.slot-air { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
@@ -2296,7 +2296,7 @@ function openAidPrintWindow() {
     .aid-tact-slot-chip { gap: 0; }
     .aid-tact-slot { font-weight: 700; min-width: 0; }
     .aid-tact-slot-hero { color: #8a6400; }
-    .aid-tact-slot-core { color: #16637f; }
+    .aid-tact-slot-core { color: #0f6f87; }
     .aid-tact-slot-elite { color: #a33846; }
     .aid-tact-slot-support { color: #1a7a40; }
     .aid-tact-slot-air { color: #8a6400; }

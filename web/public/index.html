@@ -20,7 +20,8 @@
       --accent:    #66b6ff;
       --accent-2:  #45f2ff;
       --terran:    #7db4ff;
-      --protoss:   #65f4ff;
+      --protoss:   #f1bf59;
+      --protoss-rgb: 241, 191, 89;
       --zerg:      #f76db2;
       --green:     #46d48a;
       --yellow:    #f1bf59;
@@ -93,8 +94,8 @@
       border-radius: 999px;
       padding: 3px 9px;
       color: var(--protoss);
-      border: 1px solid rgba(101, 244, 255, .45);
-      background: rgba(101, 244, 255, .1);
+      border: 1px solid rgba(var(--protoss-rgb), .45);
+      background: rgba(var(--protoss-rgb), .12);
     }
 
     main {
@@ -293,7 +294,7 @@
     .btn.ghost:hover:not(:disabled) {
       color: var(--protoss);
       border-color: var(--protoss);
-      box-shadow: 0 0 0 2px rgba(101, 244, 255, .11);
+      box-shadow: 0 0 0 2px rgba(var(--protoss-rgb), .14);
     }
     .btn.sm { padding: 5px 10px; font-size: .62rem; }
 
@@ -335,9 +336,9 @@
     }
     .tab.active {
       color: var(--protoss);
-      border-color: rgba(101, 244, 255, .52);
+      border-color: rgba(var(--protoss-rgb), .52);
       background: linear-gradient(180deg, rgba(43, 74, 103, .58), rgba(21, 42, 62, .65));
-      box-shadow: inset 0 0 0 1px rgba(101, 244, 255, .14), 0 0 18px rgba(101, 244, 255, .12);
+      box-shadow: inset 0 0 0 1px rgba(var(--protoss-rgb), .14), 0 0 18px rgba(var(--protoss-rgb), .12);
     }
 
     .panel { display: none; }
@@ -474,7 +475,7 @@
       transition: transform .16s, background .16s;
     }
     .mode-switch input:checked + .mode-track {
-      border-color: rgba(101, 244, 255, .58);
+      border-color: rgba(var(--protoss-rgb), .58);
       background: rgba(28, 57, 80, .88);
     }
     .mode-switch input:checked + .mode-track::after {
@@ -521,12 +522,12 @@
     .roster-card.faction-protoss {
       background:
         linear-gradient(180deg, rgba(19, 39, 59, .95), rgba(12, 25, 39, .97)),
-        radial-gradient(circle at 82% 10%, rgba(101, 244, 255, .16), transparent 42%);
+        radial-gradient(circle at 82% 10%, rgba(var(--protoss-rgb), .2), transparent 42%);
     }
     .roster-header {
       padding: 16px 20px;
       border-bottom: 1px solid var(--line-soft);
-      background: linear-gradient(90deg, rgba(89, 143, 232, .14), rgba(101, 244, 255, .05) 58%, rgba(247, 109, 178, .05));
+      background: linear-gradient(90deg, rgba(89, 143, 232, .14), rgba(var(--protoss-rgb), .08) 58%, rgba(247, 109, 178, .05));
     }
     .roster-faction {
       font-size: 1.32rem;
@@ -587,9 +588,9 @@
       background: rgba(241, 191, 89, .1);
     }
     .slot-chip.slot-core {
-      color: var(--protoss);
-      border-color: rgba(101, 244, 255, .55);
-      background: rgba(101, 244, 255, .1);
+      color: var(--accent-2);
+      border-color: rgba(69, 242, 255, .55);
+      background: rgba(69, 242, 255, .12);
     }
     .slot-chip.slot-elite {
       color: var(--red);
@@ -624,7 +625,7 @@
     .tag .tact-tag-gas { color: var(--yellow); }
     .tag .tact-tag-supply { color: var(--green); }
     .tag .tact-slot-bracket { color: var(--muted); }
-    .tag .tact-slot-core { color: var(--protoss); }
+    .tag .tact-slot-core { color: var(--accent-2); }
     .tag .tact-slot-elite { color: var(--red); }
     .tag .tact-slot-support { color: var(--green); }
     .tag .tact-slot-hero { color: var(--yellow); }
@@ -646,13 +647,13 @@
       border-bottom: 1px solid var(--line-soft);
       transition: background .16s ease;
     }
-    .unit-row:hover { background: rgba(101, 244, 255, .045); }
+    .unit-row:hover { background: rgba(var(--protoss-rgb), .06); }
     .roster-card.faction-terran .unit-row { border-bottom-color: rgba(125, 180, 255, .26); }
     .roster-card.faction-zerg .unit-row { border-bottom-color: rgba(247, 109, 178, .26); }
-    .roster-card.faction-protoss .unit-row { border-bottom-color: rgba(101, 244, 255, .26); }
+    .roster-card.faction-protoss .unit-row { border-bottom-color: rgba(var(--protoss-rgb), .35); }
     .roster-card.faction-terran .unit-row:hover { background: rgba(125, 180, 255, .08); }
     .roster-card.faction-zerg .unit-row:hover { background: rgba(247, 109, 178, .085); }
-    .roster-card.faction-protoss .unit-row:hover { background: rgba(101, 244, 255, .085); }
+    .roster-card.faction-protoss .unit-row:hover { background: rgba(var(--protoss-rgb), .14); }
     .unit-row:last-child { border-bottom: none; }
     .unit-type-badge {
       min-width: 30px;
@@ -668,7 +669,7 @@
       border: 1px solid transparent;
     }
     .badge-Hero    { background: rgba(241, 191, 89, .14); color: var(--yellow); border-color: rgba(241, 191, 89, .65); }
-    .badge-Core    { background: rgba(101, 244, 255, .12); color: var(--protoss);  border-color: rgba(101, 244, 255, .58); }
+    .badge-Core    { background: rgba(69, 242, 255, .14); color: var(--accent-2);  border-color: rgba(69, 242, 255, .58); }
     .badge-Elite   { background: rgba(255, 98, 107, .12); color: var(--red); border-color: rgba(255, 98, 107, .62); }
     .badge-Support { background: rgba(70, 212, 138, .13); color: var(--green); border-color: rgba(70, 212, 138, .62); }
     .badge-Air     { background: rgba(102, 182, 255, .13); color: var(--accent); border-color: rgba(102, 182, 255, .62); }
@@ -756,7 +757,7 @@
       outline: 2px solid var(--accent);
       outline-offset: -2px;
     }
-    .aid-unit-header:hover { background: rgba(101, 244, 255, .038); }
+    .aid-unit-header:hover { background: rgba(var(--protoss-rgb), .05); }
     .aid-unit-title-row {
       display: flex;
       align-items: center;
@@ -1008,7 +1009,7 @@
       height: 56px;
       border-radius: 8px;
       overflow: hidden;
-      border: 1px solid rgba(101, 244, 255, .18);
+      border: 1px solid rgba(var(--protoss-rgb), .35);
       background: rgba(10, 16, 28, .8);
       flex-shrink: 0;
     }
@@ -1070,7 +1071,7 @@
       font-weight: 700;
     }
     .aid-tact-slot-hero { color: var(--protoss); }
-    .aid-tact-slot-core { color: var(--text); }
+    .aid-tact-slot-core { color: var(--accent-2); }
     .aid-tact-slot-elite { color: var(--red); }
     .aid-tact-slot-support { color: var(--green); }
     .aid-tact-slot-air { color: var(--yellow); }
