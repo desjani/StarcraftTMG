@@ -2099,6 +2099,7 @@ function openAidPrintWindow() {
   if (!currentRoster) return;
   const seed = getSeed();
   const cardHtml = aidCardEl.innerHTML;
+  const isInkFriendly = JSON.parse(localStorage.getItem('aidPrintInkFriendly') || 'false');
 
   const win = window.open('', '_blank', 'width=900,height=700');
   win.document.write(`<!DOCTYPE html>
@@ -2356,9 +2357,49 @@ function openAidPrintWindow() {
     .aid-tact-slot-air { color: #8a6400; }
     .aid-tags { font-size: .73rem; color: #666; margin-bottom: 5px; }
     a, button { display: none !important; }
+
+    /* INK-FRIENDLY MODE */
+    body.ink-friendly { background: #ffffff; }
+    body.ink-friendly .roster-faction { color: #1f5f9e; }
+    body.ink-friendly .roster-faction.Terran { color: #1052cc; }
+    body.ink-friendly .roster-faction.Zerg { color: #c41e5a; }
+    body.ink-friendly .roster-faction.Protoss { color: #b8860b; }
+    body.ink-friendly .aid-unit-header { background: #f5f7fa; }
+    body.ink-friendly .unit-name { color: #1a1a1a; }
+    body.ink-friendly .aid-body { background: #ffffff; }
+    body.ink-friendly .aid-section-title { color: #333; }
+    body.ink-friendly .weapon-name { color: #111; }
+    body.ink-friendly .aid-weapons-table th { background: #e8ecf3; color: #222; }
+    body.ink-friendly .aid-weapons-table tr:nth-child(even) { background: #f9f9f9; }
+    body.ink-friendly .aid-weapons-table tr:nth-child(odd) { background: #ffffff; }
+    body.ink-friendly .aid-weapons-table tbody tr td { border-color: #e0e8f2; color: #111; }
+    body.ink-friendly .aid-upg { background: #f9f9f9; border-color: #d0d8e0; }
+    body.ink-friendly .aid-upg-desc { color: #333; }
+    body.ink-friendly .aid-upg.is-active { background: #e8f5e9; border-color: #66bb6a; }
+    body.ink-friendly .aid-upg.is-active .aid-upg-name { color: #1a6b2f; }
+    body.ink-friendly .upg-pill { background: #e8f5e9; border-color: #66bb6a; color: #1a6b2f; }
+    body.ink-friendly .stat-chip { background: #f0f5ff; border-color: #99aac4; color: #333; }
+    body.ink-friendly .stat-chip strong { color: #1052cc; }
+    body.ink-friendly .stat-chip.stat-chip-supply { background: #fff5f5; border-color: #e8a5a5; color: #a33846; }
+    body.ink-friendly .stat-chip.stat-chip-supply strong { color: #a33846; }
+    body.ink-friendly .aid-inline-chip { background: #eff2f7; border-color: #99aac4; color: #333; }
+    body.ink-friendly .aid-inline-activation { background: #f5f1ff; border-color: #cdbbdb; color: #6a4aa8; }
+    body.ink-friendly .aid-inline-resource { background: #eef6ff; border-color: #9bc1e3; color: #1f5f9e; }
+    body.ink-friendly .aid-tact-card { background: #f9f9f9; border-color: #d0d8e0; }
+    body.ink-friendly .aid-tact-card-name { color: #1a1a1a; }
+    body.ink-friendly .aid-tact-card-count { color: #333; }
+    body.ink-friendly .aid-tact-meta-chip { background: #eff2f7; border-color: #99aac4; color: #333; }
+    body.ink-friendly .aid-tact-ability { background: #ffffff; border-color: #d0d8e0; }
+    body.ink-friendly .aid-tact-ability-name { color: #1a1a1a; }
+    body.ink-friendly .aid-tact-phase-chip { background: #eff2f7; border-color: #99aac4; color: #333; }
+    body.ink-friendly .aid-tact-phase-chip.phase-movement { background: #eef6ff; border-color: #9bc1e3; color: #1052cc; }
+    body.ink-friendly .aid-tact-phase-chip.phase-assault { background: #fff1f3; border-color: #e8a5ab; color: #a33846; }
+    body.ink-friendly .aid-tact-phase-chip.phase-combat { background: #fff8ea; border-color: #dcc58b; color: #b8860b; }
+    body.ink-friendly .aid-tact-phase-chip.phase-scoring { background: #effaf3; border-color: #97d4ad; color: #1a6b2f; }
+    body.ink-friendly .aid-tact-phase-chip.phase-cleanup { background: #f5f1ff; border-color: #d4c8e1; color: #6a4aa8; }
   </style>
 </head>
-<body>
+<body class="${isInkFriendly ? 'ink-friendly' : ''}">
   <div class="roster-card">${cardHtml}</div>
   <script>
     window.addEventListener('load', () => {
