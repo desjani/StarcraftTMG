@@ -12,8 +12,8 @@ RUN apt-get update \
     && apt-get install -y google-chrome-stable --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Point Puppeteer at the installed Chrome — skip its own Chromium download
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+# Point Puppeteer at the installed Chrome — skip Puppeteer's bundled browser download
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 WORKDIR /app
