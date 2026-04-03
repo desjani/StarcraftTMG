@@ -239,7 +239,8 @@ async function renderSessionReply(interaction, session) {
   if (session.mode === 'discord') {
     const output = buildDiscordOutput(session);
     const header = `seed: ${session.seed}`;
-    const content = `${header}\n${output}`;
+    const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
+    const content = `${header}\n${output}\n${link}`;
     return interaction.editReply({ content, files: [], components });
   }
 
