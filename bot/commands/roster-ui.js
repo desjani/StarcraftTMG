@@ -434,6 +434,8 @@ export const rosterCommand = {
             allowedMentions: { users: [interaction.user.id] },
           });
         }
+        sessions.delete(session.id);
+        await interaction.deleteReply().catch(() => {});
         return true;
       }
 
