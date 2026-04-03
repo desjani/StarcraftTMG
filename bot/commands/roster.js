@@ -44,8 +44,22 @@ export const rosterCommand = {
         .setDescription('Show tactical supply types per card (e.g. [S+2])')
     )
     .addBooleanOption(opt =>
+      opt.setName('tact_resource')
+        .setDescription('Show tactical card faction-resource costs (e.g. 1cp)')
+    )
+    .addBooleanOption(opt =>
+      opt.setName('tact_gas')
+        .setDescription('Show tactical card gas costs (e.g. 35g)')
+    )
+    .addBooleanOption(opt =>
       opt.setName('slot_breakdown')
         .setDescription('Move supply to its own line with slot used/total breakdown')
+    )
+    .addIntegerOption(opt =>
+      opt.setName('limit')
+        .setDescription('Maximum output length before simplification (default 2000)')
+        .setMinValue(500)
+        .setMaxValue(2000)
     ),
 
   async execute(interaction) {
@@ -59,7 +73,10 @@ export const rosterCommand = {
     const tacticalPerLine = interaction.options.getBoolean('tact_per_line') ?? false;
     const abbreviateTacticalCards = interaction.options.getBoolean('abbr_tact') ?? false;
     const showTacticalSupplyTypes = interaction.options.getBoolean('tact_supply') ?? false;
+    const showTacticalResourceCosts = interaction.options.getBoolean('tact_resource') ?? false;
+    const showTacticalGasCosts = interaction.options.getBoolean('tact_gas') ?? false;
     const showSlotBreakdown = interaction.options.getBoolean('slot_breakdown') ?? false;
+    const charLimit = interaction.options.getInteger('limit') ?? 2000;
 
     try {
       const flat   = await fetchRoster(rawSeed);
@@ -72,8 +89,10 @@ export const rosterCommand = {
         tacticalPerLine,
         abbreviateTacticalCards,
         showTacticalSupplyTypes,
+        showTacticalResourceCosts,
+        showTacticalGasCosts,
         showSlotBreakdown,
-        charLimit: 2000,
+        charLimit,
       });
       await interaction.editReply(output);
     } catch (err) {

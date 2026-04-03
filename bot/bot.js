@@ -6,12 +6,14 @@
 import 'dotenv/config';
 import { Client, GatewayIntentBits, Collection } from 'discord.js';
 import { rosterCommand } from './commands/roster.js';
+import { rosterUiCommand } from './commands/roster-ui.js';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // Register commands
 client.commands = new Collection();
 client.commands.set(rosterCommand.data.name, rosterCommand);
+client.commands.set(rosterUiCommand.data.name, rosterUiCommand);
 
 client.once('clientReady', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
@@ -19,6 +21,16 @@ client.once('clientReady', () => {
 });
 
 client.on('interactionCreate', async interaction => {
+  if (interaction.isButton() || interaction.isStringSelectMenu()) {
+    for (const command of client.commands.values()) {
+      if (typeof command.canHandleComponent !== 'function') continue;
+      if (!command.canHandleComponent(interaction)) continue;
+      await command.handleComponent(interaction);
+      return;
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
