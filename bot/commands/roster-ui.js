@@ -65,9 +65,9 @@ function createSession({ userId, seed, roster }) {
     discord: {
       plain: false,
       stats: false,
-      abbr: true,
+      abbr: false,
       tactLine: true,
-      tactAbbr: true,
+      tactAbbr: false,
       tactSupply: true,
       tactResource: true,
       tactGas: true,
