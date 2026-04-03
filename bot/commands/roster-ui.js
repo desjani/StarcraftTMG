@@ -434,14 +434,12 @@ export const rosterCommand = {
             allowedMentions: { users: [interaction.user.id] },
           });
         }
-        await interaction.followUp({ content: 'Posted to channel.', ephemeral: true });
         return true;
       }
 
       if (parsed.action === 'close' && interaction.isButton()) {
         await interaction.deferUpdate();
         sessions.delete(session.id);
-        await interaction.editReply({ content: 'Preview closed.', files: [], components: [] });
         return true;
       }
     } catch (err) {
