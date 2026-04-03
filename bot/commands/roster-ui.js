@@ -19,15 +19,15 @@ const SESSION_TTL_MS = 30 * 60 * 1000;
 const sessions = new Map();
 
 const DISCORD_OPTION_DEFS = [
-  { key: 'plain', value: 'plain', label: 'Plain Text', shortLabel: 'Plain', description: 'Disable ANSI colors' },
-  { key: 'stats', value: 'stats', label: 'Unit Stats', shortLabel: 'Stats', description: 'Show HP/armor/evade/speed' },
-  { key: 'abbr', value: 'abbr', label: 'Abbreviate Upgrades', shortLabel: 'Abbr Upg', description: 'Render upgrades inline as abbreviations' },
-  { key: 'tactLine', value: 'tactLine', label: 'Tactical Per Line', shortLabel: 'Tact Lines', description: 'One tactical card per line' },
-  { key: 'tactAbbr', value: 'tactAbbr', label: 'Abbreviate Tactical', shortLabel: 'Abbr Tact', description: 'Short tactical card names' },
-  { key: 'tactSupply', value: 'tactSupply', label: 'Tactical Supply Types', shortLabel: 'Tact Supply', description: 'Show tactical supply slots' },
-  { key: 'tactResource', value: 'tactResource', label: 'Tactical Resource Cost', shortLabel: 'Tact Resource', description: 'Show tactical resource costs' },
-  { key: 'tactGas', value: 'tactGas', label: 'Tactical Gas Cost', shortLabel: 'Tact Gas', description: 'Show tactical gas costs' },
-  { key: 'slotBreakdown', value: 'slotBreakdown', label: 'Slot Breakdown', shortLabel: 'Slots', description: 'Separate supply + slot totals line' },
+  { key: 'plain', value: 'plain', label: 'Plain text (No color)', description: 'Disable ANSI colors' },
+  { key: 'abbr', value: 'abbr', label: 'Abbreviate Upgrades', description: 'Render upgrades inline as abbreviations' },
+  { key: 'tactAbbr', value: 'tactAbbr', label: 'Abbreviate Tac Cards', description: 'Short tactical card names' },
+  { key: 'tactLine', value: 'tactLine', label: 'Multiline Tac Card List', description: 'One tactical card per line' },
+  { key: 'slotBreakdown', value: 'slotBreakdown', label: 'Slot breakdown', description: 'Separate supply + slot totals line' },
+  { key: 'tactSupply', value: 'tactSupply', label: 'Tac Card Supply slots', description: 'Show tactical supply slots' },
+  { key: 'tactResource', value: 'tactResource', label: 'Tac Card Faction resource', description: 'Show tactical resource costs' },
+  { key: 'tactGas', value: 'tactGas', label: 'Tac Card Gas costs', description: 'Show tactical gas costs' },
+  { key: 'stats', value: 'stats', label: 'Unit Stats', description: 'Show HP/armor/evade/speed' },
 ];
 
 const CARD_OPTION_DEFS = [
@@ -41,8 +41,6 @@ const CARD_OPTION_DEFS = [
   { key: 'tactSupply', value: 'tactSupply', label: 'Tactical Supply Types', description: 'Show tactical supply slots' },
   { key: 'slots', value: 'slots', label: 'Show Slot Breakdown', description: 'Display slot used/total values' },
 ];
-
-const LIMIT_STEPS = [1200, 1500, 1800, 2000];
 
 function now() {
   return Date.now();
@@ -67,14 +65,14 @@ function createSession({ userId, seed, roster }) {
     discord: {
       plain: false,
       stats: false,
-      abbr: false,
-      tactLine: false,
-      tactAbbr: false,
-      tactSupply: false,
-      tactResource: false,
-      tactGas: false,
-      slotBreakdown: false,
-      limit: 2000,
+      abbr: true,
+      tactLine: true,
+      tactAbbr: true,
+      tactSupply: true,
+      tactResource: true,
+      tactGas: true,
+      slotBreakdown: true,
+      limit: 2300,
     },
     card: {
       upgrades: true,
@@ -108,12 +106,6 @@ function requireSessionOwnership(interaction, session) {
     return 'This preview belongs to another user.';
   }
   return null;
-}
-
-function nextLimit(current) {
-  const idx = LIMIT_STEPS.indexOf(current);
-  if (idx === -1 || idx === LIMIT_STEPS.length - 1) return LIMIT_STEPS[0];
-  return LIMIT_STEPS[idx + 1];
 }
 
 function buildDiscordOutput(session) {
@@ -196,11 +188,6 @@ function buildComponents(session) {
       .setStyle(ButtonStyle.Success)
       .setLabel(session.mode === 'discord' ? 'Post Text To Channel' : 'Post Card To Channel'),
     new ButtonBuilder()
-      .setCustomId(`roi:limit:${session.id}`)
-      .setStyle(ButtonStyle.Secondary)
-      .setLabel(`Limit ${session.discord.limit}`)
-      .setDisabled(session.mode !== 'discord'),
-    new ButtonBuilder()
       .setCustomId(`roi:close:${session.id}`)
       .setStyle(ButtonStyle.Danger)
       .setLabel('Close')
@@ -218,7 +205,7 @@ function buildComponents(session) {
             return new ButtonBuilder()
               .setCustomId(`roi:toggle:${def.key}:${session.id}`)
               .setStyle(enabled ? ButtonStyle.Primary : ButtonStyle.Secondary)
-              .setLabel(`${enabled ? 'ON' : 'OFF'} ${def.shortLabel}`);
+              .setLabel(def.label);
           })
         )
       );
@@ -251,13 +238,13 @@ async function renderSessionReply(interaction, session) {
 
   if (session.mode === 'discord') {
     const output = buildDiscordOutput(session);
-    const header = `Seed: ${session.seed} | Mode: Discord | Enabled: ${summarizeEnabled(session)} | Limit: ${session.discord.limit}`;
+    const header = `seed: ${session.seed}`;
     const content = `${header}\n${output}`;
     return interaction.editReply({ content, files: [], components });
   }
 
   const attachment = await fetchCardAttachment(session);
-  const content = `Seed: ${session.seed} | Mode: Roster Card | Enabled: ${summarizeEnabled(session)}`;
+  const content = `seed: ${session.seed}`;
   return interaction.editReply({ content, files: [attachment], components });
 }
 
@@ -344,13 +331,6 @@ export const rosterUiCommand = {
           const def = DISCORD_OPTION_DEFS.find(d => d.key === parsed.key);
           if (def) session.discord[def.key] = !session.discord[def.key];
         }
-        await renderSessionReply(interaction, session);
-        return true;
-      }
-
-      if (parsed.action === 'limit' && interaction.isButton()) {
-        await interaction.deferUpdate();
-        session.discord.limit = nextLimit(session.discord.limit);
         await renderSessionReply(interaction, session);
         return true;
       }
