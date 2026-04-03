@@ -314,6 +314,16 @@ export const rosterUiCommand = {
       if (parsed.action === 'mode' && interaction.isStringSelectMenu()) {
         await interaction.deferUpdate();
         session.mode = interaction.values[0] === 'card' ? 'card' : 'discord';
+        
+        // Show loading message if switching to card mode
+        if (session.mode === 'card') {
+          await interaction.editReply({
+            content: 'seed: ' + session.seed + '\n⏳ Loading roster card image...',
+            files: [],
+            components: buildComponents(session),
+          });
+        }
+        
         await renderSessionReply(interaction, session);
         return true;
       }
