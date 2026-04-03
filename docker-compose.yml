@@ -1,0 +1,18 @@
+services:
+  starcraft-tmg:
+    build: .
+    container_name: starcraft-tmg
+    restart: unless-stopped
+    # Port 3000 is accessible on your local network at http://192.168.68.54:3000
+    # Remove or comment out the ports section if you don't need local access
+    # (the Discord bot works without it — it only calls localhost internally)
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      # Discord bot credentials — loaded from .env file in this directory
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID:-}
+    # Chromium needs /dev/shm larger than the default 64MB
+    shm_size: '256mb'
