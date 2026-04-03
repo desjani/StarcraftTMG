@@ -13,7 +13,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 client.commands.set(rosterCommand.data.name, rosterCommand);
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   console.log(`   Commands: ${[...client.commands.keys()].join(', ')}`);
 });
