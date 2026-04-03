@@ -1083,14 +1083,8 @@ function formatTacticalSupplyTypes(slots = {}) {
   return letters;
 }
 
-function renderRosterTacticalTag(card, { showResource = false, showGas = false, showSupply = false } = {}, resourceShort = 'res') {
+function renderRosterTacticalTag(card, { showResource = false, showGas = false, showSupply = false } = {}, resourceShort = 'res', resourceIcon = null) {
   const details = [];
-  if (showResource && typeof card.resource === 'number') {
-    details.push(`<span class="tact-tag-resource">${card.resource}${escapeHtml(resourceShort)}</span>`);
-  }
-  if (showGas && typeof card.gasCost === 'number') {
-    details.push(`<span class="tact-tag-gas">${card.gasCost}g</span>`);
-  }
   if (showSupply) {
     const supplyLetters = formatTacticalSupplyTypes(card.slots ?? {});
     if (supplyLetters.length) {
@@ -1099,6 +1093,13 @@ function renderRosterTacticalTag(card, { showResource = false, showGas = false, 
         .join('');
       details.push(`<span class="tact-tag-supply"><span class="tact-slot-bracket">[</span>${supplyHtml}<span class="tact-slot-bracket">]</span></span>`);
     }
+  }
+  if (showResource && typeof card.resource === 'number') {
+    const symbol = resourceIcon ?? escapeHtml(resourceShort);
+    details.push(`<span class="tact-tag-resource">${card.resource}${symbol}</span>`);
+  }
+  if (showGas && typeof card.gasCost === 'number') {
+    details.push(`<span class="tact-tag-gas">${card.gasCost}g</span>`);
   }
   const suffix = details.length ? ` ${details.join(' ')}` : '';
   return `<span class="tag"><span class="tact-tag-name">${escapeHtml(card.name)}</span>${suffix}</span>`;
@@ -1280,7 +1281,7 @@ function renderRosterCard(roster, opts = {}) {
       showResource: showTacticalResource,
       showGas: showTacticalGas,
       showSupply: showTacticalSupply,
-    }, resourceShort))
+    }, resourceShort, resourceIcon))
     .join('');
 
   return `
@@ -2602,6 +2603,7 @@ async function loadRoster() {
       applyRecentCollapsed(false);
     }
     savePrefs();
+    syncUrlToState();
     document.body.classList.remove('preload');
     loadingBox.style.display = 'none';
     resultsEl.style.display  = 'block';
@@ -2626,6 +2628,21 @@ async function loadRoster() {
   }
 }
 
+// ─── URL state sync ──────────────────────────────────────────────────────────
+function syncUrlToState() {
+  try {
+    const url = new URL(window.location.href);
+    if (currentRoster?.seed) url.searchParams.set('s', currentRoster.seed);
+    const activeTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (activeTab && activeTab !== 'preview') {
+      url.searchParams.set('tab', activeTab);
+    } else {
+      url.searchParams.delete('tab');
+    }
+    window.history.replaceState({}, '', url);
+  } catch (_) { /* navigation unavailable */ }
+}
+
 // ─── Tab switcher ─────────────────────────────────────────────────────────────
 const DISCORD_TABS = new Set(['preview']);
 const tabs = Array.from(document.querySelectorAll('.tab'));
@@ -2646,6 +2663,7 @@ function activateTab(tab, { setFocus = false } = {}) {
   if (setFocus) tab.focus();
   discordOpts.style.display = DISCORD_TABS.has(tab.dataset.tab) ? '' : 'none';
   savePrefs();
+  syncUrlToState();
 }
 
 tabs.forEach((tab, idx) => {
@@ -4502,3 +4520,56 @@ loadPrefs();
 loadSeedHistory();
 renderSeedHistory();
 applyRecentCollapsed(false);
+
+// ── URL param auto-load ───────────────────────────────────────────────────────
+// Supports: /?s=SEED  /?s=SEED&tab=card|aid|play|preview
+// The server redirects /SEED → /?s=SEED so clean URLs work too.
+// When _img=1 is present (headless render), card checkboxes are overridden from
+// URL params before rendering: upgrades, stats, size, cost, tactical,
+// tact-resource, tact-gas, tact-supply, slots  (1=on, 0=off)
+(function applyUrlParams() {
+  const SEED_RE = /^[A-Z0-9]{4,8}$/;
+  const params  = new URLSearchParams(window.location.search);
+  const urlSeed = params.get('s');
+  const urlTab  = params.get('tab');
+  const isImg   = params.get('_img') === '1';
+
+  // Override card checkboxes when rendering for image export
+  if (isImg) {
+    const flag = (key, def) => {
+      const v = params.get(key);
+      return v === null ? def : v !== '0';
+    };
+    cardUpgrades.checked     = flag('upgrades',     true);
+    cardStats.checked        = flag('stats',         false);
+    cardSize.checked         = flag('size',          true);
+    cardCost.checked         = flag('cost',          true);
+    cardTactical.checked     = flag('tactical',      true);
+    cardTactResource.checked = flag('tact-resource', false);
+    cardTactGas.checked      = flag('tact-gas',      false);
+    cardTactSupply.checked   = flag('tact-supply',   false);
+    cardSlots.checked        = flag('slots',         false);
+    // Hide everything except the roster card so the screenshot is clean
+    document.body.classList.add('img-render-mode');
+  }
+
+  if (urlTab) {
+    const tabEl = document.querySelector(`.tab[data-tab="${urlTab}"]`);
+    if (tabEl) activateTab(tabEl);
+  }
+
+  if (urlSeed) {
+    const seed = urlSeed.trim().toUpperCase();
+    if (SEED_RE.test(seed)) {
+      seedInput.value = seed;
+      loadRoster().then(() => {
+        if (isImg) {
+          // Signal to puppeteer that the card is ready
+          document.documentElement.dataset.imgReady = '1';
+        }
+      }).catch(() => {
+        if (isImg) document.documentElement.dataset.imgReady = 'error';
+      });
+    }
+  }
+})();

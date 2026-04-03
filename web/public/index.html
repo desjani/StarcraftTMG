@@ -684,17 +684,20 @@
     .unit-info { flex: 1; min-width: 0; }
     .unit-main {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: baseline;
       gap: 10px;
       margin-top: 1px;
+      min-width: 0;
     }
-    .unit-name { font-weight: 700; font-size: .96rem; }
+    .unit-name { font-weight: 700; font-size: .96rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .unit-main-meta {
       color: var(--muted);
       font-family: var(--mono);
       font-size: .78rem;
       letter-spacing: .01em;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
     .unit-size { color: var(--muted); }
     .unit-sep { color: rgba(147, 168, 196, .65); }
@@ -1463,6 +1466,19 @@
     }
     .aid-tags { margin-bottom: 6px; color: var(--muted); font-size: .74rem; font-style: italic; }
 
+    /* ── Headless image-render mode (puppeteer screenshot) ───────────── */
+    body.img-render-mode { background: transparent !important; padding: 0 !important; margin: 0 !important; }
+    body.img-render-mode header { display: none !important; }
+    body.img-render-mode main { padding: 0 !important; margin: 0 !important; background: transparent !important; }
+    body.img-render-mode .lookup-shell { display: none !important; }
+    body.img-render-mode #results { display: block !important; padding: 0 !important; }
+    body.img-render-mode #tab-roster { display: block !important; padding: 0 !important; background: transparent !important; }
+    body.img-render-mode .tabs,
+    body.img-render-mode .panel:not(#tab-roster),
+    body.img-render-mode #tab-roster > :not(#roster-card),
+    body.img-render-mode #discord-limit-warning { display: none !important; }
+    body.img-render-mode #roster-card { display: inline-block; }
+
     @media (prefers-reduced-motion: reduce) {
       .aid-unit-header,
       .aid-collapse-indicator,
@@ -1471,8 +1487,6 @@
         transition: none;
       }
     }
-
-    .error {
       margin-bottom: 14px;
       border: 1px solid rgba(255, 98, 107, .74);
       border-radius: 10px;
@@ -1608,7 +1622,7 @@
       gap: 0.6mm;
     }
 
-    .unit-main {
+    .unit-card .unit-main {
       display: flex;
       flex-direction: column;
       gap: 0.6mm;
