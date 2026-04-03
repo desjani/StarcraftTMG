@@ -330,6 +330,16 @@ export const rosterUiCommand = {
 
       if (parsed.action === 'opts' && interaction.isStringSelectMenu()) {
         await interaction.deferUpdate();
+        
+        // Show loading message if in card mode
+        if (session.mode === 'card') {
+          await interaction.editReply({
+            content: 'seed: ' + session.seed + '\n⏳ Updating roster card image...',
+            files: [],
+            components: buildComponents(session),
+          });
+        }
+        
         const selected = new Set(interaction.values);
         for (const def of CARD_OPTION_DEFS) session.card[def.key] = selected.has(def.value);
         await renderSessionReply(interaction, session);
@@ -358,9 +368,10 @@ export const rosterUiCommand = {
           });
         } else {
           const attachment = await fetchCardAttachment(session);
+          const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
           await interaction.followUp({
-            content: `Roster card for ${session.seed} (requested by <@${interaction.user.id}>)`,
             files: [attachment],
+            content: `${link}\nRequested by <@${interaction.user.id}>`,
             ephemeral: false,
             allowedMentions: { users: [interaction.user.id] },
           });
