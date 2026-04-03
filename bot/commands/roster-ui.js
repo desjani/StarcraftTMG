@@ -283,17 +283,18 @@ function buildComponents(session) {
 
 async function renderSessionReply(interaction, session) {
   const components = buildComponents(session);
+  const support = 'Support: https://ko-fi.com/desjani';
 
   if (session.mode === 'discord') {
     const output = buildDiscordOutput(session);
     const header = `seed: ${session.seed}`;
     const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
-    const content = `${header}\n${output}\n${link}`;
+    const content = `${header}\n${output}\n${link}\n${support}`;
     return interaction.editReply({ content, files: [], components });
   }
 
   const attachment = await fetchCardAttachment(session);
-  const content = `seed: ${session.seed}`;
+  const content = `seed: ${session.seed}\n${support}`;
   return interaction.editReply({ content, files: [attachment], components });
 }
 
