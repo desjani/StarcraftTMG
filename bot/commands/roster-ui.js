@@ -19,15 +19,15 @@ const SESSION_TTL_MS = 30 * 60 * 1000;
 const sessions = new Map();
 
 const DISCORD_OPTION_DEFS = [
-  { key: 'plain', value: 'plain', label: 'Plain Text', description: 'Disable ANSI colors' },
-  { key: 'stats', value: 'stats', label: 'Unit Stats', description: 'Show HP/armor/evade/speed' },
-  { key: 'abbr', value: 'abbr', label: 'Abbreviate Upgrades', description: 'Render upgrades inline as abbreviations' },
-  { key: 'tactLine', value: 'tactLine', label: 'Tactical Per Line', description: 'One tactical card per line' },
-  { key: 'tactAbbr', value: 'tactAbbr', label: 'Abbreviate Tactical', description: 'Short tactical card names' },
-  { key: 'tactSupply', value: 'tactSupply', label: 'Tactical Supply Types', description: 'Show tactical supply slots' },
-  { key: 'tactResource', value: 'tactResource', label: 'Tactical Resource Cost', description: 'Show tactical resource costs' },
-  { key: 'tactGas', value: 'tactGas', label: 'Tactical Gas Cost', description: 'Show tactical gas costs' },
-  { key: 'slotBreakdown', value: 'slotBreakdown', label: 'Slot Breakdown', description: 'Separate supply + slot totals line' },
+  { key: 'plain', value: 'plain', label: 'Plain Text', shortLabel: 'Plain', description: 'Disable ANSI colors' },
+  { key: 'stats', value: 'stats', label: 'Unit Stats', shortLabel: 'Stats', description: 'Show HP/armor/evade/speed' },
+  { key: 'abbr', value: 'abbr', label: 'Abbreviate Upgrades', shortLabel: 'Abbr Upg', description: 'Render upgrades inline as abbreviations' },
+  { key: 'tactLine', value: 'tactLine', label: 'Tactical Per Line', shortLabel: 'Tact Lines', description: 'One tactical card per line' },
+  { key: 'tactAbbr', value: 'tactAbbr', label: 'Abbreviate Tactical', shortLabel: 'Abbr Tact', description: 'Short tactical card names' },
+  { key: 'tactSupply', value: 'tactSupply', label: 'Tactical Supply Types', shortLabel: 'Tact Supply', description: 'Show tactical supply slots' },
+  { key: 'tactResource', value: 'tactResource', label: 'Tactical Resource Cost', shortLabel: 'Tact Resource', description: 'Show tactical resource costs' },
+  { key: 'tactGas', value: 'tactGas', label: 'Tactical Gas Cost', shortLabel: 'Tact Gas', description: 'Show tactical gas costs' },
+  { key: 'slotBreakdown', value: 'slotBreakdown', label: 'Slot Breakdown', shortLabel: 'Slots', description: 'Separate supply + slot totals line' },
 ];
 
 const CARD_OPTION_DEFS = [
@@ -190,24 +190,6 @@ function buildComponents(session) {
       ])
   );
 
-  const defs = session.mode === 'discord' ? DISCORD_OPTION_DEFS : CARD_OPTION_DEFS;
-  const selected = defs.filter(def => (session.mode === 'discord' ? session.discord[def.key] : session.card[def.key])).map(def => def.value);
-  const optionsRow = new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`roi:opts:${session.id}`)
-      .setPlaceholder('Toggle preview options')
-      .setMinValues(0)
-      .setMaxValues(defs.length)
-      .addOptions(
-        defs.map(def => ({
-          label: def.label,
-          description: def.description,
-          value: def.value,
-          default: selected.includes(def.value),
-        }))
-      )
-  );
-
   const actionRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`roi:publish:${session.id}`)
@@ -222,6 +204,43 @@ function buildComponents(session) {
       .setCustomId(`roi:close:${session.id}`)
       .setStyle(ButtonStyle.Danger)
       .setLabel('Close')
+  );
+
+  if (session.mode === 'discord') {
+    const rows = [];
+    const chunks = [DISCORD_OPTION_DEFS.slice(0, 5), DISCORD_OPTION_DEFS.slice(5)];
+    for (const chunk of chunks) {
+      if (!chunk.length) continue;
+      rows.push(
+        new ActionRowBuilder().addComponents(
+          chunk.map(def => {
+            const enabled = Boolean(session.discord[def.key]);
+            return new ButtonBuilder()
+              .setCustomId(`roi:toggle:${def.key}:${session.id}`)
+              .setStyle(enabled ? ButtonStyle.Primary : ButtonStyle.Secondary)
+              .setLabel(`${enabled ? 'ON' : 'OFF'} ${def.shortLabel}`);
+          })
+        )
+      );
+    }
+    return [modeRow, ...rows, actionRow];
+  }
+
+  const selected = CARD_OPTION_DEFS.filter(def => session.card[def.key]).map(def => def.value);
+  const optionsRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`roi:opts:${session.id}`)
+      .setPlaceholder('Toggle card options')
+      .setMinValues(0)
+      .setMaxValues(CARD_OPTION_DEFS.length)
+      .addOptions(
+        CARD_OPTION_DEFS.map(def => ({
+          label: def.label,
+          description: def.description,
+          value: def.value,
+          default: selected.includes(def.value),
+        }))
+      )
   );
 
   return [modeRow, optionsRow, actionRow];
@@ -243,9 +262,16 @@ async function renderSessionReply(interaction, session) {
 }
 
 function parseCustomId(customId) {
-  const [prefix, action, sessionId] = String(customId || '').split(':');
-  if (prefix !== 'roi' || !action || !sessionId) return null;
-  return { action, sessionId };
+  const parts = String(customId || '').split(':');
+  const [prefix, action] = parts;
+  if (prefix !== 'roi' || !action) return null;
+  if (action === 'toggle' && parts.length === 4) {
+    return { action, key: parts[2], sessionId: parts[3] };
+  }
+  if (parts.length >= 3) {
+    return { action, sessionId: parts[2] };
+  }
+  return null;
 }
 
 export const rosterUiCommand = {
@@ -307,11 +333,16 @@ export const rosterUiCommand = {
       if (parsed.action === 'opts' && interaction.isStringSelectMenu()) {
         await interaction.deferUpdate();
         const selected = new Set(interaction.values);
-        const defs = session.mode === 'discord' ? DISCORD_OPTION_DEFS : CARD_OPTION_DEFS;
+        for (const def of CARD_OPTION_DEFS) session.card[def.key] = selected.has(def.value);
+        await renderSessionReply(interaction, session);
+        return true;
+      }
+
+      if (parsed.action === 'toggle' && interaction.isButton()) {
+        await interaction.deferUpdate();
         if (session.mode === 'discord') {
-          for (const def of defs) session.discord[def.key] = selected.has(def.value);
-        } else {
-          for (const def of defs) session.card[def.key] = selected.has(def.value);
+          const def = DISCORD_OPTION_DEFS.find(d => d.key === parsed.key);
+          if (def) session.discord[def.key] = !session.discord[def.key];
         }
         await renderSessionReply(interaction, session);
         return true;
