@@ -8,7 +8,7 @@
  */
 import 'dotenv/config';
 import { REST, Routes } from 'discord.js';
-import { rosterCommand } from './commands/roster.js';
+import { rosterCommand } from './commands/roster-ui.js';
 
 const { DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_ID } = process.env;
 

@@ -5,7 +5,7 @@
  */
 import 'dotenv/config';
 import { Client, GatewayIntentBits, Collection } from 'discord.js';
-import { rosterCommand } from './commands/roster.js';
+import { rosterCommand } from './commands/roster-ui.js';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
