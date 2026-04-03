@@ -9,7 +9,6 @@
 import 'dotenv/config';
 import { REST, Routes } from 'discord.js';
 import { rosterCommand } from './commands/roster.js';
-import { rosterUiCommand } from './commands/roster-ui.js';
 
 const { DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_ID } = process.env;
 
@@ -18,7 +17,7 @@ if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID) {
   process.exit(1);
 }
 
-const commands = [rosterCommand.data.toJSON(), rosterUiCommand.data.toJSON()];
+const commands = [rosterCommand.data.toJSON()];
 const rest     = new REST().setToken(DISCORD_TOKEN);
 
 (async () => {

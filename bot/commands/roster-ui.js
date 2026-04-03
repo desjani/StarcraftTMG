@@ -1,14 +1,18 @@
 /**
- * /roster_ui slash command.
+ * /roster slash command.
  * Ephemeral interactive UI that mirrors website Discord-tab and roster-card options.
+ * Can be invoked with or without a seed; if no seed, prompts via modal.
  */
 import {
   ActionRowBuilder,
   AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ModalBuilder,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } from 'discord.js';
 
 import { fetchRoster, fetchTacticalCards } from '../../lib/firestoreClient.js';
@@ -100,7 +104,7 @@ function getSession(id) {
 
 function requireSessionOwnership(interaction, session) {
   if (!session) {
-    return 'This preview session expired. Run /roster_ui again.';
+    return 'This preview session expired. Run /roster again.';
   }
   if (interaction.user.id !== session.userId) {
     return 'This preview belongs to another user.';
@@ -262,22 +266,44 @@ function parseCustomId(customId) {
   return null;
 }
 
-export const rosterUiCommand = {
+export const rosterCommand = {
   data: new SlashCommandBuilder()
-    .setName('roster_ui')
+    .setName('roster')
     .setDescription('Interactive ephemeral roster preview with Discord/card options')
     .addStringOption(opt =>
       opt.setName('seed')
         .setDescription('The roster seed code (e.g. VNIEMU)')
-        .setRequired(true)
-        .setMinLength(4)
+        .setRequired(false)
+        .setMinLength(3)
         .setMaxLength(10)
     ),
 
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
 
-    const seed = interaction.options.getString('seed', true).trim().toUpperCase();
+    let seed = interaction.options.getString('seed');
+
+    // If no seed provided, show modal to request it
+    if (!seed) {
+      const modal = new ModalBuilder()
+        .setCustomId(`roster:seed:${interaction.user.id}`)
+        .setTitle('Enter Roster Seed');
+      
+      const seedInput = new TextInputBuilder()
+        .setCustomId('seed_input')
+        .setLabel('Roster Seed Code')
+        .setPlaceholder('e.g. VNIEMU')
+        .setStyle(TextInputStyle.Short)
+        .setMinLength(3)
+        .setMaxLength(10)
+        .setRequired(true);
+      
+      modal.addComponents(new ActionRowBuilder().addComponents(seedInput));
+      await interaction.showModal(modal);
+      return;
+    }
+
+    seed = seed.trim().toUpperCase();
 
     try {
       const flat = await fetchRoster(seed);
@@ -290,16 +316,48 @@ export const rosterUiCommand = {
         await interaction.editReply(`No roster found with seed ${seed}.`);
         return;
       }
-      console.error('roster_ui execute failed:', err);
+      console.error('roster execute failed:', err);
       await interaction.editReply(`Failed to load seed ${seed}: ${err.message}`);
     }
   },
 
   canHandleComponent(interaction) {
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('roster:seed:')) {
+      return true;
+    }
     return Boolean(parseCustomId(interaction.customId));
   },
 
   async handleComponent(interaction) {
+    // Handle modal submission for seed
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('roster:seed:')) {
+      const userId = interaction.customId.split(':')[2];
+      if (interaction.user.id !== userId) {
+        await interaction.reply({ content: 'This modal is not for you.', ephemeral: true }).catch(() => {});
+        return true;
+      }
+
+      await interaction.deferReply({ ephemeral: true });
+      const seed = interaction.fields.getTextInputValue('seed_input').trim().toUpperCase();
+
+      try {
+        const flat = await fetchRoster(seed);
+        const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
+        const roster = parseRoster(flat, { tacticalCards });
+        const session = createSession({ userId: interaction.user.id, seed, roster });
+        await renderSessionReply(interaction, session);
+      } catch (err) {
+        if (err.status === 404 || err.message?.includes('NOT_FOUND')) {
+          await interaction.editReply(`No roster found with seed ${seed}.`);
+          return true;
+        }
+        console.error('roster seed modal failed:', err);
+        await interaction.editReply(`Failed to load seed ${seed}: ${err.message}`);
+      }
+      return true;
+    }
+
+    // Handle session interactions
     const parsed = parseCustomId(interaction.customId);
     if (!parsed) return false;
 
@@ -387,7 +445,7 @@ export const rosterUiCommand = {
         return true;
       }
     } catch (err) {
-      console.error('roster_ui component failed:', err);
+      console.error('roster component failed:', err);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ content: `Interaction failed: ${err.message}`, ephemeral: true }).catch(() => {});
       } else {
