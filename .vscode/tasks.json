@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Unraid: Update Container + Commands",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/update-unraid.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Unraid: Update Container Only",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/update-unraid.ps1",
+        "-SkipCommandDeploy"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

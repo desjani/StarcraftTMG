@@ -26,6 +26,42 @@ npm run bot
 
 Open http://localhost:3000 for the web UI.
 
+## Traffic analytics
+
+The container now tracks lightweight HTTP traffic analytics (request counts, top routes, status codes, user-agent buckets, recent 5xx errors) and persists them to `/app/data/analytics.json`.
+
+It also tracks daily Discord `/roster` command usage and can email a daily digest report.
+
+Set these in `.env`:
+
+```bash
+ANALYTICS_KEY=choose-a-secret-key
+ANALYTICS_INTERNAL_KEY=choose-a-second-secret-or-reuse-the-same
+ANALYTICS_FILE=/app/data/analytics.json
+ANALYTICS_EMAIL_TO=jaredtritsch@gmail.com
+ANALYTICS_EMAIL_FROM=bot@yourdomain.com
+ANALYTICS_DAILY_REPORT_UTC_HOUR=13
+ANALYTICS_SMTP_HOST=smtp.yourprovider.com
+ANALYTICS_SMTP_PORT=587
+ANALYTICS_SMTP_SECURE=false
+ANALYTICS_SMTP_USER=your-smtp-user
+ANALYTICS_SMTP_PASS=your-smtp-password
+```
+
+View analytics:
+
+```bash
+curl -H "x-analytics-key: <your key>" http://localhost:3000/api/analytics
+```
+
+If `ANALYTICS_KEY` is blank, `/api/analytics` is not protected.
+
+Daily digest email includes:
+- `/roster` invokes per day
+- Prompted-for-seed vs seed-provided counts
+- Unique users and top seeds
+- HTTP request totals, top routes, status mix, and latency summary
+
 ## Test
 
 ```bash

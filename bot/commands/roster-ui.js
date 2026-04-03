@@ -22,6 +22,50 @@ import { formatCompact } from '../../lib/formatter.js';
 const SESSION_TTL_MS = 30 * 60 * 1000;
 const sessions = new Map();
 
+async function trackRosterInvoke({ interaction, withSeed, prompted, seed = '' }) {
+  const port = parseInt(process.env.PORT ?? '3000', 10);
+  const key = process.env.ANALYTICS_INTERNAL_KEY ?? process.env.ANALYTICS_KEY ?? '';
+  const qs = new URLSearchParams({
+    event: 'invoke',
+    withSeed: withSeed ? '1' : '0',
+    prompted: prompted ? '1' : '0',
+    userId: interaction.user.id,
+  });
+  if (seed) qs.set('seed', seed);
+
+  try {
+    await fetch(`http://127.0.0.1:${port}/api/internal/track/roster?${qs.toString()}`, {
+      method: 'POST',
+      headers: {
+        'x-internal-analytics-key': key,
+      },
+    });
+  } catch {
+    // Telemetry should never block user-facing command flow.
+  }
+}
+
+async function trackRosterModalSeed({ interaction, seed }) {
+  const port = parseInt(process.env.PORT ?? '3000', 10);
+  const key = process.env.ANALYTICS_INTERNAL_KEY ?? process.env.ANALYTICS_KEY ?? '';
+  const qs = new URLSearchParams({
+    event: 'modal_seed',
+    seed,
+    userId: interaction.user.id,
+  });
+
+  try {
+    await fetch(`http://127.0.0.1:${port}/api/internal/track/roster?${qs.toString()}`, {
+      method: 'POST',
+      headers: {
+        'x-internal-analytics-key': key,
+      },
+    });
+  } catch {
+    // Telemetry should never block user-facing command flow.
+  }
+}
+
 const DISCORD_OPTION_DEFS = [
   { key: 'plain', value: 'plain', label: 'Plain text (No color)', description: 'Disable ANSI colors' },
   { key: 'abbr', value: 'abbr', label: 'Abbreviate Upgrades', description: 'Render upgrades inline as abbreviations' },
@@ -282,6 +326,14 @@ export const rosterCommand = {
     await interaction.deferReply({ ephemeral: true });
 
     let seed = interaction.options.getString('seed');
+    const withSeed = Boolean(seed && seed.trim());
+
+    await trackRosterInvoke({
+      interaction,
+      withSeed,
+      prompted: !withSeed,
+      seed: withSeed ? seed.trim().toUpperCase() : '',
+    });
 
     // If no seed provided, show modal to request it
     if (!seed) {
@@ -339,6 +391,7 @@ export const rosterCommand = {
 
       await interaction.deferReply({ ephemeral: true });
       const seed = interaction.fields.getTextInputValue('seed_input').trim().toUpperCase();
+      await trackRosterModalSeed({ interaction, seed });
 
       try {
         const flat = await fetchRoster(seed);
