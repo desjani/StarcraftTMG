@@ -340,8 +340,9 @@ export const rosterUiCommand = {
         await interaction.deferUpdate();
         if (session.mode === 'discord') {
           const output = buildDiscordOutput(session);
+          const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
           await interaction.followUp({
-            content: `${output}\nRequested by <@${interaction.user.id}>`,
+            content: `${output}\n${link}\nRequested by <@${interaction.user.id}>`,
             ephemeral: false,
             allowedMentions: { users: [interaction.user.id] },
           });
