@@ -236,6 +236,10 @@ function buildComponents(session) {
       .setStyle(ButtonStyle.Success)
       .setLabel(session.mode === 'discord' ? 'Post Text To Channel' : 'Post Card To Channel'),
     new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setURL('https://ko-fi.com/desjani')
+      .setLabel('Support on Ko-fi'),
+    new ButtonBuilder()
       .setCustomId(`roi:close:${session.id}`)
       .setStyle(ButtonStyle.Danger)
       .setLabel('Close')
@@ -283,18 +287,17 @@ function buildComponents(session) {
 
 async function renderSessionReply(interaction, session) {
   const components = buildComponents(session);
-  const support = 'Support: https://ko-fi.com/desjani';
 
   if (session.mode === 'discord') {
     const output = buildDiscordOutput(session);
     const header = `seed: ${session.seed}`;
     const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
-    const content = `${header}\n${output}\n${link}\n${support}`;
+    const content = `${header}\n${output}\n${link}`;
     return interaction.editReply({ content, files: [], components });
   }
 
   const attachment = await fetchCardAttachment(session);
-  const content = `seed: ${session.seed}\n${support}`;
+  const content = `seed: ${session.seed}`;
   return interaction.editReply({ content, files: [attachment], components });
 }
 
