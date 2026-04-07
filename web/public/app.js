@@ -491,12 +491,15 @@ function buildInProgressGamesHtml() {
       const state = record?.state;
       if (!state) return '';
       const isActive = playModeState?.gameId === record.id;
+      const playerSeed = sanitizeSeed(state.playerSeed || state.playerRoster?.seed || '');
+      const opponentSeed = sanitizeSeed(state.opponentSeed || state.opponentRoster?.seed || '');
+      const playerLabel = playerSeed ? `${state.playerName || 'Player'} [${playerSeed}]` : (state.playerName || 'Player');
+      const opponentLabel = opponentSeed ? `${state.opponentName || 'Opponent'} [${opponentSeed}]` : (state.opponentName || 'Opponent');
       return `
         <div class="play-save-row${isActive ? ' is-active' : ''}">
           <div class="play-save-meta">
-            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong></div>
-            <div class="play-save-detail">${escapeHtml(state.missionName || 'Mission')} · Round ${Number(state.round || 1)} · ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))}</div>
-            <div class="play-save-detail">Updated ${escapeHtml(formatPlayDateTime(record.updatedAt))}</div>
+            <div><strong>${escapeHtml(playerLabel)}</strong> vs <strong>${escapeHtml(opponentLabel)}</strong></div>
+            <div class="play-save-detail">${escapeHtml(state.missionName || 'Mission')} · R${Number(state.round || 1)} · ${escapeHtml(formatPlayDateTime(record.updatedAt))} · ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))}</div>
           </div>
           <div class="play-save-actions">
             <button class="btn ghost sm play-icon-btn" type="button" title="Load" aria-label="Load" data-play-action="load-saved-game" data-game-id="${escapeHtml(record.id)}">↺</button>
@@ -517,13 +520,15 @@ function buildCompletedGamesHtml() {
       const state = record?.state;
       if (!state) return '';
       const winner = getPlayWinnerLabel(state);
-      const breakdown = buildPlayBreakdown(state);
+      const playerSeed = sanitizeSeed(state.playerSeed || state.playerRoster?.seed || '');
+      const opponentSeed = sanitizeSeed(state.opponentSeed || state.opponentRoster?.seed || '');
+      const playerLabel = playerSeed ? `${state.playerName || 'Player'} [${playerSeed}]` : (state.playerName || 'Player');
+      const opponentLabel = opponentSeed ? `${state.opponentName || 'Opponent'} [${opponentSeed}]` : (state.opponentName || 'Opponent');
       return `
         <div class="play-save-row past-game">
           <div class="play-save-meta">
-            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong> · Winner: <strong>${escapeHtml(winner)}</strong></div>
-            <div class="play-save-detail">Final ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))} · ${escapeHtml(state.missionName || 'Mission')} · Ended ${escapeHtml(formatPlayDateTime(state.completedAt || record.updatedAt))}</div>
-            <div class="play-save-detail">Breakdown: ${escapeHtml(state.playerName || 'Player')} D:${breakdown.player.deployed} W:${breakdown.player.wounded} KIA:${breakdown.player.destroyed} | ${escapeHtml(state.opponentName || 'Opponent')} D:${breakdown.opponent.deployed} W:${breakdown.opponent.wounded} KIA:${breakdown.opponent.destroyed}</div>
+            <div><strong>${escapeHtml(playerLabel)}</strong> vs <strong>${escapeHtml(opponentLabel)}</strong> · <strong>${escapeHtml(winner)}</strong></div>
+            <div class="play-save-detail">${escapeHtml(state.missionName || 'Mission')} · R${escapeHtml(String(state.round || state.gameLength || 1))} · ${escapeHtml(formatPlayDateTime(state.completedAt || record.updatedAt))} · Final ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))}</div>
           </div>
           <div class="play-save-actions">
             <button class="btn ghost sm play-icon-btn" type="button" title="Review / Load" aria-label="Review / Load" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">◉</button>
@@ -2216,6 +2221,7 @@ function buildPlayDashboard() {
         <div class="play-resource-row"><span class="play-stat-label">Phase</span><span class="play-stat-value play-phase-readout ${escapeHtml(phaseClass)}">${escapeHtml(currentPhase)}</span></div>
         <div class="play-inline-controls">
           <button class="btn ghost sm" type="button" data-play-action="open-new-game-confirm" title="Start New Game">↻ New Game</button>
+          <button class="btn ghost sm" type="button" data-play-action="end-game" title="End Game">■ End Game</button>
         </div>
       </div>
       <div class="play-stat">
@@ -2223,10 +2229,6 @@ function buildPlayDashboard() {
         <div class="play-phase-actions">
           <button class="btn ghost sm" type="button" data-play-action="phase-back">Back</button>
           <button class="btn sm" type="button" data-play-action="phase-next">${escapeHtml(nextLabel)}</button>
-        </div>
-        <div class="play-inline-controls" style="margin-top:8px;">
-          <button class="btn ghost sm" type="button" data-play-action="save-progress">Save Progress</button>
-          <button class="btn ghost sm" type="button" data-play-action="archive-current">Archive Game</button>
         </div>
       </div>
     </div>`;
@@ -2328,17 +2330,22 @@ function openPlayNewGameDialog() {
   playNewGameDialog.showModal();
 }
 
+function finalizePlayGame() {
+  if (!playModeState) return;
+  persistCurrentPlayState({ archive: true });
+  const winner = playModeState.playerScore === playModeState.opponentScore
+    ? 'Draw'
+    : (playModeState.playerScore > playModeState.opponentScore ? playModeState.playerName : playModeState.opponentName);
+  window.alert(`Final Score\n${playModeState.playerName}: ${playModeState.playerScore}\n${playModeState.opponentName}: ${playModeState.opponentScore}\nWinner: ${winner}`);
+  showToast('Game archived to Past Games.');
+  refreshPlayModeOutput();
+}
+
 function handlePlayNextStep() {
   if (!playModeState) return;
   const currentPhase = getPlayCurrentPhase();
   if (currentPhase === 'Scoring' && playModeState.round >= playModeState.gameLength) {
-    persistCurrentPlayState({ archive: true });
-    const winner = playModeState.playerScore === playModeState.opponentScore
-      ? 'Draw'
-      : (playModeState.playerScore > playModeState.opponentScore ? playModeState.playerName : playModeState.opponentName);
-    window.alert(`Final Score\n${playModeState.playerName}: ${playModeState.playerScore}\n${playModeState.opponentName}: ${playModeState.opponentScore}\nWinner: ${winner}`);
-    showToast('Game archived to Past Games.');
-    refreshPlayModeOutput();
+    finalizePlayGame();
     return;
   }
 
@@ -2389,6 +2396,10 @@ function handlePlayAction(actionEl) {
     if (gameId && loadPlayGameFromLibrary(gameId, 'completed', { mode: 'restart', asEditableCopy: true })) {
       showToast('Started a fresh game from archived setup.');
     }
+    return;
+  }
+  if (action === 'end-game') {
+    finalizePlayGame();
     return;
   }
   if (action === 'delete-saved-game') {

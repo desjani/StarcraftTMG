@@ -1480,7 +1480,7 @@
       display: flex;
       gap: 10px;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: stretch;
     }
     .play-save-row.is-active {
       border-color: rgba(70, 212, 138, .72);
@@ -1500,16 +1500,18 @@
       line-height: 1.35;
     }
     .play-save-actions {
-      display: inline-flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 28px;
       gap: 6px;
       justify-content: flex-end;
       flex-shrink: 0;
+      align-self: stretch;
     }
     .play-save-actions .play-icon-btn {
       min-width: 28px;
       width: 28px;
-      height: 28px;
+      height: auto;
       padding: 0;
       display: inline-flex;
       align-items: center;
