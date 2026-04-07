@@ -20,8 +20,8 @@ const seedInput      = document.getElementById('seed-input');
 const loadBtn        = document.getElementById('load-btn');
 const recentToggleBtn = document.getElementById('recent-toggle-btn');
 const saveFavoriteBtn = document.getElementById('save-favorite-btn');
-const historySavedBtn = document.getElementById('history-saved-btn');
-const historyPastBtn = document.getElementById('history-past-btn');
+const historySavedList = document.getElementById('history-saved-list');
+const historyPastList = document.getElementById('history-past-list');
 const seedHistorySectionEl = document.getElementById('seed-history-section');
 const resultsEl      = document.getElementById('results');
 const errorBox       = document.getElementById('error-box');
@@ -96,10 +96,6 @@ const playCancelBtn = document.getElementById('play-cancel-btn');
 const playResetGameDialog = document.getElementById('play-reset-game-dialog');
 const playResetGameCancelBtn = document.getElementById('play-reset-game-cancel-btn');
 const playResetGameConfirmBtn = document.getElementById('play-reset-game-confirm-btn');
-const playHistoryDialog = document.getElementById('play-history-dialog');
-const playHistorySavedList = document.getElementById('play-history-saved-list');
-const playHistoryPastList = document.getElementById('play-history-past-list');
-const playHistoryCloseBtn = document.getElementById('play-history-close-btn');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
@@ -338,6 +334,22 @@ function ensurePlayStateMetadata(state) {
   state.updatedAt = new Date().toISOString();
 }
 
+function createPlayGameId() {
+  return `play_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function restoreSnapshotIntoState(state, snapshot) {
+  if (!state || !snapshot) return;
+  state.round = snapshot.round;
+  state.phaseIndex = snapshot.phaseIndex;
+  state.firstPlayer = snapshot.firstPlayer;
+  state.playerResource = snapshot.playerResource;
+  state.opponentResource = snapshot.opponentResource;
+  state.playerScore = snapshot.playerScore;
+  state.opponentScore = snapshot.opponentScore;
+  state.unitsByKey = snapshot.unitsByKey;
+}
+
 function savePlayLibrary() {
   try {
     localStorage.setItem(PLAY_LIBRARY_KEY, JSON.stringify(playLibrary));
@@ -371,27 +383,69 @@ function persistCurrentPlayState({ archive = false } = {}) {
 
   if (archive) {
     snapshot.completedAt = new Date().toISOString();
+    playModeState.completedAt = snapshot.completedAt;
     record.updatedAt = snapshot.completedAt;
     record.state = snapshot;
     playLibrary.inProgress = playLibrary.inProgress.filter(g => g?.id !== record.id);
     playLibrary.completed = upsertGameRecord(playLibrary.completed, record).slice(0, MAX_COMPLETED_GAMES);
-  } else {
+    playLibrary.activeGameId = null;
+  } else if (!snapshot.completedAt) {
+    delete snapshot.completedAt;
+    record.state = snapshot;
     playLibrary.inProgress = upsertGameRecord(playLibrary.inProgress, record);
+    playLibrary.activeGameId = record.id;
+  } else {
+    // Completed snapshots are kept only in archive; avoid re-adding to in-progress.
   }
-
-  playLibrary.activeGameId = record.id;
   savePlayLibrary();
 }
 
-function loadPlayGameFromLibrary(gameId, source = 'inProgress') {
+function loadPlayGameFromLibrary(gameId, source = 'inProgress', options = {}) {
   const list = source === 'completed' ? playLibrary.completed : playLibrary.inProgress;
   const record = list.find(g => g?.id === gameId);
   if (!record?.state) return false;
 
-  playModeState = cloneDeep(record.state);
+  const mode = options.mode || 'load';
+  const asEditableCopy = source === 'completed' || Boolean(options.asEditableCopy);
+  let loadedState = cloneDeep(record.state);
+
+  if (mode === 'restart') {
+    loadedState = createPlayModeState(loadedState.playerRoster, loadedState.opponentRoster, {
+      playerSeed: loadedState.playerSeed,
+      opponentSeed: loadedState.opponentSeed,
+      playerName: loadedState.playerName,
+      opponentName: loadedState.opponentName,
+      opponentFaction: loadedState.opponentFaction,
+      missionName: loadedState.missionName,
+      gameLength: loadedState.gameLength,
+      startingSupply: loadedState.startingSupply,
+      supplyPerRound: loadedState.supplyPerRound,
+      gameSize: loadedState.gameSize,
+      hasStarted: true,
+    });
+    applyDefaultPlayCollapsedUnits(loadedState);
+  } else if (mode === 'rewind') {
+    const rewindSnapshot = Array.isArray(loadedState.history) ? loadedState.history.pop() : null;
+    if (rewindSnapshot) {
+      restoreSnapshotIntoState(loadedState, rewindSnapshot);
+    }
+  }
+
+  if (asEditableCopy) {
+    delete loadedState.completedAt;
+    loadedState.gameId = createPlayGameId();
+    loadedState.createdAt = new Date().toISOString();
+    loadedState.updatedAt = loadedState.createdAt;
+  }
+
+  playModeState = loadedState;
   ensurePlayStateMetadata(playModeState);
-  playLibrary.activeGameId = playModeState.gameId;
-  savePlayLibrary();
+  if (asEditableCopy) {
+    persistCurrentPlayState();
+  } else {
+    playLibrary.activeGameId = playModeState.gameId;
+    savePlayLibrary();
+  }
 
   if (playModeState.playerRoster) {
     currentRoster = playModeState.playerRoster;
@@ -472,7 +526,9 @@ function buildCompletedGamesHtml() {
             <div class="play-save-detail">Breakdown: ${escapeHtml(state.playerName || 'Player')} D:${breakdown.player.deployed} W:${breakdown.player.wounded} KIA:${breakdown.player.destroyed} | ${escapeHtml(state.opponentName || 'Opponent')} D:${breakdown.opponent.deployed} W:${breakdown.opponent.wounded} KIA:${breakdown.opponent.destroyed}</div>
           </div>
           <div class="play-save-actions">
-            <button class="btn ghost sm" type="button" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">Review</button>
+            <button class="btn ghost sm" type="button" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">Load</button>
+            <button class="btn ghost sm" type="button" data-play-action="rewind-completed-game" data-game-id="${escapeHtml(record.id)}">Rewind</button>
+            <button class="btn ghost sm" type="button" data-play-action="restart-completed-game" data-game-id="${escapeHtml(record.id)}">Restart</button>
             <button class="btn ghost sm" type="button" data-play-action="delete-completed-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
           </div>
         </div>`;
@@ -480,21 +536,10 @@ function buildCompletedGamesHtml() {
     .join('') || '<div class="play-save-empty">No past games yet.</div>';
 }
 
-function renderPlayHistoryDialog({ focus = 'saved' } = {}) {
-  if (!playHistorySavedList || !playHistoryPastList) return;
-  playHistorySavedList.innerHTML = buildInProgressGamesHtml();
-  playHistoryPastList.innerHTML = buildCompletedGamesHtml();
-  if (focus === 'past') {
-    playHistoryPastList.scrollTop = 0;
-  } else {
-    playHistorySavedList.scrollTop = 0;
-  }
-}
-
-function openPlayHistoryDialog({ focus = 'saved' } = {}) {
-  if (!playHistoryDialog) return;
-  renderPlayHistoryDialog({ focus });
-  playHistoryDialog.showModal();
+function renderPlayHistoryLists() {
+  if (!historySavedList || !historyPastList) return;
+  historySavedList.innerHTML = buildInProgressGamesHtml();
+  historyPastList.innerHTML = buildCompletedGamesHtml();
 }
 
 function renderSeedHistory() {
@@ -2240,7 +2285,7 @@ function refreshPlayModeOutput() {
   if (playModeState?.hasStarted) persistCurrentPlayState();
   if (playNewGameBtn) playNewGameBtn.style.display = playModeState?.hasStarted ? 'none' : '';
   playDashboardEl.innerHTML = buildPlayDashboard();
-  renderPlayHistoryDialog();
+  renderPlayHistoryLists();
   playCardEl.innerHTML = renderPlayMode(currentRoster);
   if (playModeState?.hasStarted) {
     const side = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
@@ -2287,11 +2332,11 @@ function handlePlayNextStep() {
   if (!playModeState) return;
   const currentPhase = getPlayCurrentPhase();
   if (currentPhase === 'Scoring' && playModeState.round >= playModeState.gameLength) {
+    persistCurrentPlayState({ archive: true });
     const winner = playModeState.playerScore === playModeState.opponentScore
       ? 'Draw'
       : (playModeState.playerScore > playModeState.opponentScore ? playModeState.playerName : playModeState.opponentName);
     window.alert(`Final Score\n${playModeState.playerName}: ${playModeState.playerScore}\n${playModeState.opponentName}: ${playModeState.opponentScore}\nWinner: ${winner}`);
-    persistCurrentPlayState({ archive: true });
     showToast('Game archived to Past Games.');
     refreshPlayModeOutput();
     return;
@@ -2316,11 +2361,54 @@ function handlePlayBackStep() {
 }
 
 function handlePlayAction(actionEl) {
-  if (!playModeState) return;
   const action = String(actionEl.dataset.playAction || '');
   const side = String(actionEl.dataset.side || '');
   const unitKey = String(actionEl.dataset.unitKey || '');
   const phase = String(actionEl.dataset.phase || '').toLowerCase();
+  const gameId = String(actionEl.dataset.gameId || '');
+
+  if (action === 'load-saved-game') {
+    if (gameId && loadPlayGameFromLibrary(gameId, 'inProgress')) {
+      showToast('Loaded saved game.');
+    }
+    return;
+  }
+  if (action === 'load-completed-game') {
+    if (gameId && loadPlayGameFromLibrary(gameId, 'completed', { mode: 'load', asEditableCopy: true })) {
+      showToast('Loaded archived game into active play.');
+    }
+    return;
+  }
+  if (action === 'rewind-completed-game') {
+    if (gameId && loadPlayGameFromLibrary(gameId, 'completed', { mode: 'rewind', asEditableCopy: true })) {
+      showToast('Loaded archived game rewound one step.');
+    }
+    return;
+  }
+  if (action === 'restart-completed-game') {
+    if (gameId && loadPlayGameFromLibrary(gameId, 'completed', { mode: 'restart', asEditableCopy: true })) {
+      showToast('Started a fresh game from archived setup.');
+    }
+    return;
+  }
+  if (action === 'delete-saved-game') {
+    if (gameId) {
+      removePlayGameFromLibrary(gameId, 'inProgress');
+      showToast('Saved game deleted.');
+      refreshPlayModeOutput();
+    }
+    return;
+  }
+  if (action === 'delete-completed-game') {
+    if (gameId) {
+      removePlayGameFromLibrary(gameId, 'completed');
+      showToast('Past game deleted.');
+      refreshPlayModeOutput();
+    }
+    return;
+  }
+
+  if (!playModeState) return;
   const tracker = unitKey ? playModeState.unitsByKey[unitKey] : null;
 
   if (action === 'open-new-game') {
@@ -2347,43 +2435,11 @@ function handlePlayAction(actionEl) {
     refreshPlayModeOutput();
     return;
   }
-  if (action === 'load-saved-game') {
-    const gameId = String(actionEl.dataset.gameId || '');
-    if (gameId && loadPlayGameFromLibrary(gameId, 'inProgress')) {
-      showToast('Loaded saved game.');
-    }
-    return;
-  }
-  if (action === 'load-completed-game') {
-    const gameId = String(actionEl.dataset.gameId || '');
-    if (gameId && loadPlayGameFromLibrary(gameId, 'completed')) {
-      showToast('Loaded past game for review.');
-    }
-    return;
-  }
   if (action === 'archive-saved-game') {
     const gameId = String(actionEl.dataset.gameId || '');
     if (gameId && loadPlayGameFromLibrary(gameId, 'inProgress')) {
       persistCurrentPlayState({ archive: true });
       showToast('Saved game archived.');
-      refreshPlayModeOutput();
-    }
-    return;
-  }
-  if (action === 'delete-saved-game') {
-    const gameId = String(actionEl.dataset.gameId || '');
-    if (gameId) {
-      removePlayGameFromLibrary(gameId, 'inProgress');
-      showToast('Saved game deleted.');
-      refreshPlayModeOutput();
-    }
-    return;
-  }
-  if (action === 'delete-completed-game') {
-    const gameId = String(actionEl.dataset.gameId || '');
-    if (gameId) {
-      removePlayGameFromLibrary(gameId, 'completed');
-      showToast('Past game deleted.');
       refreshPlayModeOutput();
     }
     return;
@@ -4715,30 +4771,12 @@ if (playDashboardEl) {
   });
 }
 
-if (playHistoryDialog) {
-  playHistoryDialog.addEventListener('click', e => {
+if (seedHistorySectionEl) {
+  seedHistorySectionEl.addEventListener('click', e => {
     const actionEl = e.target.closest('[data-play-action]');
-    if (!actionEl || !playHistoryDialog.contains(actionEl)) return;
+    if (!actionEl || !seedHistorySectionEl.contains(actionEl)) return;
     e.preventDefault();
     handlePlayAction(actionEl);
-  });
-}
-
-if (playHistoryCloseBtn) {
-  playHistoryCloseBtn.addEventListener('click', () => {
-    playHistoryDialog?.close();
-  });
-}
-
-if (historySavedBtn) {
-  historySavedBtn.addEventListener('click', () => {
-    openPlayHistoryDialog({ focus: 'saved' });
-  });
-}
-
-if (historyPastBtn) {
-  historyPastBtn.addEventListener('click', () => {
-    openPlayHistoryDialog({ focus: 'past' });
   });
 }
 
@@ -4829,6 +4867,7 @@ loadSeedHistory();
 loadPlayLibrary();
 renderSeedHistory();
 applyRecentCollapsed(false);
+renderPlayHistoryLists();
 
 // ── URL param auto-load ───────────────────────────────────────────────────────
 // Supports: /?s=SEED  /?s=SEED&tab=card|aid|play|preview
