@@ -98,6 +98,7 @@ let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
 let playModeState = null;
+let playLibrary = { activeGameId: null, inProgress: [], completed: [] };
 
 const PLAY_PHASES = ['Movement', 'Assault', 'Combat', 'Scoring'];
 
@@ -137,7 +138,9 @@ function showToast(message, type = 'success', duration = 2500) {
 // ─── localStorage persistence ─────────────────────────────────────────────────
 const STORAGE_KEY = 'sctmg.prefs';
 const SEED_HISTORY_KEY = 'sctmg.seedHistory';
+const PLAY_LIBRARY_KEY = 'sctmg.playLibrary.v1';
 const MAX_RECENT_SEEDS = 10;
+const MAX_COMPLETED_GAMES = 25;
 
 function savePrefs() {
   try {
@@ -277,6 +280,147 @@ function loadSeedHistory() {
         .filter(f => f.name && f.seed),
     };
   } catch (_) { /* corrupt storage — ignore */ }
+}
+
+function cloneDeep(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function upsertGameRecord(records, record) {
+  const list = Array.isArray(records) ? records : [];
+  const idx = list.findIndex(item => item?.id === record?.id);
+  if (idx >= 0) {
+    list[idx] = record;
+    return list;
+  }
+  return [record, ...list];
+}
+
+function formatPlayDateTime(iso) {
+  if (!iso) return 'unknown';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'unknown';
+  return d.toLocaleString();
+}
+
+function getPlayWinnerLabel(state) {
+  if (!state) return 'Unknown';
+  if (state.playerScore === state.opponentScore) return 'Draw';
+  return state.playerScore > state.opponentScore ? state.playerName : state.opponentName;
+}
+
+function buildPlayBreakdown(state) {
+  const trackers = Object.values(state?.unitsByKey ?? {});
+  const summarizeSide = (side) => {
+    const sideTrackers = trackers.filter(t => t.side === side);
+    const deployed = sideTrackers.filter(t => t.deployed).length;
+    const destroyed = sideTrackers.filter(t => t.deployed && getPlayTrackerCurrentHealth(t) <= 0).length;
+    const wounded = sideTrackers.filter(t => t.deployed && getPlayTrackerCurrentHealth(t) > 0 && getPlayTrackerCurrentHealth(t) < (t.maxHealthPools ?? []).reduce((sum, p) => sum + Number(p?.value || 0), 0)).length;
+    return { deployed, destroyed, wounded };
+  };
+
+  return {
+    player: summarizeSide('player'),
+    opponent: summarizeSide('opponent'),
+  };
+}
+
+function ensurePlayStateMetadata(state) {
+  if (!state) return;
+  if (!state.gameId) state.gameId = `play_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  if (!state.createdAt) state.createdAt = new Date().toISOString();
+  state.updatedAt = new Date().toISOString();
+}
+
+function savePlayLibrary() {
+  try {
+    localStorage.setItem(PLAY_LIBRARY_KEY, JSON.stringify(playLibrary));
+  } catch (_) { /* storage unavailable */ }
+}
+
+function loadPlayLibrary() {
+  try {
+    const raw = localStorage.getItem(PLAY_LIBRARY_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    playLibrary = {
+      activeGameId: parsed?.activeGameId || null,
+      inProgress: Array.isArray(parsed?.inProgress) ? parsed.inProgress : [],
+      completed: Array.isArray(parsed?.completed) ? parsed.completed : [],
+    };
+  } catch (_) {
+    playLibrary = { activeGameId: null, inProgress: [], completed: [] };
+  }
+}
+
+function persistCurrentPlayState({ archive = false } = {}) {
+  if (!playModeState?.hasStarted) return;
+  ensurePlayStateMetadata(playModeState);
+  const snapshot = cloneDeep(playModeState);
+  const record = {
+    id: snapshot.gameId,
+    updatedAt: snapshot.updatedAt,
+    state: snapshot,
+  };
+
+  if (archive) {
+    snapshot.completedAt = new Date().toISOString();
+    record.updatedAt = snapshot.completedAt;
+    record.state = snapshot;
+    playLibrary.inProgress = playLibrary.inProgress.filter(g => g?.id !== record.id);
+    playLibrary.completed = upsertGameRecord(playLibrary.completed, record).slice(0, MAX_COMPLETED_GAMES);
+  } else {
+    playLibrary.inProgress = upsertGameRecord(playLibrary.inProgress, record);
+  }
+
+  playLibrary.activeGameId = record.id;
+  savePlayLibrary();
+}
+
+function loadPlayGameFromLibrary(gameId, source = 'inProgress') {
+  const list = source === 'completed' ? playLibrary.completed : playLibrary.inProgress;
+  const record = list.find(g => g?.id === gameId);
+  if (!record?.state) return false;
+
+  playModeState = cloneDeep(record.state);
+  ensurePlayStateMetadata(playModeState);
+  playLibrary.activeGameId = playModeState.gameId;
+  savePlayLibrary();
+
+  if (playModeState.playerRoster) {
+    currentRoster = playModeState.playerRoster;
+    if (seedInput) seedInput.value = playModeState.playerSeed || playModeState.playerRoster.seed || '';
+    refreshOutput();
+    resultsEl.style.display = 'block';
+    loadingBox.style.display = 'none';
+    errorBox.style.display = 'none';
+    document.body.classList.remove('preload');
+    const playTab = document.querySelector('.tab[data-tab="play"]');
+    if (playTab) activateTab(playTab);
+  } else {
+    refreshPlayModeOutput();
+  }
+  return true;
+}
+
+function removePlayGameFromLibrary(gameId, source = 'inProgress') {
+  if (!gameId) return;
+  if (source === 'completed') {
+    playLibrary.completed = playLibrary.completed.filter(g => g?.id !== gameId);
+  } else {
+    playLibrary.inProgress = playLibrary.inProgress.filter(g => g?.id !== gameId);
+  }
+  if (playLibrary.activeGameId === gameId) {
+    playLibrary.activeGameId = playModeState?.gameId || null;
+  }
+  savePlayLibrary();
+}
+
+function restoreActivePlayGame() {
+  const id = playLibrary.activeGameId;
+  if (!id || currentRoster) return false;
+  return loadPlayGameFromLibrary(id, 'inProgress')
+    || loadPlayGameFromLibrary(id, 'completed');
 }
 
 function renderSeedHistory() {
@@ -1894,6 +2038,53 @@ function buildPlayDashboard() {
     nextLabel = playModeState.round >= playModeState.gameLength ? 'End Game' : 'Next Round';
   }
 
+  const inProgressCards = playLibrary.inProgress
+    .slice()
+    .sort((a, b) => String(b?.updatedAt || '').localeCompare(String(a?.updatedAt || '')))
+    .map(record => {
+      const state = record?.state;
+      if (!state) return '';
+      const isActive = playModeState?.gameId === record.id;
+      return `
+        <div class="play-save-row${isActive ? ' is-active' : ''}">
+          <div class="play-save-meta">
+            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong></div>
+            <div class="play-save-detail">${escapeHtml(state.missionName || 'Mission')} · Round ${Number(state.round || 1)} · ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))}</div>
+            <div class="play-save-detail">Updated ${escapeHtml(formatPlayDateTime(record.updatedAt))}</div>
+          </div>
+          <div class="play-save-actions">
+            <button class="btn ghost sm" type="button" data-play-action="load-saved-game" data-game-id="${escapeHtml(record.id)}">Load</button>
+            <button class="btn ghost sm" type="button" data-play-action="archive-saved-game" data-game-id="${escapeHtml(record.id)}">Archive</button>
+            <button class="btn ghost sm" type="button" data-play-action="delete-saved-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
+          </div>
+        </div>`;
+    })
+    .join('') || '<div class="play-save-empty">No in-progress games saved yet.</div>';
+
+  const completedCards = playLibrary.completed
+    .slice()
+    .sort((a, b) => String(b?.updatedAt || '').localeCompare(String(a?.updatedAt || '')))
+    .slice(0, 12)
+    .map(record => {
+      const state = record?.state;
+      if (!state) return '';
+      const winner = getPlayWinnerLabel(state);
+      const breakdown = buildPlayBreakdown(state);
+      return `
+        <div class="play-save-row past-game">
+          <div class="play-save-meta">
+            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong> · Winner: <strong>${escapeHtml(winner)}</strong></div>
+            <div class="play-save-detail">Final ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))} · ${escapeHtml(state.missionName || 'Mission')} · Ended ${escapeHtml(formatPlayDateTime(state.completedAt || record.updatedAt))}</div>
+            <div class="play-save-detail">Breakdown: ${escapeHtml(state.playerName || 'Player')} D:${breakdown.player.deployed} W:${breakdown.player.wounded} KIA:${breakdown.player.destroyed} | ${escapeHtml(state.opponentName || 'Opponent')} D:${breakdown.opponent.deployed} W:${breakdown.opponent.wounded} KIA:${breakdown.opponent.destroyed}</div>
+          </div>
+          <div class="play-save-actions">
+            <button class="btn ghost sm" type="button" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">Review</button>
+            <button class="btn ghost sm" type="button" data-play-action="delete-completed-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
+          </div>
+        </div>`;
+    })
+    .join('') || '<div class="play-save-empty">No past games yet.</div>';
+
   return `
     <div class="play-topbar">
       <div class="play-name-line"><strong>${escapeHtml(playModeState.playerName)}</strong> vs <strong>${escapeHtml(playModeState.opponentName)}</strong> (${escapeHtml(playModeState.opponentFaction)}) · ${escapeHtml(String(playModeState.gameSize))}m · <strong>${escapeHtml(playModeState.missionName)}</strong> · ${playModeState.gameLength} rounds</div>
@@ -1961,6 +2152,18 @@ function buildPlayDashboard() {
           <button class="btn ghost sm" type="button" data-play-action="phase-back">Back</button>
           <button class="btn sm" type="button" data-play-action="phase-next">${escapeHtml(nextLabel)}</button>
         </div>
+        <div class="play-inline-controls" style="margin-top:8px;">
+          <button class="btn ghost sm" type="button" data-play-action="save-progress">Save Progress</button>
+          <button class="btn ghost sm" type="button" data-play-action="archive-current">Archive Game</button>
+        </div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Saved In Progress</div>
+        <div class="play-save-list">${inProgressCards}</div>
+      </div>
+      <div class="play-stat">
+        <div class="play-stat-label">Past Games</div>
+        <div class="play-save-list">${completedCards}</div>
       </div>
     </div>`;
 }
@@ -2015,6 +2218,7 @@ function renderPlayMode(roster) {
 function refreshPlayModeOutput() {
   if (!playCardEl || !playDashboardEl) return;
   if (!playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (playModeState?.hasStarted) persistCurrentPlayState();
   if (playNewGameBtn) playNewGameBtn.style.display = playModeState?.hasStarted ? 'none' : '';
   playDashboardEl.innerHTML = buildPlayDashboard();
   playCardEl.innerHTML = renderPlayMode(currentRoster);
@@ -2067,6 +2271,9 @@ function handlePlayNextStep() {
       ? 'Draw'
       : (playModeState.playerScore > playModeState.opponentScore ? playModeState.playerName : playModeState.opponentName);
     window.alert(`Final Score\n${playModeState.playerName}: ${playModeState.playerScore}\n${playModeState.opponentName}: ${playModeState.opponentScore}\nWinner: ${winner}`);
+    persistCurrentPlayState({ archive: true });
+    showToast('Game archived to Past Games.');
+    refreshPlayModeOutput();
     return;
   }
 
@@ -2106,6 +2313,59 @@ function handlePlayAction(actionEl) {
   }
   if (action === 'phase-next') {
     handlePlayNextStep();
+    return;
+  }
+  if (action === 'save-progress') {
+    persistCurrentPlayState();
+    showToast('Game progress saved locally.');
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'archive-current') {
+    persistCurrentPlayState({ archive: true });
+    showToast('Game moved to Past Games.');
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'load-saved-game') {
+    const gameId = String(actionEl.dataset.gameId || '');
+    if (gameId && loadPlayGameFromLibrary(gameId, 'inProgress')) {
+      showToast('Loaded saved game.');
+    }
+    return;
+  }
+  if (action === 'load-completed-game') {
+    const gameId = String(actionEl.dataset.gameId || '');
+    if (gameId && loadPlayGameFromLibrary(gameId, 'completed')) {
+      showToast('Loaded past game for review.');
+    }
+    return;
+  }
+  if (action === 'archive-saved-game') {
+    const gameId = String(actionEl.dataset.gameId || '');
+    if (gameId && loadPlayGameFromLibrary(gameId, 'inProgress')) {
+      persistCurrentPlayState({ archive: true });
+      showToast('Saved game archived.');
+      refreshPlayModeOutput();
+    }
+    return;
+  }
+  if (action === 'delete-saved-game') {
+    const gameId = String(actionEl.dataset.gameId || '');
+    if (gameId) {
+      removePlayGameFromLibrary(gameId, 'inProgress');
+      showToast('Saved game deleted.');
+      refreshPlayModeOutput();
+    }
+    return;
+  }
+  if (action === 'delete-completed-game') {
+    const gameId = String(actionEl.dataset.gameId || '');
+    if (gameId) {
+      removePlayGameFromLibrary(gameId, 'completed');
+      showToast('Past game deleted.');
+      refreshPlayModeOutput();
+    }
     return;
   }
   if (action === 'collapse-side') {
@@ -4487,6 +4747,7 @@ if (playNewGameForm) {
         hasStarted: true,
       });
       applyDefaultPlayCollapsedUnits(playModeState);
+      persistCurrentPlayState();
       playNewGameDialog?.close();
       refreshPlayModeOutput();
     } catch (err) {
@@ -4518,6 +4779,7 @@ if (document.fonts?.ready?.then) {
 // Restore persisted preferences (must come after all event listeners are wired up)
 loadPrefs();
 loadSeedHistory();
+loadPlayLibrary();
 renderSeedHistory();
 applyRecentCollapsed(false);
 
@@ -4573,3 +4835,9 @@ applyRecentCollapsed(false);
     }
   }
 })();
+
+// If there is no URL seed override, restore the most recent active play session.
+try {
+  const hasSeedInUrl = new URLSearchParams(window.location.search).has('s');
+  if (!hasSeedInUrl) restoreActivePlayGame();
+} catch (_) { /* ignore URL parsing failures */ }
