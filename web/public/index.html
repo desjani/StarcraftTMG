@@ -1162,9 +1162,17 @@
     }
     .play-topbar {
       display: flex;
-      flex-wrap: wrap;
+      justify-content: space-between;
       gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .play-topbar-actions {
+      display: inline-flex;
       align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .btn.play-new-game-main {
       width: 100%;
@@ -1280,8 +1288,9 @@
     .play-name-line {
       font-size: .84rem;
       color: var(--muted);
-      width: 100%;
-      text-align: center;
+      flex: 1 1 420px;
+      min-width: 0;
+      text-align: left;
     }
     .play-name-line strong { color: var(--text); }
     .play-mini-new-game { margin-left: auto; }

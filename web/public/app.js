@@ -424,11 +424,6 @@ function loadPlayGameFromLibrary(gameId, source = 'inProgress', options = {}) {
       hasStarted: true,
     });
     applyDefaultPlayCollapsedUnits(loadedState);
-  } else if (mode === 'rewind') {
-    const rewindSnapshot = Array.isArray(loadedState.history) ? loadedState.history.pop() : null;
-    if (rewindSnapshot) {
-      restoreSnapshotIntoState(loadedState, rewindSnapshot);
-    }
   }
 
   if (asEditableCopy) {
@@ -532,7 +527,6 @@ function buildCompletedGamesHtml() {
           </div>
           <div class="play-save-actions">
             <button class="btn ghost sm play-icon-btn" type="button" title="Review / Load" aria-label="Review / Load" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">◉</button>
-            <button class="btn ghost sm play-icon-btn" type="button" title="Rewind" aria-label="Rewind" data-play-action="rewind-completed-game" data-game-id="${escapeHtml(record.id)}">⟲</button>
             <button class="btn ghost sm play-icon-btn" type="button" title="Restart" aria-label="Restart" data-play-action="restart-completed-game" data-game-id="${escapeHtml(record.id)}">↻</button>
             <button class="btn ghost sm play-icon-btn" type="button" title="Delete" aria-label="Delete" data-play-action="delete-completed-game" data-game-id="${escapeHtml(record.id)}">✕</button>
           </div>
@@ -2165,6 +2159,10 @@ function buildPlayDashboard() {
   return `
     <div class="play-topbar">
       <div class="play-name-line"><strong>${escapeHtml(playModeState.playerName)}</strong> vs <strong>${escapeHtml(playModeState.opponentName)}</strong> (${escapeHtml(playModeState.opponentFaction)}) · ${escapeHtml(String(playModeState.gameSize))}m · <strong>${escapeHtml(playModeState.missionName)}</strong> · ${playModeState.gameLength} rounds</div>
+      <div class="play-topbar-actions">
+        <button class="btn ghost sm" type="button" data-play-action="open-new-game-confirm" title="Start New Game">↻ New Game</button>
+        <button class="btn ghost sm" type="button" data-play-action="end-game" title="End Game">■ End Game</button>
+      </div>
     </div>
     <div class="play-dashboard">
       <div class="play-stat">
@@ -2219,10 +2217,6 @@ function buildPlayDashboard() {
         <div class="play-stat-label">Round Tracker</div>
         <div class="play-resource-row"><span class="play-stat-label">Round</span><span class="play-stat-value">${playModeState.round}</span></div>
         <div class="play-resource-row"><span class="play-stat-label">Phase</span><span class="play-stat-value play-phase-readout ${escapeHtml(phaseClass)}">${escapeHtml(currentPhase)}</span></div>
-        <div class="play-inline-controls">
-          <button class="btn ghost sm" type="button" data-play-action="open-new-game-confirm" title="Start New Game">↻ New Game</button>
-          <button class="btn ghost sm" type="button" data-play-action="end-game" title="End Game">■ End Game</button>
-        </div>
       </div>
       <div class="play-stat">
         <div class="play-stat-label">Flow</div>
@@ -2383,12 +2377,6 @@ function handlePlayAction(actionEl) {
   if (action === 'load-completed-game') {
     if (gameId && loadPlayGameFromLibrary(gameId, 'completed', { mode: 'load', asEditableCopy: true })) {
       showToast('Loaded archived game into active play.');
-    }
-    return;
-  }
-  if (action === 'rewind-completed-game') {
-    if (gameId && loadPlayGameFromLibrary(gameId, 'completed', { mode: 'rewind', asEditableCopy: true })) {
-      showToast('Loaded archived game rewound one step.');
     }
     return;
   }
