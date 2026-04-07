@@ -499,9 +499,9 @@ function buildInProgressGamesHtml() {
             <div class="play-save-detail">Updated ${escapeHtml(formatPlayDateTime(record.updatedAt))}</div>
           </div>
           <div class="play-save-actions">
-            <button class="btn ghost sm" type="button" data-play-action="load-saved-game" data-game-id="${escapeHtml(record.id)}">Load</button>
-            <button class="btn ghost sm" type="button" data-play-action="archive-saved-game" data-game-id="${escapeHtml(record.id)}">Archive</button>
-            <button class="btn ghost sm" type="button" data-play-action="delete-saved-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
+            <button class="btn ghost sm play-icon-btn" type="button" title="Load" aria-label="Load" data-play-action="load-saved-game" data-game-id="${escapeHtml(record.id)}">↺</button>
+            <button class="btn ghost sm play-icon-btn" type="button" title="Archive" aria-label="Archive" data-play-action="archive-saved-game" data-game-id="${escapeHtml(record.id)}">⤓</button>
+            <button class="btn ghost sm play-icon-btn" type="button" title="Delete" aria-label="Delete" data-play-action="delete-saved-game" data-game-id="${escapeHtml(record.id)}">✕</button>
           </div>
         </div>`;
     })
@@ -526,10 +526,10 @@ function buildCompletedGamesHtml() {
             <div class="play-save-detail">Breakdown: ${escapeHtml(state.playerName || 'Player')} D:${breakdown.player.deployed} W:${breakdown.player.wounded} KIA:${breakdown.player.destroyed} | ${escapeHtml(state.opponentName || 'Opponent')} D:${breakdown.opponent.deployed} W:${breakdown.opponent.wounded} KIA:${breakdown.opponent.destroyed}</div>
           </div>
           <div class="play-save-actions">
-            <button class="btn ghost sm" type="button" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">Load</button>
-            <button class="btn ghost sm" type="button" data-play-action="rewind-completed-game" data-game-id="${escapeHtml(record.id)}">Rewind</button>
-            <button class="btn ghost sm" type="button" data-play-action="restart-completed-game" data-game-id="${escapeHtml(record.id)}">Restart</button>
-            <button class="btn ghost sm" type="button" data-play-action="delete-completed-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
+            <button class="btn ghost sm play-icon-btn" type="button" title="Review / Load" aria-label="Review / Load" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">◉</button>
+            <button class="btn ghost sm play-icon-btn" type="button" title="Rewind" aria-label="Rewind" data-play-action="rewind-completed-game" data-game-id="${escapeHtml(record.id)}">⟲</button>
+            <button class="btn ghost sm play-icon-btn" type="button" title="Restart" aria-label="Restart" data-play-action="restart-completed-game" data-game-id="${escapeHtml(record.id)}">↻</button>
+            <button class="btn ghost sm play-icon-btn" type="button" title="Delete" aria-label="Delete" data-play-action="delete-completed-game" data-game-id="${escapeHtml(record.id)}">✕</button>
           </div>
         </div>`;
     })
@@ -4866,6 +4866,14 @@ loadPrefs();
 loadSeedHistory();
 loadPlayLibrary();
 renderSeedHistory();
+try {
+  const seedParam = new URLSearchParams(window.location.search).get('s');
+  const hasUrlSeed = /^[A-Z0-9]{4,8}$/i.test(String(seedParam || '').trim());
+  // On direct seed links, start with history closed; otherwise open by default.
+  recentCollapsed = hasUrlSeed;
+} catch (_) {
+  recentCollapsed = false;
+}
 applyRecentCollapsed(false);
 renderPlayHistoryLists();
 
