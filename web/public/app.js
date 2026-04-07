@@ -20,6 +20,8 @@ const seedInput      = document.getElementById('seed-input');
 const loadBtn        = document.getElementById('load-btn');
 const recentToggleBtn = document.getElementById('recent-toggle-btn');
 const saveFavoriteBtn = document.getElementById('save-favorite-btn');
+const historySavedBtn = document.getElementById('history-saved-btn');
+const historyPastBtn = document.getElementById('history-past-btn');
 const seedHistorySectionEl = document.getElementById('seed-history-section');
 const resultsEl      = document.getElementById('results');
 const errorBox       = document.getElementById('error-box');
@@ -94,6 +96,10 @@ const playCancelBtn = document.getElementById('play-cancel-btn');
 const playResetGameDialog = document.getElementById('play-reset-game-dialog');
 const playResetGameCancelBtn = document.getElementById('play-reset-game-cancel-btn');
 const playResetGameConfirmBtn = document.getElementById('play-reset-game-confirm-btn');
+const playHistoryDialog = document.getElementById('play-history-dialog');
+const playHistorySavedList = document.getElementById('play-history-saved-list');
+const playHistoryPastList = document.getElementById('play-history-past-list');
+const playHistoryCloseBtn = document.getElementById('play-history-close-btn');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
@@ -421,6 +427,74 @@ function restoreActivePlayGame() {
   if (!id || currentRoster) return false;
   return loadPlayGameFromLibrary(id, 'inProgress')
     || loadPlayGameFromLibrary(id, 'completed');
+}
+
+function buildInProgressGamesHtml() {
+  return playLibrary.inProgress
+    .slice()
+    .sort((a, b) => String(b?.updatedAt || '').localeCompare(String(a?.updatedAt || '')))
+    .map(record => {
+      const state = record?.state;
+      if (!state) return '';
+      const isActive = playModeState?.gameId === record.id;
+      return `
+        <div class="play-save-row${isActive ? ' is-active' : ''}">
+          <div class="play-save-meta">
+            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong></div>
+            <div class="play-save-detail">${escapeHtml(state.missionName || 'Mission')} · Round ${Number(state.round || 1)} · ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))}</div>
+            <div class="play-save-detail">Updated ${escapeHtml(formatPlayDateTime(record.updatedAt))}</div>
+          </div>
+          <div class="play-save-actions">
+            <button class="btn ghost sm" type="button" data-play-action="load-saved-game" data-game-id="${escapeHtml(record.id)}">Load</button>
+            <button class="btn ghost sm" type="button" data-play-action="archive-saved-game" data-game-id="${escapeHtml(record.id)}">Archive</button>
+            <button class="btn ghost sm" type="button" data-play-action="delete-saved-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
+          </div>
+        </div>`;
+    })
+    .join('') || '<div class="play-save-empty">No in-progress games saved yet.</div>';
+}
+
+function buildCompletedGamesHtml() {
+  return playLibrary.completed
+    .slice()
+    .sort((a, b) => String(b?.updatedAt || '').localeCompare(String(a?.updatedAt || '')))
+    .slice(0, 20)
+    .map(record => {
+      const state = record?.state;
+      if (!state) return '';
+      const winner = getPlayWinnerLabel(state);
+      const breakdown = buildPlayBreakdown(state);
+      return `
+        <div class="play-save-row past-game">
+          <div class="play-save-meta">
+            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong> · Winner: <strong>${escapeHtml(winner)}</strong></div>
+            <div class="play-save-detail">Final ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))} · ${escapeHtml(state.missionName || 'Mission')} · Ended ${escapeHtml(formatPlayDateTime(state.completedAt || record.updatedAt))}</div>
+            <div class="play-save-detail">Breakdown: ${escapeHtml(state.playerName || 'Player')} D:${breakdown.player.deployed} W:${breakdown.player.wounded} KIA:${breakdown.player.destroyed} | ${escapeHtml(state.opponentName || 'Opponent')} D:${breakdown.opponent.deployed} W:${breakdown.opponent.wounded} KIA:${breakdown.opponent.destroyed}</div>
+          </div>
+          <div class="play-save-actions">
+            <button class="btn ghost sm" type="button" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">Review</button>
+            <button class="btn ghost sm" type="button" data-play-action="delete-completed-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
+          </div>
+        </div>`;
+    })
+    .join('') || '<div class="play-save-empty">No past games yet.</div>';
+}
+
+function renderPlayHistoryDialog({ focus = 'saved' } = {}) {
+  if (!playHistorySavedList || !playHistoryPastList) return;
+  playHistorySavedList.innerHTML = buildInProgressGamesHtml();
+  playHistoryPastList.innerHTML = buildCompletedGamesHtml();
+  if (focus === 'past') {
+    playHistoryPastList.scrollTop = 0;
+  } else {
+    playHistorySavedList.scrollTop = 0;
+  }
+}
+
+function openPlayHistoryDialog({ focus = 'saved' } = {}) {
+  if (!playHistoryDialog) return;
+  renderPlayHistoryDialog({ focus });
+  playHistoryDialog.showModal();
 }
 
 function renderSeedHistory() {
@@ -2038,53 +2112,6 @@ function buildPlayDashboard() {
     nextLabel = playModeState.round >= playModeState.gameLength ? 'End Game' : 'Next Round';
   }
 
-  const inProgressCards = playLibrary.inProgress
-    .slice()
-    .sort((a, b) => String(b?.updatedAt || '').localeCompare(String(a?.updatedAt || '')))
-    .map(record => {
-      const state = record?.state;
-      if (!state) return '';
-      const isActive = playModeState?.gameId === record.id;
-      return `
-        <div class="play-save-row${isActive ? ' is-active' : ''}">
-          <div class="play-save-meta">
-            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong></div>
-            <div class="play-save-detail">${escapeHtml(state.missionName || 'Mission')} · Round ${Number(state.round || 1)} · ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))}</div>
-            <div class="play-save-detail">Updated ${escapeHtml(formatPlayDateTime(record.updatedAt))}</div>
-          </div>
-          <div class="play-save-actions">
-            <button class="btn ghost sm" type="button" data-play-action="load-saved-game" data-game-id="${escapeHtml(record.id)}">Load</button>
-            <button class="btn ghost sm" type="button" data-play-action="archive-saved-game" data-game-id="${escapeHtml(record.id)}">Archive</button>
-            <button class="btn ghost sm" type="button" data-play-action="delete-saved-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
-          </div>
-        </div>`;
-    })
-    .join('') || '<div class="play-save-empty">No in-progress games saved yet.</div>';
-
-  const completedCards = playLibrary.completed
-    .slice()
-    .sort((a, b) => String(b?.updatedAt || '').localeCompare(String(a?.updatedAt || '')))
-    .slice(0, 12)
-    .map(record => {
-      const state = record?.state;
-      if (!state) return '';
-      const winner = getPlayWinnerLabel(state);
-      const breakdown = buildPlayBreakdown(state);
-      return `
-        <div class="play-save-row past-game">
-          <div class="play-save-meta">
-            <div><strong>${escapeHtml(state.playerName || 'Player')}</strong> vs <strong>${escapeHtml(state.opponentName || 'Opponent')}</strong> · Winner: <strong>${escapeHtml(winner)}</strong></div>
-            <div class="play-save-detail">Final ${escapeHtml(String(state.playerScore || 0))}-${escapeHtml(String(state.opponentScore || 0))} · ${escapeHtml(state.missionName || 'Mission')} · Ended ${escapeHtml(formatPlayDateTime(state.completedAt || record.updatedAt))}</div>
-            <div class="play-save-detail">Breakdown: ${escapeHtml(state.playerName || 'Player')} D:${breakdown.player.deployed} W:${breakdown.player.wounded} KIA:${breakdown.player.destroyed} | ${escapeHtml(state.opponentName || 'Opponent')} D:${breakdown.opponent.deployed} W:${breakdown.opponent.wounded} KIA:${breakdown.opponent.destroyed}</div>
-          </div>
-          <div class="play-save-actions">
-            <button class="btn ghost sm" type="button" data-play-action="load-completed-game" data-game-id="${escapeHtml(record.id)}">Review</button>
-            <button class="btn ghost sm" type="button" data-play-action="delete-completed-game" data-game-id="${escapeHtml(record.id)}">Delete</button>
-          </div>
-        </div>`;
-    })
-    .join('') || '<div class="play-save-empty">No past games yet.</div>';
-
   return `
     <div class="play-topbar">
       <div class="play-name-line"><strong>${escapeHtml(playModeState.playerName)}</strong> vs <strong>${escapeHtml(playModeState.opponentName)}</strong> (${escapeHtml(playModeState.opponentFaction)}) · ${escapeHtml(String(playModeState.gameSize))}m · <strong>${escapeHtml(playModeState.missionName)}</strong> · ${playModeState.gameLength} rounds</div>
@@ -2157,14 +2184,6 @@ function buildPlayDashboard() {
           <button class="btn ghost sm" type="button" data-play-action="archive-current">Archive Game</button>
         </div>
       </div>
-      <div class="play-stat">
-        <div class="play-stat-label">Saved In Progress</div>
-        <div class="play-save-list">${inProgressCards}</div>
-      </div>
-      <div class="play-stat">
-        <div class="play-stat-label">Past Games</div>
-        <div class="play-save-list">${completedCards}</div>
-      </div>
     </div>`;
 }
 
@@ -2221,6 +2240,7 @@ function refreshPlayModeOutput() {
   if (playModeState?.hasStarted) persistCurrentPlayState();
   if (playNewGameBtn) playNewGameBtn.style.display = playModeState?.hasStarted ? 'none' : '';
   playDashboardEl.innerHTML = buildPlayDashboard();
+  renderPlayHistoryDialog();
   playCardEl.innerHTML = renderPlayMode(currentRoster);
   if (playModeState?.hasStarted) {
     const side = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
@@ -4692,6 +4712,33 @@ if (playDashboardEl) {
     if (!actionEl || !playDashboardEl.contains(actionEl)) return;
     e.preventDefault();
     handlePlayAction(actionEl);
+  });
+}
+
+if (playHistoryDialog) {
+  playHistoryDialog.addEventListener('click', e => {
+    const actionEl = e.target.closest('[data-play-action]');
+    if (!actionEl || !playHistoryDialog.contains(actionEl)) return;
+    e.preventDefault();
+    handlePlayAction(actionEl);
+  });
+}
+
+if (playHistoryCloseBtn) {
+  playHistoryCloseBtn.addEventListener('click', () => {
+    playHistoryDialog?.close();
+  });
+}
+
+if (historySavedBtn) {
+  historySavedBtn.addEventListener('click', () => {
+    openPlayHistoryDialog({ focus: 'saved' });
+  });
+}
+
+if (historyPastBtn) {
+  historyPastBtn.addEventListener('click', () => {
+    openPlayHistoryDialog({ focus: 'past' });
   });
 }
 

@@ -181,6 +181,15 @@
       gap: 8px;
       margin-bottom: 8px;
     }
+    .history-tools {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .history-tools .btn {
+      flex: 1 1 150px;
+    }
     .seed-history-head .seed-history-title { margin-bottom: 0; }
     .seed-history-group.collapsed .seed-list,
     .seed-history-group.collapsed .seed-empty {
@@ -1454,6 +1463,66 @@
       justify-content: flex-end;
       gap: 8px;
     }
+    .play-history-dialog {
+      width: min(920px, 95vw);
+      max-height: 88vh;
+      overflow: hidden;
+    }
+    .play-history-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .play-save-list {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(10, 18, 30, .55);
+      padding: 8px;
+      max-height: 58vh;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .play-save-row {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(18, 29, 46, .62);
+      padding: 8px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .play-save-row.is-active {
+      border-color: rgba(70, 212, 138, .72);
+      box-shadow: 0 0 0 1px rgba(70, 212, 138, .2) inset;
+    }
+    .play-save-meta {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: .8rem;
+      color: var(--text);
+    }
+    .play-save-detail {
+      color: var(--muted);
+      font-size: .74rem;
+      line-height: 1.35;
+    }
+    .play-save-actions {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+    .play-save-empty {
+      color: var(--muted);
+      font-style: italic;
+      padding: 8px 4px;
+    }
     #play-reset-game-confirm-btn {
       border-color: rgba(255, 98, 107, .8);
       background: rgba(255, 98, 107, .15);
@@ -1588,6 +1657,7 @@
         .play-dashboard { grid-template-columns: 1fr; }
         .play-board-grid,
         .play-board-grid.single { grid-template-columns: 1fr; }
+        .play-history-grid { grid-template-columns: 1fr; }
       }
     }
     @media (max-width: 680px) {
@@ -1953,6 +2023,10 @@
             </div>
             <div class="favorite-list" id="favorite-seeds"></div>
             <div class="seed-empty" id="no-favorites">No favorites saved yet.</div>
+            <div class="history-tools">
+              <button class="btn ghost sm" id="history-saved-btn">Saved Games</button>
+              <button class="btn ghost sm" id="history-past-btn">Past Games</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2163,6 +2237,24 @@
       <div class="play-dialog-actions">
         <button class="btn ghost" type="button" id="play-reset-game-cancel-btn">Cancel</button>
         <button class="btn" type="button" id="play-reset-game-confirm-btn">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="play-history-dialog" class="play-dialog play-history-dialog">
+    <form method="dialog" class="play-dialog-inner">
+      <h3>Game History</h3>
+      <div class="play-history-grid">
+        <section>
+          <div class="play-stat-label" style="margin-bottom:6px;">Saved In Progress</div>
+          <div id="play-history-saved-list" class="play-save-list"></div>
+        </section>
+        <section>
+          <div class="play-stat-label" style="margin-bottom:6px;">Past Games</div>
+          <div id="play-history-past-list" class="play-save-list"></div>
+        </section>
+      </div>
+      <div class="play-dialog-actions">
+        <button class="btn ghost" type="button" id="play-history-close-btn">Close</button>
       </div>
     </form>
   </dialog>
