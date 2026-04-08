@@ -4,6 +4,15 @@
  * Reuses the same lib/ modules as the server and Discord bot.
  */
 import { fetchRoster, fetchTacticalCards } from './lib/firestoreClient.js';
+import {
+  fetchLibraryFromCloud,
+  hasCloudSyncConfig,
+  initCloudAuth,
+  mergeLibraries,
+  signInWithGoogle,
+  signOutCloud,
+  syncLibraryToCloud,
+} from './lib/cloudSync.js';
 import { parseRoster }           from './lib/rosterParser.js';
 import { formatCompact, formatJson } from './lib/formatter.js';
 import { createDebugLogger, getUserFacingError } from './appUtils.js';
@@ -96,11 +105,19 @@ const playCancelBtn = document.getElementById('play-cancel-btn');
 const playResetGameDialog = document.getElementById('play-reset-game-dialog');
 const playResetGameCancelBtn = document.getElementById('play-reset-game-cancel-btn');
 const playResetGameConfirmBtn = document.getElementById('play-reset-game-confirm-btn');
+const cloudSignInBtn = document.getElementById('cloud-sign-in-btn');
+const cloudSignOutBtn = document.getElementById('cloud-sign-out-btn');
+const cloudUserLabel = document.getElementById('cloud-user-label');
+const cloudSyncStatusLabel = document.getElementById('cloud-sync-status');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
 let playModeState = null;
 let playLibrary = { activeGameId: null, inProgress: [], completed: [] };
+let cloudUser = null;
+let cloudSyncTimer = null;
+let cloudSyncInFlight = false;
+let cloudSyncPending = false;
 
 const PLAY_PHASES = ['Movement', 'Assault', 'Combat', 'Scoring'];
 
@@ -141,8 +158,48 @@ function showToast(message, type = 'success', duration = 2500) {
 const STORAGE_KEY = 'sctmg.prefs';
 const SEED_HISTORY_KEY = 'sctmg.seedHistory';
 const PLAY_LIBRARY_KEY = 'sctmg.playLibrary.v1';
+const CLOUD_IMPORT_PROMPT_PREFIX = 'sctmg.cloudImportPrompt.v1.';
 const MAX_RECENT_SEEDS = 10;
 const MAX_COMPLETED_GAMES = 25;
+
+function hasLibraryRecords(library = playLibrary) {
+  return Boolean((library?.inProgress?.length || 0) + (library?.completed?.length || 0));
+}
+
+function setCloudSyncStatus(text) {
+  if (cloudSyncStatusLabel) cloudSyncStatusLabel.textContent = text;
+}
+
+function updateCloudAuthUi() {
+  const signedIn = Boolean(cloudUser);
+  if (cloudSignInBtn) cloudSignInBtn.style.display = signedIn ? 'none' : '';
+  if (cloudSignOutBtn) cloudSignOutBtn.style.display = signedIn ? '' : 'none';
+  if (cloudUserLabel) {
+    const displayName = cloudUser?.displayName || cloudUser?.email || 'Guest';
+    cloudUserLabel.textContent = signedIn ? displayName : 'Guest';
+  }
+  if (!signedIn) setCloudSyncStatus('Local only');
+}
+
+function getCloudPromptKey(uid) {
+  return `${CLOUD_IMPORT_PROMPT_PREFIX}${uid}`;
+}
+
+function hasSeenCloudPrompt(uid) {
+  if (!uid) return false;
+  try {
+    return localStorage.getItem(getCloudPromptKey(uid)) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function markCloudPromptSeen(uid) {
+  if (!uid) return;
+  try {
+    localStorage.setItem(getCloudPromptKey(uid), '1');
+  } catch (_) { /* storage unavailable */ }
+}
 
 function savePrefs() {
   try {
@@ -354,6 +411,7 @@ function savePlayLibrary() {
   try {
     localStorage.setItem(PLAY_LIBRARY_KEY, JSON.stringify(playLibrary));
   } catch (_) { /* storage unavailable */ }
+  scheduleCloudSync();
 }
 
 function loadPlayLibrary() {
@@ -369,6 +427,117 @@ function loadPlayLibrary() {
   } catch (_) {
     playLibrary = { activeGameId: null, inProgress: [], completed: [] };
   }
+}
+
+function applyPlayLibrary(nextLibrary, { save = true } = {}) {
+  playLibrary = {
+    activeGameId: nextLibrary?.activeGameId || null,
+    inProgress: Array.isArray(nextLibrary?.inProgress) ? nextLibrary.inProgress : [],
+    completed: Array.isArray(nextLibrary?.completed) ? nextLibrary.completed : [],
+  };
+  if (save) savePlayLibrary();
+  renderPlayHistoryLists();
+}
+
+async function flushCloudSync() {
+  if (!cloudUser || !hasCloudSyncConfig()) return;
+  if (cloudSyncInFlight) {
+    cloudSyncPending = true;
+    return;
+  }
+
+  cloudSyncInFlight = true;
+  setCloudSyncStatus('Syncing...');
+  try {
+    await syncLibraryToCloud(playLibrary);
+    setCloudSyncStatus('Cloud synced');
+  } catch (err) {
+    console.error('Cloud sync failed:', err);
+    setCloudSyncStatus('Sync failed');
+  } finally {
+    cloudSyncInFlight = false;
+    if (cloudSyncPending) {
+      cloudSyncPending = false;
+      flushCloudSync();
+    }
+  }
+}
+
+function scheduleCloudSync(delayMs = 700) {
+  if (!cloudUser || !hasCloudSyncConfig()) return;
+  if (cloudSyncTimer) window.clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = window.setTimeout(() => {
+    cloudSyncTimer = null;
+    flushCloudSync();
+  }, delayMs);
+}
+
+function librariesEqual(a, b) {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch (_) {
+    return false;
+  }
+}
+
+async function bootstrapCloudLibrary(user) {
+  if (!user || !hasCloudSyncConfig()) return;
+
+  setCloudSyncStatus('Syncing...');
+  try {
+    const cloudLibrary = await fetchLibraryFromCloud();
+    const localLibrary = playLibrary;
+    const localHasData = hasLibraryRecords(localLibrary);
+    const cloudHasData = hasLibraryRecords(cloudLibrary);
+
+    if (!cloudHasData && localHasData) {
+      await syncLibraryToCloud(localLibrary);
+      setCloudSyncStatus('Cloud seeded');
+      return;
+    }
+
+    if (cloudHasData && !localHasData) {
+      applyPlayLibrary(cloudLibrary, { save: true });
+      setCloudSyncStatus('Cloud loaded');
+      if (!playModeState) restoreActivePlayGame();
+      return;
+    }
+
+    if (cloudHasData && localHasData) {
+      let shouldMerge = true;
+      if (!hasSeenCloudPrompt(user.uid)) {
+        shouldMerge = window.confirm('Cloud saves found. Merge cloud and local games now?\n\nOK = Merge both\nCancel = Keep local and overwrite cloud');
+        markCloudPromptSeen(user.uid);
+      }
+
+      if (shouldMerge) {
+        const merged = mergeLibraries(localLibrary, cloudLibrary);
+        if (!librariesEqual(playLibrary, merged)) {
+          applyPlayLibrary(merged, { save: true });
+          if (!playModeState) restoreActivePlayGame();
+        }
+        await syncLibraryToCloud(merged);
+        setCloudSyncStatus('Cloud merged');
+      } else {
+        await syncLibraryToCloud(localLibrary);
+        setCloudSyncStatus('Cloud overwritten');
+      }
+      return;
+    }
+
+    setCloudSyncStatus('Cloud ready');
+  } catch (err) {
+    console.error('Cloud bootstrap failed:', err);
+    setCloudSyncStatus('Sync failed');
+    showToast(getUserFacingError('Cloud sync', err), 'error');
+  }
+}
+
+async function handleCloudAuthChange(user) {
+  cloudUser = user || null;
+  updateCloudAuthUi();
+  if (!cloudUser) return;
+  await bootstrapCloudLibrary(cloudUser);
 }
 
 function persistCurrentPlayState({ archive = false } = {}) {
@@ -4805,6 +4974,28 @@ if (playResetGameConfirmBtn) {
   });
 }
 
+if (cloudSignInBtn) {
+  cloudSignInBtn.addEventListener('click', async () => {
+    try {
+      await signInWithGoogle();
+      showToast('Signed in. Cloud sync enabled.');
+    } catch (err) {
+      showToast(getUserFacingError('Sign in', err), 'error');
+    }
+  });
+}
+
+if (cloudSignOutBtn) {
+  cloudSignOutBtn.addEventListener('click', async () => {
+    try {
+      await signOutCloud();
+      showToast('Signed out. Using local saves only.');
+    } catch (err) {
+      showToast(getUserFacingError('Sign out', err), 'error');
+    }
+  });
+}
+
 if (playNewGameForm) {
   playNewGameForm.addEventListener('submit', async e => {
     e.preventDefault();
@@ -4864,6 +5055,7 @@ if (document.fonts?.ready?.then) {
 loadPrefs();
 loadSeedHistory();
 loadPlayLibrary();
+updateCloudAuthUi();
 renderSeedHistory();
 try {
   const seedParam = new URLSearchParams(window.location.search).get('s');
@@ -4934,3 +5126,17 @@ try {
   const hasSeedInUrl = new URLSearchParams(window.location.search).has('s');
   if (!hasSeedInUrl) restoreActivePlayGame();
 } catch (_) { /* ignore URL parsing failures */ }
+
+if (hasCloudSyncConfig()) {
+  initCloudAuth((user) => {
+    handleCloudAuthChange(user).catch((err) => {
+      console.error('Auth state handling failed:', err);
+      setCloudSyncStatus('Sync failed');
+    });
+  }).catch((err) => {
+    console.error('Firebase auth init failed:', err);
+    setCloudSyncStatus('Cloud unavailable');
+  });
+} else {
+  setCloudSyncStatus('Cloud unavailable');
+}
