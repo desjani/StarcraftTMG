@@ -6,15 +6,16 @@
 import { fetchRoster, fetchTacticalCards } from './lib/firestoreClient.js';
 import {
   createEmailPasswordAccount,
-  fetchLibraryFromCloud,
+  fetchCloudState,
   hasCloudSyncConfig,
   initCloudAuth,
   mergeLibraries,
+  mergeSeedHistories,
   sendPasswordReset,
   signInWithEmailPassword,
   signInWithProvider,
   signOutCloud,
-  syncLibraryToCloud,
+  syncCloudState,
 } from './lib/cloudSync.js';
 import { parseRoster }           from './lib/rosterParser.js';
 import { formatCompact, formatJson } from './lib/formatter.js';
@@ -175,6 +176,10 @@ const MAX_COMPLETED_GAMES = 25;
 
 function hasLibraryRecords(library = playLibrary) {
   return Boolean((library?.inProgress?.length || 0) + (library?.completed?.length || 0));
+}
+
+function hasSeedHistoryRecords(history = seedHistory) {
+  return Boolean((history?.recentSeeds?.length || 0) + (history?.favorites?.length || 0));
 }
 
 function setCloudSyncStatus(text) {
@@ -349,6 +354,7 @@ function saveSeedHistory() {
   try {
     localStorage.setItem(SEED_HISTORY_KEY, JSON.stringify(seedHistory));
   } catch (_) { /* storage unavailable */ }
+  scheduleCloudSync();
 }
 
 function loadSeedHistory() {
@@ -369,6 +375,25 @@ function loadSeedHistory() {
         .filter(f => f.name && f.seed),
     };
   } catch (_) { /* corrupt storage — ignore */ }
+}
+
+function applySeedHistory(nextSeedHistory, { save = true } = {}) {
+  const recentSeeds = Array.isArray(nextSeedHistory?.recentSeeds)
+    ? nextSeedHistory.recentSeeds.map(sanitizeSeed).filter(Boolean)
+    : [];
+  const favorites = Array.isArray(nextSeedHistory?.favorites)
+    ? nextSeedHistory.favorites
+      .filter(item => item && typeof item === 'object')
+      .map(item => ({
+        name: String(item.name || '').trim(),
+        seed: sanitizeSeed(item.seed),
+      }))
+      .filter(item => item.name && item.seed)
+    : [];
+
+  seedHistory = { recentSeeds, favorites };
+  if (save) saveSeedHistory();
+  renderSeedHistory();
 }
 
 function cloneDeep(value) {
@@ -479,7 +504,7 @@ async function flushCloudSync() {
   cloudSyncInFlight = true;
   setCloudSyncStatus('Syncing...');
   try {
-    await syncLibraryToCloud(playLibrary);
+    await syncCloudState({ library: playLibrary, seedHistory });
     setCloudSyncStatus('Cloud synced');
   } catch (err) {
     console.error('Cloud sync failed:', err);
@@ -515,25 +540,31 @@ async function bootstrapCloudLibrary(user) {
 
   setCloudSyncStatus('Syncing...');
   try {
-    const cloudLibrary = await fetchLibraryFromCloud();
+    const cloudState = await fetchCloudState();
+    const cloudLibrary = cloudState.library;
+    const cloudSeedHistory = cloudState.seedHistory;
     const localLibrary = playLibrary;
+    const localSeedHistory = seedHistory;
     const localHasData = hasLibraryRecords(localLibrary);
     const cloudHasData = hasLibraryRecords(cloudLibrary);
+    const localHasSeedData = hasSeedHistoryRecords(localSeedHistory);
+    const cloudHasSeedData = hasSeedHistoryRecords(cloudSeedHistory);
 
-    if (!cloudHasData && localHasData) {
-      await syncLibraryToCloud(localLibrary);
+    if (!cloudHasData && !cloudHasSeedData && (localHasData || localHasSeedData)) {
+      await syncCloudState({ library: localLibrary, seedHistory: localSeedHistory });
       setCloudSyncStatus('Cloud seeded');
       return;
     }
 
-    if (cloudHasData && !localHasData) {
+    if ((cloudHasData || cloudHasSeedData) && !localHasData && !localHasSeedData) {
       applyPlayLibrary(cloudLibrary, { save: true });
+      applySeedHistory(cloudSeedHistory, { save: true });
       setCloudSyncStatus('Cloud loaded');
       if (!playModeState) restoreActivePlayGame();
       return;
     }
 
-    if (cloudHasData && localHasData) {
+    if ((cloudHasData || cloudHasSeedData) && (localHasData || localHasSeedData)) {
       let shouldMerge = true;
       if (!hasSeenCloudPrompt(user.uid)) {
         shouldMerge = window.confirm('Cloud saves found. Merge cloud and local games now?\n\nOK = Merge both\nCancel = Keep local and overwrite cloud');
@@ -542,14 +573,18 @@ async function bootstrapCloudLibrary(user) {
 
       if (shouldMerge) {
         const merged = mergeLibraries(localLibrary, cloudLibrary);
+        const mergedSeedHistory = mergeSeedHistories(localSeedHistory, cloudSeedHistory, MAX_RECENT_SEEDS);
         if (!librariesEqual(playLibrary, merged)) {
           applyPlayLibrary(merged, { save: true });
           if (!playModeState) restoreActivePlayGame();
         }
-        await syncLibraryToCloud(merged);
+        if (!librariesEqual(seedHistory, mergedSeedHistory)) {
+          applySeedHistory(mergedSeedHistory, { save: true });
+        }
+        await syncCloudState({ library: merged, seedHistory: mergedSeedHistory });
         setCloudSyncStatus('Cloud merged');
       } else {
-        await syncLibraryToCloud(localLibrary);
+        await syncCloudState({ library: localLibrary, seedHistory: localSeedHistory });
         setCloudSyncStatus('Cloud overwritten');
       }
       return;
