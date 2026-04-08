@@ -665,10 +665,16 @@ async function startLinkedSubscription(matchId, side) {
       linkedApplyingRemoteState = true;
       try {
         applyLinkedPayload(payload);
-        refreshPlayModeOutput();
       } finally {
         linkedApplyingRemoteState = false;
       }
+      const incomingEndGame = playModeState?.linkedConsensus?.endGame;
+      if (incomingEndGame && hasBothLinkedApprovals(incomingEndGame) && isLinkedModeActive()) {
+        finalizePlayGame();
+        updateLinkedUi();
+        return;
+      }
+      refreshPlayModeOutput();
       updateLinkedUi();
     },
     (err) => {
@@ -3451,7 +3457,7 @@ function handleLinkedPassAction() {
   refreshPlayModeOutput();
 }
 
-function handleLinkedEndGameAction() {
+async function handleLinkedEndGameAction() {
   if (!playModeState.linkedConsensus) {
     playModeState.linkedConsensus = createEmptyLinkedConsensus();
   }
@@ -3468,8 +3474,14 @@ function handleLinkedEndGameAction() {
     return;
   }
 
-  playModeState.linkedConsensus.endGame = null;
+  // Both approved: push state to Firestore so the other player receives the signal, then finalize locally.
   showToast('End game approved by both players.');
+  try {
+    await updateLinkedMatchSharedState(linkedSession.matchId, buildLinkedSharedState(playModeState));
+  } catch (err) {
+    console.error('Failed to sync end-game signal to opponent:', err);
+  }
+  playModeState.linkedConsensus.endGame = null;
   finalizePlayGame();
 }
 
