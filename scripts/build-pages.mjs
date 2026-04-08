@@ -33,6 +33,7 @@ async function main() {
     '  <meta name="apple-mobile-web-app-title" content="Adjutant Mobile">',
     '  <link rel="manifest" href="./manifest.webmanifest">',
     '  <link rel="apple-touch-icon" href="./icon.svg">',
+    '  <link rel="stylesheet" href="./mobile.css">',
   ].join('\n');
 
   const mobileRegistrationScript = [

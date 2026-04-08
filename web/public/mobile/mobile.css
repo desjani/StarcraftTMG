@@ -1,0 +1,554 @@
+:root {
+  --mobile-edge: clamp(12px, 3.8vw, 22px);
+  --mobile-gap: clamp(10px, 2.8vw, 16px);
+  --mobile-panel-radius: 12px;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  -webkit-text-size-adjust: 100%;
+}
+
+body.mobile-install-banner-open header {
+  top: 54px;
+}
+
+header {
+  padding: max(12px, env(safe-area-inset-top)) var(--mobile-edge) 12px;
+  gap: 10px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+header h1 {
+  font-size: clamp(.78rem, 2.9vw, 1rem);
+  line-height: 1.25;
+  letter-spacing: .08em;
+}
+
+.badge {
+  margin-left: auto;
+}
+
+.header-actions {
+  width: 100%;
+  margin-left: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  justify-items: stretch;
+}
+
+.auth-strip {
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  border-radius: 16px;
+  padding: 8px 10px;
+}
+
+.auth-user {
+  max-width: min(48vw, 220px);
+}
+
+.auth-status {
+  min-width: 0;
+}
+
+.auth-btn {
+  min-width: 0;
+}
+
+.support-link {
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+}
+
+main {
+  max-width: 100%;
+  padding: 18px var(--mobile-edge) calc(32px + env(safe-area-inset-bottom));
+}
+
+.lookup-shell,
+#results,
+.panel,
+#roster-card,
+#aid-card,
+#play-card,
+.output-wrap,
+.output-box,
+.roster-card,
+.play-mode-shell,
+.play-dashboard,
+.play-save-list {
+  min-width: 0;
+}
+
+.search-bar {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--mobile-panel-radius);
+}
+
+.search-bar input {
+  min-width: 0;
+  font-size: 16px;
+  letter-spacing: .12em;
+}
+
+.search-bar .btn,
+.search-bar .btn.ghost,
+#copy-preview-btn,
+#copy-json-btn,
+#download-img-btn,
+#copy-img-btn {
+  width: 100%;
+}
+
+.seed-history {
+  padding: 10px;
+}
+
+.seed-history-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.seed-history-group {
+  padding: 10px;
+}
+
+.seed-list {
+  gap: 6px;
+}
+
+.seed-pill {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.favorite-item,
+.play-save-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.favorite-actions,
+.play-save-actions {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.play-save-actions {
+  grid-auto-flow: column;
+  justify-content: flex-start;
+}
+
+.tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px;
+  gap: 8px;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 9px 12px;
+  font-size: .62rem;
+  scroll-snap-align: start;
+}
+
+.tab-options {
+  padding: 10px;
+  gap: 10px;
+}
+
+.opt-row,
+.opt-group,
+.auth-email-actions,
+.play-dialog-actions,
+.play-topbar,
+.play-topbar-actions,
+.play-side-actions,
+.play-board-controls,
+.play-score-row,
+.play-resource-row,
+.play-inline-controls,
+.aid-stats-row,
+.aid-upgrade-bubbles,
+.aid-unit-title-row,
+.aid-tact-card-header {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.opt-group {
+  width: 100%;
+}
+
+.opt-label {
+  width: 100%;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.limit-group {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.limit-group input[type=number] {
+  width: 96px;
+}
+
+.output-box {
+  padding: 14px;
+  min-height: 120px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+#preview-content,
+#raw-box,
+#json-box {
+  max-width: 100%;
+}
+
+.abs-actions {
+  position: static;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.roster-header {
+  padding: 14px;
+}
+
+.roster-faction {
+  font-size: clamp(1.02rem, 4.8vw, 1.28rem);
+}
+
+.roster-meta,
+.slot-breakdown,
+.slot-breakdown-inline,
+.tact-section,
+.unit-sub-line,
+.aid-merged-buffs,
+.aid-tact-card-meta,
+.aid-tactical-grid {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.unit-row,
+.aid-unit-header {
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+.unit-row {
+  align-items: flex-start;
+}
+
+.unit-main {
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.unit-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.unit-main-meta,
+.unit-cost,
+.unit-main-cost {
+  white-space: normal;
+}
+
+.aid-body {
+  padding: 0 12px 12px 12px;
+}
+
+.aid-stats-row {
+  align-items: stretch;
+}
+
+.aid-stats-right {
+  margin-left: 0;
+  justify-content: flex-start;
+}
+
+.aid-ability-group {
+  padding-left: 0;
+  padding-top: 26px;
+}
+
+.aid-phase-tag {
+  top: 0;
+  left: 0;
+}
+
+.aid-tactical-grid {
+  grid-template-columns: 1fr;
+}
+
+.aid-weapons-wrap {
+  margin-left: -2px;
+  margin-right: -2px;
+}
+
+.aid-weapons-table {
+  min-width: 560px;
+  font-size: .72rem;
+}
+
+.play-new-game-actions {
+  grid-template-columns: 1fr;
+}
+
+.play-active-session,
+.play-board-grid,
+.play-board-grid.single {
+  gap: 10px;
+}
+
+.play-dashboard {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 10px;
+  gap: 8px;
+}
+
+.play-stat {
+  padding: 8px;
+}
+
+.play-topbar,
+.play-board-controls {
+  align-items: flex-start;
+}
+
+.play-topbar-actions {
+  margin-left: 0;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.play-linked-status {
+  white-space: normal;
+  justify-content: flex-start;
+}
+
+.play-linked-code {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.play-unit-trackers {
+  gap: 8px;
+  align-items: stretch;
+}
+
+.play-health-wrap,
+.play-activation-wrap {
+  width: 100%;
+  margin-left: 0;
+  justify-content: flex-start;
+}
+
+.play-health-value {
+  min-width: 0;
+  width: 100%;
+}
+
+.play-collapsed-trackers {
+  margin-left: 0;
+  width: 100%;
+  grid-template-columns: repeat(6, minmax(24px, auto)) minmax(44px, auto);
+  justify-content: flex-start;
+}
+
+.play-dialog {
+  width: min(100vw - 16px, 680px);
+  max-width: 100vw;
+  max-height: min(92vh, 860px);
+  margin: auto;
+}
+
+.play-dialog-inner {
+  padding: 12px;
+  max-height: calc(92vh - 4px);
+  overflow: auto;
+}
+
+.play-form-grid input,
+.play-form-grid select,
+.auth-email-grid input {
+  font-size: 16px;
+}
+
+.play-dialog-actions,
+.auth-email-actions {
+  justify-content: stretch;
+}
+
+.play-dialog-actions .btn,
+.auth-email-actions .btn,
+#aid-print-bar .btn {
+  width: 100%;
+}
+
+.auth-provider-grid {
+  grid-template-columns: 1fr;
+}
+
+.btn.google-auth-btn {
+  min-height: 44px;
+}
+
+#aid-print-bar > div,
+#aid-print-bar > div[style] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#toast-container {
+  left: var(--mobile-edge);
+  right: var(--mobile-edge);
+  bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.toast {
+  max-width: none;
+}
+
+@media (min-width: 681px) and (max-width: 1024px) {
+  body.mobile-install-banner-open header {
+    top: 54px;
+  }
+
+  .search-bar {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .search-bar .btn,
+  .search-bar .btn.ghost {
+    width: auto;
+  }
+
+  .seed-history-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tab-options {
+    padding: 12px;
+  }
+
+  .opt-label {
+    width: auto;
+  }
+
+  .play-new-game-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .play-dashboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aid-tactical-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .play-dialog {
+    width: min(720px, 92vw);
+  }
+}
+
+@media (max-width: 680px) {
+  body.mobile-install-banner-open header {
+    top: 66px;
+  }
+
+  .badge {
+    margin-left: 0;
+  }
+
+  .auth-strip {
+    gap: 6px;
+  }
+
+  .auth-user {
+    max-width: 100%;
+  }
+
+  .output-box {
+    font-size: .74rem;
+  }
+
+  .play-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .play-collapsed-trackers {
+    grid-template-columns: repeat(4, minmax(24px, auto));
+    row-gap: 6px;
+  }
+
+  .play-collapsed-trackers .play-health-value {
+    grid-column: 1 / -1;
+  }
+
+  .play-save-actions {
+    grid-template-columns: repeat(4, 28px);
+    grid-auto-flow: row;
+  }
+}
+
+@media (max-width: 420px) {
+  header h1 {
+    font-size: .74rem;
+  }
+
+  .search-bar input {
+    letter-spacing: .08em;
+  }
+
+  .tab {
+    padding: 9px 10px;
+    font-size: .58rem;
+  }
+
+  .roster-header,
+  .unit-row,
+  .aid-unit-header,
+  .aid-body,
+  .tact-section {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .play-dialog {
+    width: calc(100vw - 10px);
+  }
+}
