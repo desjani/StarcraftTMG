@@ -44,6 +44,15 @@ The canonical production web origin is `https://scadjutant.com`.
 - Bot-published roster links now default to `https://scadjutant.com` and can be overridden with `PUBLIC_WEB_BASE_URL` if needed.
 - Internal bot calls to the card and analytics endpoints can be overridden with `INTERNAL_WEB_BASE_URL` if the bot no longer runs beside the web server.
 
+### Mobile preview (Phase 1 PWA)
+
+The current desktop/web view remains canonical at `https://scadjutant.com/`.
+
+- A separate mobile preview is available at `https://scadjutant.com/mobile/`.
+- The preview is generated from the current main UI during `npm run build:hosting`, so it stays in sync without changing the base route.
+- Android install test: open `/mobile/` in Chrome and use **Add to Home screen**.
+- iOS install test: open `/mobile/` in Safari and use **Share → Add to Home Screen**.
+
 ### Cutover checklist
 
 1. Deploy Hosting once with `npm run deploy:hosting`.
