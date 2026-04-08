@@ -5,11 +5,14 @@
  */
 import { fetchRoster, fetchTacticalCards } from './lib/firestoreClient.js';
 import {
+  createEmailPasswordAccount,
   fetchLibraryFromCloud,
   hasCloudSyncConfig,
   initCloudAuth,
   mergeLibraries,
-  signInWithGoogle,
+  sendPasswordReset,
+  signInWithEmailPassword,
+  signInWithProvider,
   signOutCloud,
   syncLibraryToCloud,
 } from './lib/cloudSync.js';
@@ -109,6 +112,14 @@ const cloudSignInBtn = document.getElementById('cloud-sign-in-btn');
 const cloudSignOutBtn = document.getElementById('cloud-sign-out-btn');
 const cloudUserLabel = document.getElementById('cloud-user-label');
 const cloudSyncStatusLabel = document.getElementById('cloud-sync-status');
+const cloudAuthDialog = document.getElementById('cloud-auth-dialog');
+const cloudAuthCancelBtn = document.getElementById('cloud-auth-cancel-btn');
+const cloudAuthEmailInput = document.getElementById('cloud-auth-email');
+const cloudAuthPasswordInput = document.getElementById('cloud-auth-password');
+const cloudAuthEmailSigninBtn = document.getElementById('cloud-auth-email-signin-btn');
+const cloudAuthEmailCreateBtn = document.getElementById('cloud-auth-email-create-btn');
+const cloudAuthEmailResetBtn = document.getElementById('cloud-auth-email-reset-btn');
+const cloudAuthError = document.getElementById('cloud-auth-error');
 let discordMode      = 'preview';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
@@ -199,6 +210,25 @@ function markCloudPromptSeen(uid) {
   try {
     localStorage.setItem(getCloudPromptKey(uid), '1');
   } catch (_) { /* storage unavailable */ }
+}
+
+function clearCloudAuthError() {
+  if (cloudAuthError) cloudAuthError.textContent = '';
+}
+
+function setCloudAuthError(message) {
+  if (cloudAuthError) cloudAuthError.textContent = message;
+}
+
+function openCloudAuthDialog() {
+  if (!cloudAuthDialog) return;
+  clearCloudAuthError();
+  cloudAuthDialog.showModal();
+}
+
+function closeCloudAuthDialog() {
+  if (!cloudAuthDialog) return;
+  cloudAuthDialog.close();
 }
 
 function savePrefs() {
@@ -4976,11 +5006,76 @@ if (playResetGameConfirmBtn) {
 
 if (cloudSignInBtn) {
   cloudSignInBtn.addEventListener('click', async () => {
+    openCloudAuthDialog();
+  });
+}
+
+if (cloudAuthCancelBtn) {
+  cloudAuthCancelBtn.addEventListener('click', () => {
+    closeCloudAuthDialog();
+  });
+}
+
+if (cloudAuthDialog) {
+  cloudAuthDialog.addEventListener('click', async (e) => {
+    const providerBtn = e.target.closest('[data-auth-provider]');
+    if (!providerBtn) return;
+    const provider = String(providerBtn.dataset.authProvider || '').trim();
+    if (!provider) return;
+
+    clearCloudAuthError();
     try {
-      await signInWithGoogle();
-      showToast('Signed in. Cloud sync enabled.');
+      await signInWithProvider(provider);
+      showToast(`Signed in with ${provider}. Cloud sync enabled.`);
+      closeCloudAuthDialog();
     } catch (err) {
-      showToast(getUserFacingError('Sign in', err), 'error');
+      const message = getUserFacingError('Sign in', err);
+      setCloudAuthError(message);
+      showToast(message, 'error');
+    }
+  });
+}
+
+if (cloudAuthEmailSigninBtn) {
+  cloudAuthEmailSigninBtn.addEventListener('click', async () => {
+    clearCloudAuthError();
+    try {
+      await signInWithEmailPassword(cloudAuthEmailInput?.value, cloudAuthPasswordInput?.value);
+      showToast('Signed in with email/password. Cloud sync enabled.');
+      closeCloudAuthDialog();
+    } catch (err) {
+      const message = getUserFacingError('Email sign in', err);
+      setCloudAuthError(message);
+      showToast(message, 'error');
+    }
+  });
+}
+
+if (cloudAuthEmailCreateBtn) {
+  cloudAuthEmailCreateBtn.addEventListener('click', async () => {
+    clearCloudAuthError();
+    try {
+      await createEmailPasswordAccount(cloudAuthEmailInput?.value, cloudAuthPasswordInput?.value);
+      showToast('Account created and signed in. Cloud sync enabled.');
+      closeCloudAuthDialog();
+    } catch (err) {
+      const message = getUserFacingError('Create account', err);
+      setCloudAuthError(message);
+      showToast(message, 'error');
+    }
+  });
+}
+
+if (cloudAuthEmailResetBtn) {
+  cloudAuthEmailResetBtn.addEventListener('click', async () => {
+    clearCloudAuthError();
+    try {
+      await sendPasswordReset(cloudAuthEmailInput?.value);
+      showToast('Password reset email sent.');
+    } catch (err) {
+      const message = getUserFacingError('Password reset', err);
+      setCloudAuthError(message);
+      showToast(message, 'error');
     }
   });
 }
