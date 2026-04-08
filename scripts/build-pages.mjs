@@ -18,7 +18,7 @@ async function main() {
   await fs.cp(publicDir, outDir, { recursive: true });
   await fs.cp(libDir, path.join(outDir, 'lib'), { recursive: true });
   await fs.writeFile(path.join(outDir, '.nojekyll'), '');
-  console.log(`GitHub Pages artifact written to ${outDir}`);
+  console.log(`Static hosting artifact written to ${outDir}`);
 }
 
 main().catch((err) => {

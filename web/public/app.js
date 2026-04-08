@@ -1,5 +1,5 @@
 /**
- * StarCraft TMG Roster Viewer — browser app.
+ * StarCraft TMG Adjutant — browser app.
  * Imported as a module by index.html.
  * Reuses the same lib/ modules as the server and Discord bot.
  */

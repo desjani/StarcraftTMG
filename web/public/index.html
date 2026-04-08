@@ -3,7 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StarCraft TMG · Roster Viewer</title>
+  <title>ScAdjutant · StarCraft TMG Adjutant</title>
+  <link rel="canonical" href="https://scadjutant.com/">
+  <script>
+    (function redirectToCanonicalHost() {
+      const canonicalOrigin = 'https://scadjutant.com';
+      const canonicalHosts = new Set(['scadjutant.com', 'www.scadjutant.com']);
+      const localHosts = new Set(['localhost', '127.0.0.1']);
+      const host = window.location.hostname.toLowerCase();
+      if (localHosts.has(host) || canonicalHosts.has(host)) return;
+
+      const path = window.location.pathname.replace(/^\/StarcraftTMG(?=\/|$)/i, '') || '/';
+      const target = `${canonicalOrigin}${path}${window.location.search}${window.location.hash}`;
+      window.location.replace(target);
+    }());
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap');
 
@@ -2194,7 +2208,7 @@
 </head>
 <body class="preload">
   <header>
-    <h1>⬡ StarCraft TMG · Roster Viewer</h1>
+    <h1>⬡ StarCraft TMG · Adjutant</h1>
     <span class="badge">v1.0</span>
     <div class="header-actions">
       <span class="auth-strip" id="cloud-auth-strip">

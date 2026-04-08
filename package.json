@@ -6,8 +6,10 @@
   "scripts": {
     "start": "node web/server.js",
     "bot": "node bot/bot.js",
+    "build:hosting": "node scripts/build-pages.mjs",
     "build:pages": "node scripts/build-pages.mjs",
     "web": "node web/server.js",
+    "deploy:hosting": "npm run build:hosting && npx firebase-tools deploy --only hosting",
     "deploy": "node bot/deploy-commands.js",
     "test": "node tests/run.mjs",
     "test:capture": "node tests/capture-fixtures.mjs"

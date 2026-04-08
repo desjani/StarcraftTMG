@@ -1,4 +1,4 @@
-# StarCraft TMG — Roster Viewer
+# StarCraft TMG — Adjutant
 
 Discord bot and web UI that looks up a StarCraft TMG army list by its **seed code** and posts a compact, ANSI-coloured summary.
 
@@ -33,6 +33,32 @@ Linked live games rely on Firebase Auth and Firestore in the browser app.
 - Enable Anonymous sign-in in Firebase Authentication so invited players can join without creating a full account.
 - Publish the current Firestore rules from [firestore.rules](firestore.rules) after deploying linked-play changes.
 - If linked joins start failing with permission errors after a rules change, re-publish the rules before debugging the client.
+
+## Firebase hosting and custom domain
+
+The canonical production web origin is `https://scadjutant.com`.
+
+- Static hosting is configured through [firebase.json](firebase.json) and [.firebaserc](.firebaserc).
+- Build the hosting artifact with `npm run build:hosting`.
+- Deploy the hosting site with `npm run deploy:hosting`.
+- Bot-published roster links now default to `https://scadjutant.com` and can be overridden with `PUBLIC_WEB_BASE_URL` if needed.
+- Internal bot calls to the card and analytics endpoints can be overridden with `INTERNAL_WEB_BASE_URL` if the bot no longer runs beside the web server.
+
+### Cutover checklist
+
+1. Deploy Hosting once with `npm run deploy:hosting`.
+2. In Firebase Hosting, add the custom domain `scadjutant.com` and optionally `www.scadjutant.com`.
+3. Create the DNS records Firebase provides at your registrar for `scadjutant.com`.
+4. In Firebase Authentication, add `scadjutant.com` and `www.scadjutant.com` to Authorized domains.
+5. Forward `www.scadjutant.com` to `https://scadjutant.com` if you want a single public host.
+
+### Firebase migration plan
+
+1. Keep the browser app on Firebase Hosting as the canonical public site at `https://scadjutant.com`.
+2. Move the Express server to Cloud Run for server-only features such as `/api/card`, analytics endpoints, and any future authenticated APIs.
+3. After Cloud Run is live, add Hosting rewrites for `/api/**` to the Cloud Run service.
+4. Move the Discord bot to Cloud Run only if you want its runtime on Firebase/GCP too; GitHub should remain source control only.
+5. Remove the last GitHub Pages references once Hosting is live and DNS is verified.
 
 ## Traffic analytics
 

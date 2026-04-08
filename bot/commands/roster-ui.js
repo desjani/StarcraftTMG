@@ -18,12 +18,21 @@ import {
 import { fetchRoster, fetchTacticalCards } from '../../lib/firestoreClient.js';
 import { parseRoster } from '../../lib/rosterParser.js';
 import { formatCompact } from '../../lib/formatter.js';
+import { buildPublicRosterUrl, getPublicWebOrigin } from '../../lib/siteConfig.js';
 
 const SESSION_TTL_MS = 30 * 60 * 1000;
 const sessions = new Map();
 
-async function trackRosterInvoke({ interaction, withSeed, prompted, seed = '' }) {
+function getInternalWebBaseUrl() {
   const port = parseInt(process.env.PORT ?? '3000', 10);
+  return String(process.env.INTERNAL_WEB_BASE_URL || `http://127.0.0.1:${port}`).replace(/\/+$/, '');
+}
+
+function getPublicRosterLink(seed) {
+  return buildPublicRosterUrl(seed, getPublicWebOrigin(process.env.PUBLIC_WEB_BASE_URL));
+}
+
+async function trackRosterInvoke({ interaction, withSeed, prompted, seed = '' }) {
   const key = process.env.ANALYTICS_INTERNAL_KEY ?? process.env.ANALYTICS_KEY ?? '';
   const qs = new URLSearchParams({
     event: 'invoke',
@@ -34,7 +43,7 @@ async function trackRosterInvoke({ interaction, withSeed, prompted, seed = '' })
   if (seed) qs.set('seed', seed);
 
   try {
-    await fetch(`http://127.0.0.1:${port}/api/internal/track/roster?${qs.toString()}`, {
+    await fetch(`${getInternalWebBaseUrl()}/api/internal/track/roster?${qs.toString()}`, {
       method: 'POST',
       headers: {
         'x-internal-analytics-key': key,
@@ -46,7 +55,6 @@ async function trackRosterInvoke({ interaction, withSeed, prompted, seed = '' })
 }
 
 async function trackRosterModalSeed({ interaction, seed }) {
-  const port = parseInt(process.env.PORT ?? '3000', 10);
   const key = process.env.ANALYTICS_INTERNAL_KEY ?? process.env.ANALYTICS_KEY ?? '';
   const qs = new URLSearchParams({
     event: 'modal_seed',
@@ -55,7 +63,7 @@ async function trackRosterModalSeed({ interaction, seed }) {
   });
 
   try {
-    await fetch(`http://127.0.0.1:${port}/api/internal/track/roster?${qs.toString()}`, {
+    await fetch(`${getInternalWebBaseUrl()}/api/internal/track/roster?${qs.toString()}`, {
       method: 'POST',
       headers: {
         'x-internal-analytics-key': key,
@@ -186,9 +194,8 @@ function buildCardQuery(session) {
 }
 
 async function fetchCardAttachment(session) {
-  const port = parseInt(process.env.PORT ?? '3000', 10);
   const qs = buildCardQuery(session);
-  const url = `http://127.0.0.1:${port}/api/card/${encodeURIComponent(session.seed)}.png?${qs.toString()}`;
+  const url = `${getInternalWebBaseUrl()}/api/card/${encodeURIComponent(session.seed)}.png?${qs.toString()}`;
   const res = await fetch(url);
   if (!res.ok) {
     const msg = await res.text();
@@ -291,7 +298,7 @@ async function renderSessionReply(interaction, session) {
   if (session.mode === 'discord') {
     const output = buildDiscordOutput(session);
     const header = `seed: ${session.seed}`;
-    const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
+    const link = getPublicRosterLink(session.seed);
     const content = `${header}\n${output}\n${link}`;
     return interaction.editReply({ content, files: [], components });
   }
@@ -475,7 +482,7 @@ export const rosterCommand = {
         await interaction.deferUpdate();
         if (session.mode === 'discord') {
           const output = buildDiscordOutput(session);
-          const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
+          const link = getPublicRosterLink(session.seed);
           await interaction.followUp({
             content: `${output}\n${link}\nRequested by <@${interaction.user.id}>`,
             ephemeral: false,
@@ -483,7 +490,7 @@ export const rosterCommand = {
           });
         } else {
           const attachment = await fetchCardAttachment(session);
-          const link = `https://desjani.github.io/StarcraftTMG/?tab=roster&s=${encodeURIComponent(session.seed)}`;
+          const link = getPublicRosterLink(session.seed);
           await interaction.followUp({
             files: [attachment],
             content: `${link}\nRequested by <@${interaction.user.id}>`,
