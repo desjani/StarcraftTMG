@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'adjutant-mobile-v3';
+const CACHE_VERSION = 'adjutant-mobile-v4';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -6,6 +6,7 @@ const APP_SHELL_URLS = [
   '/mobile/',
   '/mobile/index.html',
   '/mobile/mobile.css',
+  '/mobile/mobile-aid-bar.js',
   '/mobile/manifest.webmanifest',
   '/mobile/icon.svg',
   '/mobile/sw.js',

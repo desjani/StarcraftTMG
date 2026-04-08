@@ -411,8 +411,7 @@ main {
 }
 
 .play-dialog-actions .btn,
-.auth-email-actions .btn,
-#aid-print-bar .btn {
+.auth-email-actions .btn {
   width: 100%;
 }
 
@@ -424,41 +423,84 @@ main {
   min-height: 44px;
 }
 
-#aid-print-bar {
-  width: 100%;
+/* ── Mobile Aid Print Bar ─────────────────────────────────────── */
+
+/* Hide original button rows; mobile-aid-bar.js appends replacement rows */
+#aid-print-bar > div:not(.mobile-aid-bar-row) {
+  display: none !important;
 }
 
-#aid-print-bar > div,
-#aid-print-bar > div[style] {
-  display: grid !important;
-  grid-template-columns: 1fr;
-  align-items: stretch;
+#aid-print-bar {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   width: 100%;
 }
 
-#aid-print-bar .btn,
-#aid-print-bar .btn.ghost {
+.mobile-aid-bar-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.mobile-aid-print-trigger {
+  width: 100%;
+}
+
+.mobile-aid-collapse-btn {
+  flex: 1 1 0;
   min-width: 0;
+}
+
+/* Print options dialog */
+.mobile-print-dialog {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0;
+  background: var(--surface);
+  color: var(--text);
+  width: min(340px, 92vw);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .48);
+}
+
+.mobile-print-dialog::backdrop {
+  background: rgba(0, 0, 0, .62);
+}
+
+.mobile-print-dialog-inner {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-print-dialog-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .82rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+.mobile-print-opt-btn {
   width: 100%;
   white-space: normal;
   word-break: break-word;
   text-align: center;
-  letter-spacing: .04em;
-  font-size: .66rem;
-  padding: 10px 8px;
 }
 
-#aid-print-bar .opt-label {
-  width: 100%;
-  min-width: 0;
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
-  padding: 8px 10px;
+.mobile-print-ink-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(16, 28, 45, .42);
+  cursor: pointer;
+  font-size: .9rem;
+  color: var(--text);
 }
 
 #toast-container {
@@ -513,10 +555,6 @@ main {
     width: min(720px, 92vw);
   }
 
-  #aid-print-bar > div,
-  #aid-print-bar > div[style] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 680px) {

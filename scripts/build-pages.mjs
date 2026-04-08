@@ -255,7 +255,7 @@ async function main() {
       '<link rel="canonical" href="https://scadjutant.com/mobile/">\n' + mobileHeadInjection,
     )
     .replace('  <script type="module" src="app.js"></script>', `  <script type="module" src="../app.js"></script>\n${mobileRegistrationScript}`)
-    .replace('</body>', `${mobileInstallUiScript}\n</body>`);
+    .replace('</body>', `${mobileInstallUiScript}\n  <script src="./mobile-aid-bar.js" defer><\/script>\n</body>`);
 
   await fs.writeFile(mobileIndexPath, mobileIndexHtml, 'utf8');
   await fs.writeFile(path.join(outDir, '.nojekyll'), '');
