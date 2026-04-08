@@ -424,12 +424,36 @@ main {
   min-height: 44px;
 }
 
+#aid-print-bar {
+  width: 100%;
+}
+
 #aid-print-bar > div,
 #aid-print-bar > div[style] {
-  display: flex;
-  flex-direction: column;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
   gap: 8px;
+  width: 100%;
+}
+
+#aid-print-bar .btn,
+#aid-print-bar .btn.ghost {
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+}
+
+#aid-print-bar .opt-label {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(16, 28, 45, .42);
 }
 
 #toast-container {
@@ -522,6 +546,11 @@ main {
   .play-save-actions {
     grid-template-columns: repeat(4, 28px);
     grid-auto-flow: row;
+  }
+
+  #aid-print-bar > div,
+  #aid-print-bar > div[style] {
+    grid-template-columns: 1fr;
   }
 }
 
