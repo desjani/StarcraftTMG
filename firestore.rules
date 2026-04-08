@@ -1,9 +1,91 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function linkedMatch(matchId) {
+      return get(/databases/$(database)/documents/linkedMatches/$(matchId));
+    }
+
+    function linkedMatchAfter(matchId) {
+      return getAfter(/databases/$(database)/documents/linkedMatches/$(matchId));
+    }
+
+    function isLinkedParticipant(matchId) {
+      return isSignedIn()
+        && (
+          linkedMatch(matchId).data.participants.playerUid == request.auth.uid
+          || linkedMatch(matchId).data.participants.opponentUid == request.auth.uid
+        );
+    }
+
+    function linkedSideOwnerUid(matchId, side) {
+      return side == 'opponent'
+        ? linkedMatch(matchId).data.participants.opponentUid
+        : linkedMatch(matchId).data.participants.playerUid;
+    }
+
+    function linkedSideOwnerUidAfter(matchId, side) {
+      return !existsAfter(/databases/$(database)/documents/linkedMatches/$(matchId))
+        ? null
+        : (
+          side == 'opponent'
+            ? linkedMatchAfter(matchId).data.participants.opponentUid
+            : linkedMatchAfter(matchId).data.participants.playerUid
+        );
+    }
+
+    function canClaimOpenLinkedMatchSlot() {
+      return isSignedIn()
+        && resource != null
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.matchId == resource.data.matchId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.sharedState == resource.data.sharedState
+        && request.resource.data.schemaVersion == resource.data.schemaVersion
+        && (
+          (
+            resource.data.participants.playerUid == null
+            && request.resource.data.participants.playerUid == request.auth.uid
+            && request.resource.data.participants.opponentUid == resource.data.participants.opponentUid
+          )
+          ||
+          (
+            resource.data.participants.opponentUid == null
+            && request.resource.data.participants.opponentUid == request.auth.uid
+            && request.resource.data.participants.playerUid == resource.data.participants.playerUid
+          )
+        );
+    }
+
     // Each user can only read/write their own cloud save data.
     match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
+    }
+
+    // Linked live matches for head-to-head synchronized play.
+    match /linkedMatches/{matchId} {
+      // Match code is required client-side; signed-in users may read to join by code.
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isLinkedParticipant(matchId) || canClaimOpenLinkedMatchSlot();
+      allow delete: if isLinkedParticipant(matchId);
+
+      match /sides/{side} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn()
+          && (side == 'player' || side == 'opponent')
+          && request.resource.data.uid == request.auth.uid
+          && linkedSideOwnerUidAfter(matchId, side) == request.auth.uid;
+        allow delete: if isLinkedParticipant(matchId);
+      }
     }
   }
 }

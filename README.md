@@ -26,6 +26,14 @@ npm run bot
 
 Open http://localhost:3000 for the web UI.
 
+## Firebase linked live game prerequisites
+
+Linked live games rely on Firebase Auth and Firestore in the browser app.
+
+- Enable Anonymous sign-in in Firebase Authentication so invited players can join without creating a full account.
+- Publish the current Firestore rules from [firestore.rules](firestore.rules) after deploying linked-play changes.
+- If linked joins start failing with permission errors after a rules change, re-publish the rules before debugging the client.
+
 ## Traffic analytics
 
 The container now tracks lightweight HTTP traffic analytics (request counts, top routes, status codes, user-agent buckets, recent 5xx errors) and persists them to `/app/data/analytics.json`.

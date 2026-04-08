@@ -5,17 +5,23 @@
  */
 import { fetchRoster, fetchTacticalCards } from './lib/firestoreClient.js';
 import {
+  createLinkedMatch,
   createEmailPasswordAccount,
   fetchCloudState,
   hasCloudSyncConfig,
   initCloudAuth,
+  joinLinkedMatch,
   mergeLibraries,
   mergeSeedHistories,
   sendPasswordReset,
+  signInAnonymouslyCloud,
   signInWithEmailPassword,
   signInWithProvider,
   signOutCloud,
+  subscribeToLinkedMatch,
   syncCloudState,
+  updateLinkedMatchSharedState,
+  updateLinkedMatchSideState,
 } from './lib/cloudSync.js';
 import { parseRoster }           from './lib/rosterParser.js';
 import { formatCompact, formatJson } from './lib/formatter.js';
@@ -92,7 +98,11 @@ const aidPrintBtn    = document.getElementById('aid-print-btn');
 // Play Mode controls
 const playCardEl = document.getElementById('play-card');
 const playDashboardEl = document.getElementById('play-dashboard');
+const playActiveSessionEl = document.getElementById('play-active-session');
+const playNewGameActionsEl = document.querySelector('.play-new-game-actions');
 const playNewGameBtn = document.getElementById('play-new-game-btn');
+const playNewLinkedGameBtn = document.getElementById('play-new-linked-game-btn');
+const playJoinGameBtn = document.getElementById('play-join-game-btn');
 const playNewGameDialog = document.getElementById('play-new-game-dialog');
 const playNewGameForm = document.getElementById('play-new-game-form');
 const playPlayerNameInput = document.getElementById('play-player-name');
@@ -106,6 +116,22 @@ const playStartingSupplyInput = document.getElementById('play-starting-supply');
 const playSupplyPerRoundInput = document.getElementById('play-supply-per-round');
 const playGameSizeInput = document.getElementById('play-game-size');
 const playCancelBtn = document.getElementById('play-cancel-btn');
+const playNewLinkedGameDialog = document.getElementById('play-new-linked-game-dialog');
+const playNewLinkedGameForm = document.getElementById('play-new-linked-game-form');
+const playLinkedPlayerNameInput = document.getElementById('play-linked-player-name');
+const playLinkedPlayerSeedInput = document.getElementById('play-linked-player-seed');
+const playLinkedMissionNameInput = document.getElementById('play-linked-mission-name');
+const playLinkedGameLengthInput = document.getElementById('play-linked-game-length');
+const playLinkedStartingSupplyInput = document.getElementById('play-linked-starting-supply');
+const playLinkedSupplyPerRoundInput = document.getElementById('play-linked-supply-per-round');
+const playLinkedGameSizeInput = document.getElementById('play-linked-game-size');
+const playLinkedCancelBtn = document.getElementById('play-linked-cancel-btn');
+const playJoinGameDialog = document.getElementById('play-join-game-dialog');
+const playJoinGameForm = document.getElementById('play-join-game-form');
+const playJoinCodeInput = document.getElementById('play-join-code');
+const playJoinNameInput = document.getElementById('play-join-name');
+const playJoinSeedInput = document.getElementById('play-join-seed');
+const playJoinCancelBtn = document.getElementById('play-join-cancel-btn');
 const playResetGameDialog = document.getElementById('play-reset-game-dialog');
 const playResetGameCancelBtn = document.getElementById('play-reset-game-cancel-btn');
 const playResetGameConfirmBtn = document.getElementById('play-reset-game-confirm-btn');
@@ -130,8 +156,74 @@ let cloudUser = null;
 let cloudSyncTimer = null;
 let cloudSyncInFlight = false;
 let cloudSyncPending = false;
+let linkedSyncTimer = null;
+let linkedSyncInFlight = false;
+let linkedSyncPending = false;
+let linkedApplyingRemoteState = false;
+let linkedSession = {
+  matchId: null,
+  side: null,
+  ready: false,
+  unsubscribe: null,
+};
+let pendingNewGameDialogMode = 'standard';
 
 const PLAY_PHASES = ['Movement', 'Assault', 'Combat', 'Scoring'];
+
+function createEmptyLinkedConsensus() {
+  return { pass: null, endGame: null };
+}
+
+function normalizeLinkedConsensus(consensus) {
+  const src = consensus && typeof consensus === 'object' ? consensus : {};
+  const normalizeEndGameRequest = (value) => {
+    if (!value || typeof value !== 'object') return null;
+    return {
+      type: 'end-game',
+      requestId: String(value.requestId || `end-game-${Date.now()}`),
+      requestedBy: value.requestedBy === 'opponent' ? 'opponent' : 'player',
+      playerApproved: Boolean(value.playerApproved),
+      opponentApproved: Boolean(value.opponentApproved),
+      targetRound: Number(value.targetRound || 0),
+      targetPhaseIndex: Number(value.targetPhaseIndex || 0),
+    };
+  };
+
+  const normalizePassState = (value) => {
+    if (!value || typeof value !== 'object') return null;
+    const firstPassedBy = value.firstPassedBy === 'opponent'
+      ? 'opponent'
+      : (value.firstPassedBy === 'player' ? 'player' : null);
+    return {
+      targetRound: Number(value.targetRound || 0),
+      targetPhaseIndex: Number(value.targetPhaseIndex || 0),
+      playerPassed: Boolean(value.playerPassed),
+      opponentPassed: Boolean(value.opponentPassed),
+      firstPassedBy,
+    };
+  };
+
+  const phaseAdvanceFallback = src.phaseAdvance && typeof src.phaseAdvance === 'object'
+    ? {
+      targetRound: Number(src.phaseAdvance.targetRound || 0),
+      targetPhaseIndex: Number(src.phaseAdvance.targetPhaseIndex || 0),
+      playerPassed: Boolean(src.phaseAdvance.playerApproved),
+      opponentPassed: Boolean(src.phaseAdvance.opponentApproved),
+      firstPassedBy: src.phaseAdvance.requestedBy === 'opponent' ? 'opponent' : 'player',
+    }
+    : null;
+
+  const pass = normalizePassState(src.pass) || phaseAdvanceFallback;
+
+  return {
+    pass,
+    endGame: normalizeEndGameRequest(src.endGame),
+  };
+}
+
+function hasBothLinkedApprovals(request) {
+  return Boolean(request?.playerApproved && request?.opponentApproved);
+}
 
 // Initialize ink-friendly preference from localStorage
 function initInkFriendlyPreference() {
@@ -195,6 +287,445 @@ function updateCloudAuthUi() {
     cloudUserLabel.textContent = signedIn ? displayName : 'Guest';
   }
   if (!signedIn) setCloudSyncStatus('Local only');
+  updateLinkedUi();
+}
+
+function normalizeLinkedCode(value) {
+  return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+}
+
+function getLinkedSide() {
+  return linkedSession.side === 'opponent' ? 'opponent' : 'player';
+}
+
+function isLinkedModeActive() {
+  return Boolean(linkedSession.matchId);
+}
+
+function isLinkedGameState(state = playModeState) {
+  return Boolean(state?.isLinkedGame || linkedSession.matchId);
+}
+
+function isLinkedGameReady(state = playModeState) {
+  if (!isLinkedGameState(state)) return true;
+  return Boolean(
+    state?.linkedReady
+    && state?.playerRoster
+    && state?.opponentRoster
+    && sanitizeSeed(state?.playerSeed)
+    && sanitizeSeed(state?.opponentSeed)
+  );
+}
+
+function updateLinkedReadyState(state, { match = null, playerSide = null, opponentSide = null } = {}) {
+  if (!state) return false;
+  const participants = match?.participants || {};
+  const bothUsersJoined = Boolean(participants.playerUid && participants.opponentUid);
+  const bothSeedsLoaded = Boolean(
+    sanitizeSeed(playerSide?.seed || state?.playerSeed)
+    && sanitizeSeed(opponentSide?.seed || state?.opponentSeed)
+  );
+  const bothRostersLoaded = Boolean(
+    (playerSide?.roster || state?.playerRoster)
+    && (opponentSide?.roster || state?.opponentRoster)
+  );
+  const ready = bothUsersJoined && bothSeedsLoaded && bothRostersLoaded;
+  state.isLinkedGame = isLinkedGameState(state);
+  state.linkedReady = ready;
+  linkedSession.ready = ready;
+  return ready;
+}
+
+function setLinkedStatus(text) {
+  const label = document.getElementById('play-linked-status');
+  if (label) label.textContent = text;
+}
+
+function setLinkedStatusMarkup(markup) {
+  const label = document.getElementById('play-linked-status');
+  if (label) label.innerHTML = markup;
+}
+
+function getPreferredPlayerName() {
+  const cloudName = String(cloudUser?.displayName || '').trim();
+  if (cloudName) return cloudName;
+  const cloudEmail = String(cloudUser?.email || '').trim();
+  if (cloudEmail) return cloudEmail.split('@')[0] || 'Player 1';
+  const stateName = String(playModeState?.playerName || '').trim();
+  if (stateName) return stateName;
+  return 'Player 1';
+}
+
+function getPreferredSeed() {
+  return sanitizeSeed(
+    playModeState?.playerSeed
+      || currentRoster?.seed
+      || seedInput?.value
+      || ''
+  );
+}
+
+function updateLinkedUi() {
+  const signedIn = Boolean(cloudUser);
+  const linkedActive = isLinkedModeActive();
+
+  if (!signedIn) {
+    setLinkedStatus('');
+    return;
+  }
+  if (linkedActive) {
+    setLinkedStatusMarkup(`<span class="play-linked-code">${escapeHtml(linkedSession.matchId)}</span>`);
+    return;
+  }
+  setLinkedStatus('');
+}
+
+function openPlayJoinGameDialog() {
+  if (!playJoinGameDialog) return;
+  if (playJoinNameInput) playJoinNameInput.value = getPreferredPlayerName();
+  if (playJoinSeedInput) playJoinSeedInput.value = getPreferredSeed();
+  if (playJoinCodeInput) playJoinCodeInput.value = '';
+  playJoinGameDialog.showModal();
+}
+
+function getLinkedErrorMessage(context, err) {
+  const code = String(err?.code || '').toLowerCase();
+  if (code.includes('permission-denied')) {
+    return `${context} failed (permission denied). Publish the latest Firestore rules, then retry.`;
+  }
+  if (code.includes('operation-not-allowed')) {
+    return `${context} failed. Enable Anonymous sign-in in Firebase Authentication, then retry.`;
+  }
+  return getUserFacingError(context, err);
+}
+
+async function ensureLinkedJoinIdentity() {
+  if (cloudUser) return cloudUser;
+  const result = await signInAnonymouslyCloud();
+  if (result?.user) {
+    cloudUser = result.user;
+    updateCloudAuthUi();
+    return result.user;
+  }
+  return cloudUser;
+}
+
+function requestPlayDialog(mode = 'standard') {
+  if (playModeState?.hasStarted) {
+    pendingNewGameDialogMode = mode;
+    playResetGameDialog?.showModal();
+    return;
+  }
+
+  if (mode === 'linked') {
+    openPlayNewLinkedGameDialog();
+    return;
+  }
+  if (mode === 'join') {
+    openPlayJoinGameDialog();
+    return;
+  }
+  openPlayNewGameDialog();
+}
+
+function getUnitsBySide(unitsByKey, side) {
+  const normalizedSide = side === 'opponent' ? 'opponent' : 'player';
+  const prefix = `${normalizedSide}:`;
+  const source = unitsByKey && typeof unitsByKey === 'object' ? unitsByKey : {};
+  const out = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (!String(key).startsWith(prefix)) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+function buildLinkedUnitsBySide({ roster = null, side = 'player', existingUnitsByKey = null, incomingUnitsByKey = null } = {}) {
+  const normalizedSide = side === 'opponent' ? 'opponent' : 'player';
+  const fallbackUnitsByKey = roster ? createPlayUnitsByKey(roster, normalizedSide) : {};
+  return {
+    ...fallbackUnitsByKey,
+    ...getUnitsBySide(existingUnitsByKey, normalizedSide),
+    ...getUnitsBySide(incomingUnitsByKey, normalizedSide),
+  };
+}
+
+function isLinkedSideEditable(side) {
+  if (!isLinkedModeActive()) return true;
+  return getLinkedSide() === (side === 'opponent' ? 'opponent' : 'player');
+}
+
+function getLinkedTrackerDisabledAttrs(side) {
+  if (isLinkedSideEditable(side)) return '';
+  return ' disabled aria-disabled="true" title="Only the owner of this linked seed can edit these trackers."';
+}
+
+function buildLinkedSharedState(state) {
+  return {
+    hasStarted: Boolean(state?.hasStarted),
+    round: Number(state?.round || 1),
+    phaseIndex: Number(state?.phaseIndex || 0),
+    firstPlayer: state?.firstPlayer === 'opponent' ? 'opponent' : 'player',
+    missionName: String(state?.missionName || 'Mission'),
+    gameLength: Number(state?.gameLength || 5),
+    startingSupply: Number(state?.startingSupply || 10),
+    supplyPerRound: Number(state?.supplyPerRound || 2),
+    gameSize: Number(state?.gameSize || 2000),
+    queuedFirstPlayer: state?.queuedFirstPlayer === 'opponent' ? 'opponent' : (state?.queuedFirstPlayer === 'player' ? 'player' : null),
+    consensus: normalizeLinkedConsensus(state?.linkedConsensus),
+  };
+}
+
+function buildLinkedSideState(state, side) {
+  const normalizedSide = side === 'opponent' ? 'opponent' : 'player';
+  const isPlayer = normalizedSide === 'player';
+  const roster = isPlayer ? state?.playerRoster : state?.opponentRoster;
+  const faction = roster?.faction || (isPlayer ? state?.playerRoster?.faction : state?.opponentFaction) || 'Terran';
+  return {
+    side: normalizedSide,
+    name: String(isPlayer ? state?.playerName : state?.opponentName || (isPlayer ? 'Player' : 'Opponent')),
+    seed: String(isPlayer ? state?.playerSeed : state?.opponentSeed || ''),
+    faction: String(faction || 'Terran'),
+    score: Number(isPlayer ? state?.playerScore : state?.opponentScore || 0),
+    resource: Number(isPlayer ? state?.playerResource : state?.opponentResource || 0),
+    activationRound: Number(state?.round || 1),
+    roster,
+    unitsByKey: getUnitsBySide(state?.unitsByKey, normalizedSide),
+  };
+}
+
+function normalizeTrackerActivation(tracker) {
+  const activation = tracker?.activation && typeof tracker.activation === 'object'
+    ? tracker.activation
+    : {};
+  return {
+    movement: Boolean(activation.movement),
+    assault: Boolean(activation.assault),
+    combat: Boolean(activation.combat),
+  };
+}
+
+function resetTrackerActivation(tracker) {
+  return {
+    ...tracker,
+    activation: {
+      movement: false,
+      assault: false,
+      combat: false,
+    },
+  };
+}
+
+function sanitizeLinkedSideUnitsForRound(unitsByKey, side, activationRound, currentRound) {
+  const scoped = getUnitsBySide(unitsByKey, side);
+  const normalizedCurrentRound = Number(currentRound || 1);
+  const normalizedActivationRound = Number(activationRound || 0);
+  const shouldResetActivation = normalizedActivationRound !== normalizedCurrentRound;
+  const next = {};
+
+  for (const [key, tracker] of Object.entries(scoped)) {
+    if (!tracker || typeof tracker !== 'object') {
+      next[key] = tracker;
+      continue;
+    }
+
+    const normalizedTracker = {
+      ...tracker,
+      activation: normalizeTrackerActivation(tracker),
+    };
+    next[key] = shouldResetActivation
+      ? resetTrackerActivation(normalizedTracker)
+      : normalizedTracker;
+  }
+
+  return next;
+}
+
+function applyLinkedPayload({ match, playerSide, opponentSide } = {}) {
+  if (!match || !playerSide || !opponentSide) return;
+
+  const shared = match.sharedState || {};
+  const playerRoster = playerSide.roster || playModeState?.playerRoster || null;
+  const opponentRoster = opponentSide.roster || playModeState?.opponentRoster || null;
+  if (!playerRoster && !opponentRoster) return;
+
+  const setup = {
+    playerSeed: playerSide.seed || playerRoster?.seed || '',
+    opponentSeed: opponentSide.seed || opponentRoster?.seed || '',
+    playerName: playerSide.name || playModeState?.playerName || 'Player',
+    opponentName: opponentSide.name || playModeState?.opponentName || 'Opponent',
+    opponentFaction: opponentSide.faction || opponentRoster?.faction || 'Terran',
+    missionName: shared.missionName || 'Mission',
+    gameLength: shared.gameLength ?? 5,
+    startingSupply: shared.startingSupply ?? 10,
+    supplyPerRound: shared.supplyPerRound ?? 2,
+    gameSize: shared.gameSize ?? 2000,
+    queuedFirstPlayer: shared.queuedFirstPlayer === 'opponent' ? 'opponent' : (shared.queuedFirstPlayer === 'player' ? 'player' : null),
+    hasStarted: Boolean(shared.hasStarted ?? true),
+  };
+  const consensus = normalizeLinkedConsensus(shared.consensus);
+
+  if (!playModeState?.hasStarted) {
+    playModeState = createPlayModeState(playerRoster, opponentRoster, setup);
+    applyDefaultPlayCollapsedUnits(playModeState);
+  } else {
+    playModeState.playerRoster = playerRoster;
+    playModeState.opponentRoster = opponentRoster;
+    playModeState.playerSeed = setup.playerSeed;
+    playModeState.opponentSeed = setup.opponentSeed;
+    playModeState.playerName = setup.playerName;
+    playModeState.opponentName = setup.opponentName;
+    playModeState.opponentFaction = setup.opponentFaction;
+    playModeState.missionName = setup.missionName;
+    playModeState.gameLength = setup.gameLength;
+    playModeState.startingSupply = setup.startingSupply;
+    playModeState.supplyPerRound = setup.supplyPerRound;
+    playModeState.gameSize = setup.gameSize;
+    playModeState.queuedFirstPlayer = setup.queuedFirstPlayer;
+    playModeState.hasStarted = setup.hasStarted;
+  }
+
+  playModeState.linkedConsensus = consensus;
+
+  const existingUnitsByKey = playModeState.unitsByKey && typeof playModeState.unitsByKey === 'object'
+    ? playModeState.unitsByKey
+    : {};
+  const playerUnitsByKey = buildLinkedUnitsBySide({
+    roster: playerRoster,
+    side: 'player',
+    existingUnitsByKey,
+    incomingUnitsByKey: sanitizeLinkedSideUnitsForRound(
+      playerSide.unitsByKey,
+      'player',
+      playerSide.activationRound,
+      shared.round || 1,
+    ),
+  });
+  const opponentUnitsByKey = buildLinkedUnitsBySide({
+    roster: opponentRoster,
+    side: 'opponent',
+    existingUnitsByKey,
+    incomingUnitsByKey: sanitizeLinkedSideUnitsForRound(
+      opponentSide.unitsByKey,
+      'opponent',
+      opponentSide.activationRound,
+      shared.round || 1,
+    ),
+  });
+
+  playModeState.round = Number(shared.round || 1);
+  playModeState.phaseIndex = Number(shared.phaseIndex || 0);
+  playModeState.firstPlayer = shared.firstPlayer === 'opponent' ? 'opponent' : 'player';
+  playModeState.activeBoardSide = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
+  playModeState.playerScore = Number(playerSide.score || 0);
+  playModeState.opponentScore = Number(opponentSide.score || 0);
+  playModeState.playerResource = Number(playerSide.resource || 0);
+  playModeState.opponentResource = Number(opponentSide.resource || 0);
+  playModeState.unitsByKey = {
+    ...playerUnitsByKey,
+    ...opponentUnitsByKey,
+  };
+  playModeState.history = [];
+  playModeState.isLinkedGame = true;
+  playModeState.linkedMatchId = match.matchId || linkedSession.matchId || null;
+  playModeState.linkedSide = linkedSession.side || null;
+  updateLinkedReadyState(playModeState, { match, playerSide, opponentSide });
+
+  if (playModeState.playerRoster) {
+    currentRoster = playModeState.playerRoster;
+  }
+}
+
+async function stopLinkedSession({ notify = false } = {}) {
+  if (linkedSession.unsubscribe) {
+    try {
+      linkedSession.unsubscribe();
+    } catch (_) { /* ignore */ }
+  }
+  linkedSession = { matchId: null, side: null, ready: false, unsubscribe: null };
+  if (linkedSyncTimer) {
+    window.clearTimeout(linkedSyncTimer);
+    linkedSyncTimer = null;
+  }
+  linkedSyncInFlight = false;
+  linkedSyncPending = false;
+  updateLinkedUi();
+  if (notify) showToast('Left linked live game.');
+}
+
+async function startLinkedSubscription(matchId, side) {
+  await stopLinkedSession();
+  const normalizedMatchId = normalizeLinkedCode(matchId);
+  linkedSession.matchId = normalizedMatchId;
+  linkedSession.side = side === 'opponent' ? 'opponent' : 'player';
+  linkedSession.ready = false;
+  linkedSession.unsubscribe = await subscribeToLinkedMatch(
+    normalizedMatchId,
+    (payload) => {
+      linkedApplyingRemoteState = true;
+      try {
+        applyLinkedPayload(payload);
+        refreshPlayModeOutput();
+      } finally {
+        linkedApplyingRemoteState = false;
+      }
+      updateLinkedUi();
+    },
+    (err) => {
+      console.error('Linked match subscription failed:', err);
+      setLinkedStatus('Linked sync failed');
+      showToast(getUserFacingError('Linked sync', err), 'error');
+    }
+  );
+  updateLinkedUi();
+}
+
+async function flushLinkedSync() {
+  if (!isLinkedModeActive() || !playModeState?.hasStarted || linkedApplyingRemoteState) return;
+  if (linkedSyncInFlight) {
+    linkedSyncPending = true;
+    return;
+  }
+
+  linkedSyncInFlight = true;
+  try {
+    const side = getLinkedSide();
+    await Promise.all([
+      updateLinkedMatchSharedState(linkedSession.matchId, buildLinkedSharedState(playModeState)),
+      updateLinkedMatchSideState(linkedSession.matchId, side, buildLinkedSideState(playModeState, side)),
+    ]);
+    setLinkedStatusMarkup(`<span class="play-linked-code">${escapeHtml(linkedSession.matchId)}</span>`);
+  } catch (err) {
+    console.error('Linked match sync failed:', err);
+    setLinkedStatus('Linked sync failed');
+  } finally {
+    linkedSyncInFlight = false;
+    if (linkedSyncPending) {
+      linkedSyncPending = false;
+      flushLinkedSync();
+    }
+  }
+}
+
+function scheduleLinkedSync(delayMs = 1000) {
+  if (!isLinkedModeActive() || !playModeState?.hasStarted || linkedApplyingRemoteState) return;
+  if (linkedSyncTimer) window.clearTimeout(linkedSyncTimer);
+  linkedSyncTimer = window.setTimeout(() => {
+    linkedSyncTimer = null;
+    flushLinkedSync();
+  }, delayMs);
+}
+
+function assertLinkedActionAllowed(action, { side = '', tracker = null } = {}) {
+  if (!isLinkedModeActive()) return true;
+  const linkedSide = getLinkedSide();
+  if (action === 'score-inc' || action === 'score-dec' || action === 'resource-inc' || action === 'resource-dec') {
+    return side === linkedSide;
+  }
+  if (action === 'hp-inc' || action === 'hp-dec' || action === 'toggle-activation' || action === 'toggle-deployed') {
+    return tracker?.side === linkedSide;
+  }
+  return true;
 }
 
 function getCloudPromptKey(uid) {
@@ -518,7 +1049,7 @@ async function flushCloudSync() {
   }
 }
 
-function scheduleCloudSync(delayMs = 700) {
+function scheduleCloudSync(delayMs = 1000) {
   if (!cloudUser || !hasCloudSyncConfig()) return;
   if (cloudSyncTimer) window.clearTimeout(cloudSyncTimer);
   cloudSyncTimer = window.setTimeout(() => {
@@ -600,13 +1131,68 @@ async function bootstrapCloudLibrary(user) {
 
 async function handleCloudAuthChange(user) {
   cloudUser = user || null;
+  if (!cloudUser && isLinkedModeActive()) {
+    await stopLinkedSession();
+  }
   updateCloudAuthUi();
   if (!cloudUser) return;
   await bootstrapCloudLibrary(cloudUser);
+  await syncLoadedLinkedSession({ notifyOnFailure: false });
+}
+
+function hasReconnectableLinkedState(state = playModeState) {
+  return Boolean(
+    state?.hasStarted
+    && state?.isLinkedGame
+    && normalizeLinkedCode(state?.linkedMatchId)
+    && (state?.linkedSide === 'player' || state?.linkedSide === 'opponent')
+  );
+}
+
+async function syncLoadedLinkedSession({ notifyOnFailure = true } = {}) {
+  if (!hasReconnectableLinkedState(playModeState)) {
+    if (isLinkedModeActive()) {
+      await stopLinkedSession();
+    }
+    return false;
+  }
+
+  if (!cloudUser) {
+    setLinkedStatus('Restore linked game by signing in again.');
+    return false;
+  }
+
+  const matchId = normalizeLinkedCode(playModeState.linkedMatchId);
+  const side = playModeState.linkedSide === 'opponent' ? 'opponent' : 'player';
+  const alreadyActive = linkedSession.matchId === matchId
+    && linkedSession.side === side
+    && typeof linkedSession.unsubscribe === 'function';
+  if (alreadyActive) return true;
+
+  try {
+    await startLinkedSubscription(matchId, side);
+    return true;
+  } catch (err) {
+    console.error('Linked game resume failed:', err);
+    setLinkedStatus('Linked reconnect failed');
+    if (notifyOnFailure) {
+      showToast(getLinkedErrorMessage('Resume linked game', err), 'error');
+    }
+    return false;
+  }
 }
 
 function persistCurrentPlayState({ archive = false } = {}) {
   if (!playModeState?.hasStarted) return;
+  if (!archive && isLinkedGameState(playModeState) && !isLinkedGameReady(playModeState)) {
+    playLibrary.inProgress = playLibrary.inProgress.filter(g => g?.id !== playModeState?.gameId);
+    if (playLibrary.activeGameId === playModeState?.gameId) {
+      playLibrary.activeGameId = null;
+    }
+    savePlayLibrary();
+    scheduleLinkedSync();
+    return;
+  }
   ensurePlayStateMetadata(playModeState);
   const snapshot = cloneDeep(playModeState);
   const record = {
@@ -632,6 +1218,7 @@ function persistCurrentPlayState({ archive = false } = {}) {
     // Completed snapshots are kept only in archive; avoid re-adding to in-progress.
   }
   savePlayLibrary();
+  if (!archive) scheduleLinkedSync();
 }
 
 function loadPlayGameFromLibrary(gameId, source = 'inProgress', options = {}) {
@@ -665,6 +1252,10 @@ function loadPlayGameFromLibrary(gameId, source = 'inProgress', options = {}) {
     loadedState.gameId = createPlayGameId();
     loadedState.createdAt = new Date().toISOString();
     loadedState.updatedAt = loadedState.createdAt;
+    loadedState.isLinkedGame = false;
+    loadedState.linkedReady = false;
+    loadedState.linkedMatchId = null;
+    loadedState.linkedSide = null;
   }
 
   playModeState = loadedState;
@@ -689,6 +1280,10 @@ function loadPlayGameFromLibrary(gameId, source = 'inProgress', options = {}) {
   } else {
     refreshPlayModeOutput();
   }
+
+  syncLoadedLinkedSession().catch((err) => {
+    console.error('Linked session sync after load failed:', err);
+  });
   return true;
 }
 
@@ -2046,14 +2641,15 @@ function renderPlayerAid(roster, opts = {}) {
       ? `<span class="stat-chip stat-chip-supply">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
       : `<span class="stat-chip stat-chip-supply">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
     const mineralsHtml = `<span class="stat-chip stat-chip-minerals"><strong>${u.totalCost}m</strong></span>`;
+    const trackerDisabledAttrs = tracker ? getLinkedTrackerDisabledAttrs(tracker.side) : '';
     const collapsedTrackerHtml = tracker ? `<div class="play-collapsed-trackers">
-      <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}">-</button>
+      <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>-</button>
       <span class="play-health-value">${renderPlayHealthReadout(tracker)}</span>
-      <button class="btn ghost sm" type="button" data-play-action="hp-inc" data-unit-key="${escapeHtml(unitKey)}">+</button>
-      <button class="btn ghost sm play-activation-btn${tracker.activation?.movement ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="movement">M</button>
-      <button class="btn ghost sm play-activation-btn${tracker.activation?.assault ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="assault">A</button>
-      <button class="btn ghost sm play-activation-btn${tracker.activation?.combat ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="combat">C</button>
-      <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}">Dep</button>
+      <button class="btn ghost sm" type="button" data-play-action="hp-inc" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>+</button>
+      <button class="btn ghost sm play-activation-btn${tracker.activation?.movement ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="movement"${trackerDisabledAttrs}>M</button>
+      <button class="btn ghost sm play-activation-btn${tracker.activation?.assault ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="assault"${trackerDisabledAttrs}>A</button>
+      <button class="btn ghost sm play-activation-btn${tracker.activation?.combat ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="combat"${trackerDisabledAttrs}>C</button>
+      <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>Dep</button>
     </div>` : '';
 
     const collapsedStatlineHtml = showStats
@@ -2116,16 +2712,16 @@ function renderPlayerAid(roster, opts = {}) {
       <div class="play-unit-trackers">
         <div class="play-health-wrap">
           <span class="play-stat-label">Health</span>
-          <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}">-</button>
+          <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>-</button>
           <span class="play-health-value">${renderPlayHealthReadout(tracker)}</span>
-          <button class="btn ghost sm" type="button" data-play-action="hp-inc" data-unit-key="${escapeHtml(unitKey)}">+</button>
+          <button class="btn ghost sm" type="button" data-play-action="hp-inc" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>+</button>
         </div>
         <div class="play-activation-wrap">
           <span class="play-stat-label">Activated</span>
-          <button class="btn ghost sm play-activation-btn${tracker.activation?.movement ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="movement">Mov</button>
-          <button class="btn ghost sm play-activation-btn${tracker.activation?.assault ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="assault">Ass</button>
-          <button class="btn ghost sm play-activation-btn${tracker.activation?.combat ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="combat">Com</button>
-          <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}">Deployed</button>
+          <button class="btn ghost sm play-activation-btn${tracker.activation?.movement ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="movement"${trackerDisabledAttrs}>Mov</button>
+          <button class="btn ghost sm play-activation-btn${tracker.activation?.assault ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="assault"${trackerDisabledAttrs}>Ass</button>
+          <button class="btn ghost sm play-activation-btn${tracker.activation?.combat ? ' is-on' : ''}" type="button" data-play-action="toggle-activation" data-unit-key="${escapeHtml(unitKey)}" data-phase="combat"${trackerDisabledAttrs}>Com</button>
+          <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>Deployed</button>
         </div>
       </div>` : '';
 
@@ -2284,6 +2880,11 @@ function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
     supplyPerRound,
     gameSize,
     hasStarted: !!setup.hasStarted,
+    isLinkedGame: Boolean(setup.isLinkedGame),
+    linkedReady: Boolean(setup.linkedReady),
+    linkedMatchId: setup.linkedMatchId ? String(setup.linkedMatchId) : null,
+    linkedSide: setup.linkedSide === 'opponent' ? 'opponent' : 'player',
+    linkedConsensus: createEmptyLinkedConsensus(),
     playerScore: 0,
     opponentScore: 0,
     playerResource: 0,
@@ -2291,6 +2892,9 @@ function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
     round: 1,
     phaseIndex: 0,
     firstPlayer: 'player',
+    queuedFirstPlayer: setup.queuedFirstPlayer === 'opponent'
+      ? 'opponent'
+      : (setup.queuedFirstPlayer === 'player' ? 'player' : null),
     activeBoardSide: 'player',
     collapsedHealthWidthBySide: {
       player: null,
@@ -2336,6 +2940,7 @@ function clonePlaySnapshot() {
     opponentResource: playModeState.opponentResource,
     playerScore: playModeState.playerScore,
     opponentScore: playModeState.opponentScore,
+    queuedFirstPlayer: playModeState.queuedFirstPlayer,
     unitsByKey: JSON.parse(JSON.stringify(playModeState.unitsByKey)),
   };
 }
@@ -2349,6 +2954,9 @@ function restorePlaySnapshot(snapshot) {
   playModeState.opponentResource = snapshot.opponentResource;
   playModeState.playerScore = snapshot.playerScore;
   playModeState.opponentScore = snapshot.opponentScore;
+  playModeState.queuedFirstPlayer = snapshot.queuedFirstPlayer === 'opponent'
+    ? 'opponent'
+    : (snapshot.queuedFirstPlayer === 'player' ? 'player' : null);
   playModeState.unitsByKey = snapshot.unitsByKey;
 }
 
@@ -2378,24 +2986,83 @@ function buildPlayDashboard() {
   const opponentSupplyOnBoard = getSupplyOnBoard('opponent');
   const playerSupplyAvailable = Math.max(0, Number(supplyCap || 0) - playerSupplyOnBoard);
   const opponentSupplyAvailable = Math.max(0, Number(supplyCap || 0) - opponentSupplyOnBoard);
-  const firstPlayerLabel = playModeState.firstPlayer === 'player' ? playModeState.playerName : playModeState.opponentName;
+  const isScoringPhase = currentPhase === 'Scoring';
+  const firstPlayerLabel = isScoringPhase
+    ? 'Scoring'
+    : (playModeState.firstPlayer === 'player' ? playModeState.playerName : playModeState.opponentName);
+  const playerFactionSource = playModeState.playerRoster?.faction || 'Unknown';
   const playerFactionClass = `faction-${String(playModeState.playerRoster?.faction || 'terran').toLowerCase()}`;
   const opponentFactionSource = playModeState.opponentRoster?.faction || playModeState.opponentFaction || 'terran';
   const opponentFactionClass = `faction-${String(opponentFactionSource).toLowerCase()}`;
-  const firstPlayerFactionClass = playModeState.firstPlayer === 'player' ? playerFactionClass : opponentFactionClass;
+  const firstPlayerFactionClass = isScoringPhase
+    ? 'is-scoring'
+    : (playModeState.firstPlayer === 'player' ? playerFactionClass : opponentFactionClass);
   const phaseClass = `phase-${String(currentPhase).toLowerCase()}`;
   const hasOpponentBoard = !!playModeState.opponentRoster;
-  let nextLabel = 'Next Phase';
-  if (currentPhase === 'Scoring') {
-    nextLabel = playModeState.round >= playModeState.gameLength ? 'End Game' : 'Next Round';
+  const linkedGameplay = isLinkedGameState(playModeState);
+  const consensus = normalizeLinkedConsensus(playModeState.linkedConsensus);
+  const passState = linkedGameplay ? getLinkedPassStateForCurrentPhase(playModeState) : null;
+  const localSide = getLinkedActionRequesterSide();
+  const localPassed = Boolean(passState && (localSide === 'player' ? passState.playerPassed : passState.opponentPassed));
+  const otherSide = localSide === 'player' ? 'opponent' : 'player';
+  const otherPassed = Boolean(passState && (otherSide === 'player' ? passState.playerPassed : passState.opponentPassed));
+  const passedNames = [];
+  if (passState?.playerPassed) passedNames.push(playModeState.playerName || 'Player');
+  if (passState?.opponentPassed) passedNames.push(playModeState.opponentName || 'Opponent');
+  let passStatusText = '';
+  if (passedNames.length === 1) passStatusText = `${passedNames[0]} has passed`;
+  if (passedNames.length === 2) passStatusText = `${passedNames[0]} and ${passedNames[1]} have passed`;
+  const passStatusHtml = passStatusText
+    ? `<div class="play-phase-pass-note">${escapeHtml(passStatusText)}</div>`
+    : '';
+
+  const endGameRequest = linkedGameplay ? consensus.endGame : null;
+  const localEndGameApproved = Boolean(endGameRequest && (localSide === 'player' ? endGameRequest.playerApproved : endGameRequest.opponentApproved));
+  const endGameAwaitingOther = Boolean(endGameRequest && localEndGameApproved && !hasBothLinkedApprovals(endGameRequest));
+  const endGameRequestedByOther = Boolean(endGameRequest && !localEndGameApproved && !hasBothLinkedApprovals(endGameRequest));
+  const endGameRequesterName = endGameRequest?.requestedBy
+    ? getLinkedSideDisplayName(endGameRequest.requestedBy)
+    : 'Opponent';
+  let flowStatusText = '';
+  if (linkedGameplay) {
+    if (endGameAwaitingOther) {
+      flowStatusText = `Waiting for ${getLinkedSideDisplayName(otherSide)} to confirm end game.`;
+    } else if (endGameRequestedByOther) {
+      flowStatusText = `${endGameRequesterName} requested end game.`;
+    } else if (localPassed && !otherPassed) {
+      flowStatusText = `Waiting for ${getLinkedSideDisplayName(otherSide)} to pass.`;
+    } else if (!localPassed && otherPassed) {
+      flowStatusText = `${getLinkedSideDisplayName(otherSide)} has passed.`;
+    }
   }
+  const flowStatusHtml = flowStatusText
+    ? `<div class="play-flow-note">${escapeHtml(flowStatusText)}</div>`
+    : '';
+
+  const endGameButtonLabel = linkedGameplay
+    ? (endGameRequestedByOther ? '■ Confirm End' : (endGameAwaitingOther ? '■ End Requested' : '■ End Game'))
+    : '■ End Game';
+
+  const phaseActionLabel = linkedGameplay
+    ? (localPassed ? 'Passed' : 'Pass')
+    : (() => {
+      if (currentPhase === 'Scoring') {
+        return playModeState.round >= playModeState.gameLength ? 'End Game' : 'Next Round';
+      }
+      return 'Next Phase';
+    })();
+
+  const phaseActionClass = linkedGameplay && localPassed ? 'btn ghost sm is-passed' : 'btn sm';
+  const phaseAction = linkedGameplay ? 'phase-pass' : 'phase-next';
 
   return `
     <div class="play-topbar">
-      <div class="play-name-line"><strong>${escapeHtml(playModeState.playerName)}</strong> vs <strong>${escapeHtml(playModeState.opponentName)}</strong> (${escapeHtml(playModeState.opponentFaction)}) · ${escapeHtml(String(playModeState.gameSize))}m · <strong>${escapeHtml(playModeState.missionName)}</strong> · ${playModeState.gameLength} rounds</div>
+      <div class="play-name-line"><strong>${escapeHtml(playModeState.playerName)}</strong> (${escapeHtml(playerFactionSource)}) vs <strong>${escapeHtml(playModeState.opponentName)}</strong> (${escapeHtml(opponentFactionSource)}) · ${escapeHtml(String(playModeState.gameSize))}m · <strong>${escapeHtml(playModeState.missionName)}</strong> · ${playModeState.gameLength} rounds</div>
+      <div class="play-linked-status" id="play-linked-status"></div>
       <div class="play-topbar-actions">
         <button class="btn ghost sm" type="button" data-play-action="open-new-game-confirm" title="Start New Game">↻ New Game</button>
-        <button class="btn ghost sm" type="button" data-play-action="end-game" title="End Game">■ End Game</button>
+        <button class="btn ghost sm" type="button" data-play-action="open-new-linked-game-confirm" title="Start New Linked Game">⟷ New Linked Game</button>
+        <button class="btn ghost sm" type="button" data-play-action="end-game" title="End Game">${escapeHtml(endGameButtonLabel)}</button>
       </div>
     </div>
     <div class="play-dashboard">
@@ -2444,26 +3111,28 @@ function buildPlayDashboard() {
       <div class="play-stat">
         <div class="play-stat-label">First Player</div>
         <div class="play-inline-controls">
-          <button class="btn ghost play-first-player-btn ${escapeHtml(firstPlayerFactionClass)}" type="button" data-play-action="toggle-first-player">${escapeHtml(firstPlayerLabel)}</button>
+          <button class="btn ghost play-first-player-btn ${escapeHtml(firstPlayerFactionClass)}" type="button" data-play-action="toggle-first-player" ${isScoringPhase ? 'disabled' : ''}>${escapeHtml(firstPlayerLabel)}</button>
         </div>
       </div>
       <div class="play-stat">
         <div class="play-stat-label">Round Tracker</div>
         <div class="play-resource-row"><span class="play-stat-label">Round</span><span class="play-stat-value">${playModeState.round}</span></div>
         <div class="play-resource-row"><span class="play-stat-label">Phase</span><span class="play-stat-value play-phase-readout ${escapeHtml(phaseClass)}">${escapeHtml(currentPhase)}</span></div>
+        ${passStatusHtml}
       </div>
       <div class="play-stat">
         <div class="play-stat-label">Flow</div>
         <div class="play-phase-actions">
           <button class="btn ghost sm" type="button" data-play-action="phase-back">Back</button>
-          <button class="btn sm" type="button" data-play-action="phase-next">${escapeHtml(nextLabel)}</button>
+          <button class="${phaseActionClass}" type="button" data-play-action="${phaseAction}">${escapeHtml(phaseActionLabel)}</button>
         </div>
+        ${flowStatusHtml}
       </div>
     </div>`;
 }
 
-function renderPlayMode(roster) {
-  ensurePlayModeState(roster);
+function renderPlayMode(roster, { allowAutoSeed = true } = {}) {
+  if (allowAutoSeed) ensurePlayModeState(roster);
   if (!playModeState?.playerRoster) return '';
   const activeSide = playModeState.activeBoardSide === 'opponent' && playModeState.opponentRoster ? 'opponent' : 'player';
   playModeState.activeBoardSide = activeSide;
@@ -2509,14 +3178,20 @@ function renderPlayMode(roster) {
     </div>`;
 }
 
-function refreshPlayModeOutput() {
+function refreshPlayModeOutput({ allowAutoSeed = true } = {}) {
   if (!playCardEl || !playDashboardEl) return;
-  if (!playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (allowAutoSeed && !playModeState && currentRoster) ensurePlayModeState(currentRoster);
   if (playModeState?.hasStarted) persistCurrentPlayState();
-  if (playNewGameBtn) playNewGameBtn.style.display = playModeState?.hasStarted ? 'none' : '';
+  if (playNewGameActionsEl) {
+    playNewGameActionsEl.style.display = playModeState?.hasStarted ? 'none' : '';
+  }
+  if (playActiveSessionEl) {
+    playActiveSessionEl.classList.toggle('is-visible', Boolean(playModeState?.hasStarted));
+  }
   playDashboardEl.innerHTML = buildPlayDashboard();
   renderPlayHistoryLists();
-  playCardEl.innerHTML = renderPlayMode(currentRoster);
+  playCardEl.innerHTML = renderPlayMode(currentRoster, { allowAutoSeed });
+  updateLinkedUi();
   if (playModeState?.hasStarted) {
     const side = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
     const hpWidth = playModeState.collapsedHealthWidthBySide?.[side] ?? null;
@@ -2558,6 +3233,19 @@ function openPlayNewGameDialog() {
   playNewGameDialog.showModal();
 }
 
+function openPlayNewLinkedGameDialog() {
+  if (!playNewLinkedGameDialog) return;
+  if (!playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (playLinkedPlayerNameInput) playLinkedPlayerNameInput.value = getPreferredPlayerName();
+  if (playLinkedPlayerSeedInput) playLinkedPlayerSeedInput.value = getPreferredSeed();
+  if (playLinkedMissionNameInput) playLinkedMissionNameInput.value = playModeState?.missionName || 'Mission';
+  if (playLinkedGameLengthInput) playLinkedGameLengthInput.value = String(playModeState?.gameLength || 5);
+  if (playLinkedStartingSupplyInput) playLinkedStartingSupplyInput.value = String(playModeState?.startingSupply ?? 10);
+  if (playLinkedSupplyPerRoundInput) playLinkedSupplyPerRoundInput.value = String(playModeState?.supplyPerRound ?? 2);
+  if (playLinkedGameSizeInput) playLinkedGameSizeInput.value = String(playModeState?.gameSize || 2000);
+  playNewLinkedGameDialog.showModal();
+}
+
 function finalizePlayGame() {
   if (!playModeState) return;
   persistCurrentPlayState({ archive: true });
@@ -2565,8 +3253,14 @@ function finalizePlayGame() {
     ? 'Draw'
     : (playModeState.playerScore > playModeState.opponentScore ? playModeState.playerName : playModeState.opponentName);
   window.alert(`Final Score\n${playModeState.playerName}: ${playModeState.playerScore}\n${playModeState.opponentName}: ${playModeState.opponentScore}\nWinner: ${winner}`);
+  if (isLinkedModeActive()) {
+    stopLinkedSession().catch((err) => {
+      console.error('Failed to close linked session after game end:', err);
+    });
+  }
+  playModeState = null;
   showToast('Game archived to Past Games.');
-  refreshPlayModeOutput();
+  refreshPlayModeOutput({ allowAutoSeed: false });
 }
 
 function handlePlayNextStep() {
@@ -2578,13 +3272,7 @@ function handlePlayNextStep() {
   }
 
   playModeState.history.push(clonePlaySnapshot());
-  if (currentPhase === 'Scoring') {
-    playModeState.round += 1;
-    playModeState.phaseIndex = 0;
-    resetRoundTrackers();
-  } else {
-    playModeState.phaseIndex = Math.min(playModeState.phaseIndex + 1, PLAY_PHASES.length - 1);
-  }
+  applyPhaseTarget(playModeState, getNextPhaseTarget(playModeState));
   refreshPlayModeOutput();
 }
 
@@ -2593,6 +3281,196 @@ function handlePlayBackStep() {
   const snapshot = playModeState.history.pop();
   restorePlaySnapshot(snapshot);
   refreshPlayModeOutput();
+}
+
+function getLinkedActionRequesterSide() {
+  return getLinkedSide() === 'opponent' ? 'opponent' : 'player';
+}
+
+function getLinkedSideDisplayName(side) {
+  if (!playModeState) return side === 'opponent' ? 'Opponent' : 'Player';
+  return side === 'opponent'
+    ? (playModeState.opponentName || 'Opponent')
+    : (playModeState.playerName || 'Player');
+}
+
+function getLinkedPassStateForCurrentPhase(state = playModeState) {
+  const pass = normalizeLinkedConsensus(state?.linkedConsensus).pass;
+  if (!pass) return null;
+  const sameRound = Number(pass.targetRound || 0) === Number(state?.round || 0);
+  const samePhase = Number(pass.targetPhaseIndex || 0) === Number(state?.phaseIndex || 0);
+  return sameRound && samePhase ? pass : null;
+}
+
+function buildLinkedPassStateForCurrentPhase(state = playModeState) {
+  return {
+    targetRound: Number(state?.round || 1),
+    targetPhaseIndex: Number(state?.phaseIndex || 0),
+    playerPassed: false,
+    opponentPassed: false,
+    firstPassedBy: null,
+  };
+}
+
+function createLinkedActionRequest(type, targetRound, targetPhaseIndex) {
+  const side = getLinkedActionRequesterSide();
+  return {
+    type,
+    requestId: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    requestedBy: side,
+    playerApproved: side === 'player',
+    opponentApproved: side === 'opponent',
+    targetRound: Number(targetRound || 0),
+    targetPhaseIndex: Number(targetPhaseIndex || 0),
+  };
+}
+
+function approveLinkedActionRequest(request) {
+  if (!request) return request;
+  const side = getLinkedActionRequesterSide();
+  return {
+    ...request,
+    playerApproved: request.playerApproved || side === 'player',
+    opponentApproved: request.opponentApproved || side === 'opponent',
+  };
+}
+
+function toggleLinkedPassState(passState, side) {
+  const next = {
+    ...passState,
+    playerPassed: Boolean(passState.playerPassed),
+    opponentPassed: Boolean(passState.opponentPassed),
+    firstPassedBy: passState.firstPassedBy === 'opponent'
+      ? 'opponent'
+      : (passState.firstPassedBy === 'player' ? 'player' : null),
+  };
+
+  if (side === 'opponent') {
+    next.opponentPassed = !next.opponentPassed;
+  } else {
+    next.playerPassed = !next.playerPassed;
+  }
+
+  const hasPlayer = next.playerPassed;
+  const hasOpponent = next.opponentPassed;
+
+  if (!hasPlayer && !hasOpponent) {
+    next.firstPassedBy = null;
+    return next;
+  }
+
+  if (next.firstPassedBy === 'player' && !hasPlayer) {
+    next.firstPassedBy = hasOpponent ? 'opponent' : null;
+    return next;
+  }
+  if (next.firstPassedBy === 'opponent' && !hasOpponent) {
+    next.firstPassedBy = hasPlayer ? 'player' : null;
+    return next;
+  }
+  if (!next.firstPassedBy) {
+    next.firstPassedBy = hasPlayer ? 'player' : (hasOpponent ? 'opponent' : null);
+  }
+
+  return next;
+}
+
+function getNextPhaseTarget(state) {
+  const currentPhase = PLAY_PHASES[state?.phaseIndex ?? 0] ?? PLAY_PHASES[0];
+  if (currentPhase === 'Scoring') {
+    return {
+      round: Number(state?.round || 1) + 1,
+      phaseIndex: 0,
+    };
+  }
+  return {
+    round: Number(state?.round || 1),
+    phaseIndex: Math.min(Number(state?.phaseIndex || 0) + 1, PLAY_PHASES.length - 1),
+  };
+}
+
+function applyPhaseTarget(state, target) {
+  const scoringPhaseIndex = PLAY_PHASES.indexOf('Scoring');
+  const previousRound = Number(state?.round || 1);
+  const targetRound = Number(target?.round || state?.round || 1);
+  const targetPhaseIndex = Math.max(0, Math.min(PLAY_PHASES.length - 1, Number(target?.phaseIndex || 0)));
+  const wasScoringRollover = targetRound > Number(state?.round || 1);
+  const movingIntoScoring = targetRound === previousRound && targetPhaseIndex === scoringPhaseIndex;
+
+  if (movingIntoScoring && !state.queuedFirstPlayer) {
+    state.queuedFirstPlayer = state.firstPlayer === 'opponent' ? 'opponent' : 'player';
+  }
+
+  state.round = targetRound;
+  state.phaseIndex = targetPhaseIndex;
+
+  if (wasScoringRollover && (state.queuedFirstPlayer === 'player' || state.queuedFirstPlayer === 'opponent')) {
+    state.firstPlayer = state.queuedFirstPlayer;
+    state.queuedFirstPlayer = null;
+  }
+
+  if (wasScoringRollover) {
+    resetRoundTrackers();
+  }
+}
+
+function handleLinkedPassAction() {
+  const currentPhase = getPlayCurrentPhase();
+  if (currentPhase === 'Scoring' && playModeState.round >= playModeState.gameLength) {
+    handleLinkedEndGameAction();
+    return;
+  }
+
+  if (!playModeState.linkedConsensus) {
+    playModeState.linkedConsensus = createEmptyLinkedConsensus();
+  }
+
+  const side = getLinkedActionRequesterSide();
+  const existing = getLinkedPassStateForCurrentPhase(playModeState) || buildLinkedPassStateForCurrentPhase(playModeState);
+  const nextPassState = toggleLinkedPassState(existing, side);
+  playModeState.linkedConsensus.pass = nextPassState;
+
+  if (!(nextPassState.playerPassed && nextPassState.opponentPassed)) {
+    if ((side === 'player' && nextPassState.playerPassed) || (side === 'opponent' && nextPassState.opponentPassed)) {
+      const otherSide = side === 'player' ? 'opponent' : 'player';
+      showToast(`You passed. Waiting for ${getLinkedSideDisplayName(otherSide)}.`);
+    } else {
+      showToast('Pass undone.');
+    }
+    refreshPlayModeOutput();
+    return;
+  }
+
+  const target = getNextPhaseTarget(playModeState);
+  playModeState.history.push(clonePlaySnapshot());
+  if (nextPassState.firstPassedBy === 'player' || nextPassState.firstPassedBy === 'opponent') {
+    playModeState.firstPlayer = nextPassState.firstPassedBy;
+  }
+  applyPhaseTarget(playModeState, target);
+  playModeState.linkedConsensus.pass = null;
+  showToast('Both players passed. Moving to next phase.');
+  refreshPlayModeOutput();
+}
+
+function handleLinkedEndGameAction() {
+  if (!playModeState.linkedConsensus) {
+    playModeState.linkedConsensus = createEmptyLinkedConsensus();
+  }
+
+  const existing = playModeState.linkedConsensus.endGame;
+  const request = existing
+    ? approveLinkedActionRequest(existing)
+    : createLinkedActionRequest('end-game', Number(playModeState.round || 1), Number(playModeState.phaseIndex || 0));
+
+  playModeState.linkedConsensus.endGame = request;
+  if (!hasBothLinkedApprovals(request)) {
+    showToast('End game requested. Waiting for opponent approval.');
+    refreshPlayModeOutput();
+    return;
+  }
+
+  playModeState.linkedConsensus.endGame = null;
+  showToast('End game approved by both players.');
+  finalizePlayGame();
 }
 
 function handlePlayAction(actionEl) {
@@ -2621,6 +3499,10 @@ function handlePlayAction(actionEl) {
     return;
   }
   if (action === 'end-game') {
+    if (isLinkedModeActive()) {
+      handleLinkedEndGameAction();
+      return;
+    }
     finalizePlayGame();
     return;
   }
@@ -2644,15 +3526,36 @@ function handlePlayAction(actionEl) {
   if (!playModeState) return;
   const tracker = unitKey ? playModeState.unitsByKey[unitKey] : null;
 
+  if (!assertLinkedActionAllowed(action, { side, tracker })) {
+    showToast(`Only your ${getLinkedSide()} side can be edited in linked mode.`, 'error');
+    return;
+  }
+
   if (action === 'open-new-game') {
-    openPlayNewGameDialog();
+    requestPlayDialog('standard');
     return;
   }
   if (action === 'open-new-game-confirm') {
-    playResetGameDialog?.showModal();
+    requestPlayDialog('standard');
+    return;
+  }
+  if (action === 'open-new-linked-game-confirm') {
+    requestPlayDialog('linked');
     return;
   }
   if (action === 'phase-next') {
+    if (isLinkedModeActive()) {
+      handleLinkedPassAction();
+      return;
+    }
+    handlePlayNextStep();
+    return;
+  }
+  if (action === 'phase-pass') {
+    if (isLinkedModeActive()) {
+      handleLinkedPassAction();
+      return;
+    }
     handlePlayNextStep();
     return;
   }
@@ -5016,13 +5919,38 @@ if (seedHistorySectionEl) {
 if (playNewGameBtn) {
   playNewGameBtn.addEventListener('click', () => {
     if (!currentRoster) return;
-    openPlayNewGameDialog();
+    requestPlayDialog('standard');
+  });
+}
+
+if (playNewLinkedGameBtn) {
+  playNewLinkedGameBtn.addEventListener('click', () => {
+    if (!currentRoster) return;
+    requestPlayDialog('linked');
+  });
+}
+
+if (playJoinGameBtn) {
+  playJoinGameBtn.addEventListener('click', () => {
+    requestPlayDialog('join');
   });
 }
 
 if (playCancelBtn) {
   playCancelBtn.addEventListener('click', () => {
     playNewGameDialog?.close();
+  });
+}
+
+if (playLinkedCancelBtn) {
+  playLinkedCancelBtn.addEventListener('click', () => {
+    playNewLinkedGameDialog?.close();
+  });
+}
+
+if (playJoinCancelBtn) {
+  playJoinCancelBtn.addEventListener('click', () => {
+    playJoinGameDialog?.close();
   });
 }
 
@@ -5035,6 +5963,14 @@ if (playResetGameCancelBtn) {
 if (playResetGameConfirmBtn) {
   playResetGameConfirmBtn.addEventListener('click', () => {
     playResetGameDialog?.close();
+    if (pendingNewGameDialogMode === 'linked') {
+      openPlayNewLinkedGameDialog();
+      return;
+    }
+    if (pendingNewGameDialogMode === 'join') {
+      openPlayJoinGameDialog();
+      return;
+    }
     openPlayNewGameDialog();
   });
 }
@@ -5157,6 +6093,93 @@ if (playNewGameForm) {
       refreshPlayModeOutput();
     } catch (err) {
       showToast(getUserFacingError('Start play game', err), 'error');
+    }
+  });
+}
+
+if (playNewLinkedGameForm) {
+  playNewLinkedGameForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!cloudUser) {
+      showToast('Sign in is required to start a linked live game.', 'error');
+      return;
+    }
+    const playerSeed = sanitizeSeed(playLinkedPlayerSeedInput?.value || currentRoster?.seed || '');
+    if (!playerSeed) {
+      playNewLinkedGameDialog?.close();
+      return;
+    }
+    try {
+      const playerRoster = await loadRosterForPlay(playerSeed);
+      playModeState = createPlayModeState(playerRoster, null, {
+        playerSeed,
+        opponentSeed: '',
+        playerName: playLinkedPlayerNameInput?.value,
+        opponentName: 'Player 2',
+        opponentFaction: 'Unknown',
+        missionName: playLinkedMissionNameInput?.value,
+        gameLength: playLinkedGameLengthInput?.value,
+        startingSupply: playLinkedStartingSupplyInput?.value,
+        supplyPerRound: playLinkedSupplyPerRoundInput?.value,
+        gameSize: playLinkedGameSizeInput?.value,
+        hasStarted: true,
+        isLinkedGame: true,
+        linkedReady: false,
+      });
+      applyDefaultPlayCollapsedUnits(playModeState);
+      persistCurrentPlayState();
+
+      const created = await createLinkedMatch({
+        sharedState: buildLinkedSharedState(playModeState),
+        playerSideState: buildLinkedSideState(playModeState, 'player'),
+        opponentSideState: {
+          side: 'opponent',
+          name: 'Player 2',
+          seed: '',
+          faction: 'Unknown',
+          score: 0,
+          resource: 0,
+          roster: null,
+          unitsByKey: {},
+        },
+      });
+      await startLinkedSubscription(created.matchId, created.side);
+      showToast(`Linked live game created: ${created.matchId}`);
+
+      playNewLinkedGameDialog?.close();
+      refreshPlayModeOutput();
+    } catch (err) {
+      showToast(getLinkedErrorMessage('Start linked play game', err), 'error');
+    }
+  });
+}
+
+if (playJoinGameForm) {
+  playJoinGameForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const code = normalizeLinkedCode(playJoinCodeInput?.value);
+    const playerName = String(playJoinNameInput?.value || '').trim();
+    const playerSeed = sanitizeSeed(playJoinSeedInput?.value || '');
+    if (!code || !playerName || !playerSeed) {
+      showToast('Join code, name, and seed are required.', 'error');
+      return;
+    }
+
+    try {
+      await ensureLinkedJoinIdentity();
+      const joined = await joinLinkedMatch(code);
+      const joinedRoster = await loadRosterForPlay(playerSeed);
+      await startLinkedSubscription(joined.matchId, joined.side);
+      await updateLinkedMatchSideState(joined.matchId, joined.side, {
+        name: playerName,
+        seed: playerSeed,
+        faction: joinedRoster?.faction || 'Unknown',
+        roster: joinedRoster,
+      });
+      showToast(`Joined linked live game ${joined.matchId} as ${joined.side}.`);
+      playJoinGameDialog?.close();
+    } catch (err) {
+      showToast(getLinkedErrorMessage('Join linked game', err), 'error');
     }
   });
 }

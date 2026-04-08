@@ -1245,6 +1245,52 @@
       flex-direction: column;
       gap: 12px;
     }
+    .play-new-game-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .play-active-session {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .play-active-session.is-visible {
+      display: flex;
+    }
+    .play-linked-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: .84rem;
+      color: var(--muted);
+      flex: 0 1 auto;
+      min-width: 0;
+      white-space: nowrap;
+      justify-content: center;
+    }
+    .play-linked-status:empty {
+      display: none;
+    }
+    .play-linked-status strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+    .play-linked-code {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      background: rgba(255, 255, 255, .06);
+      color: #ffffff;
+      font-family: var(--mono);
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      line-height: 1;
+    }
     .play-board-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -1275,15 +1321,18 @@
       display: flex;
       justify-content: space-between;
       gap: 10px;
-      align-items: flex-start;
-      flex-wrap: wrap;
+      align-items: center;
+      flex-wrap: nowrap;
+      min-width: 0;
     }
     .play-topbar-actions {
       display: inline-flex;
       align-items: center;
       justify-content: flex-end;
       gap: 8px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      margin-left: auto;
+      flex: 0 0 auto;
     }
     .btn.play-new-game-main {
       width: 100%;
@@ -1362,6 +1411,21 @@
       gap: 8px;
       flex-wrap: wrap;
     }
+    .play-phase-actions .btn.is-passed {
+      border-color: rgba(148, 160, 181, .6);
+      background: rgba(103, 115, 136, .2);
+      color: #c7d1df;
+    }
+    .play-phase-pass-note,
+    .play-flow-note {
+      margin-top: 6px;
+      font-size: .68rem;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+    .play-flow-note {
+      color: var(--accent-2);
+    }
     .play-list-switches {
       display: flex;
       align-items: center;
@@ -1399,12 +1463,21 @@
     .play-name-line {
       font-size: .84rem;
       color: var(--muted);
-      flex: 1 1 420px;
+      flex: 1 1 auto;
       min-width: 0;
       text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .play-name-line strong { color: var(--text); }
     .play-mini-new-game { margin-left: auto; }
+
+    @media (max-width: 980px) {
+      .play-topbar {
+        gap: 8px;
+      }
+    }
 
     .aid-unit.play-dead {
       filter: grayscale(1);
@@ -1477,6 +1550,11 @@
       border-color: rgba(var(--protoss-rgb), .68);
       color: #ffe38f;
       background: rgba(var(--protoss-rgb), .13);
+    }
+    .play-first-player-btn.is-scoring {
+      border-color: rgba(148, 160, 181, .52);
+      color: #9aa7bb;
+      background: rgba(120, 132, 152, .15);
     }
     .play-phase-readout.phase-movement { color: var(--accent); }
     .play-phase-readout.phase-assault { color: var(--red); }
@@ -2291,9 +2369,15 @@
       <!-- Play Mode -->
       <div id="tab-play" class="panel" role="tabpanel" tabindex="0" hidden>
         <div class="play-mode-shell">
-          <button class="btn play-new-game-main" id="play-new-game-btn">New Game</button>
-          <div id="play-dashboard"></div>
-          <div id="play-card"></div>
+          <div class="play-new-game-actions">
+            <button class="btn play-new-game-main" id="play-new-game-btn">New Game</button>
+            <button class="btn play-new-game-main" id="play-new-linked-game-btn">New Linked Game</button>
+            <button class="btn play-new-game-main" id="play-join-game-btn">Join Game</button>
+          </div>
+          <div id="play-active-session" class="play-active-session">
+            <div id="play-dashboard"></div>
+            <div id="play-card"></div>
+          </div>
         </div>
       </div>
 
@@ -2360,6 +2444,68 @@
       <div class="play-dialog-actions">
         <button class="btn ghost" type="button" id="play-cancel-btn">Cancel</button>
         <button class="btn" type="submit">Start</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="play-new-linked-game-dialog" class="play-dialog">
+    <form method="dialog" id="play-new-linked-game-form" class="play-dialog-inner">
+      <h3>Start New Linked Game</h3>
+      <div class="play-form-grid">
+        <label>
+          Your Name
+          <input type="text" id="play-linked-player-name" required>
+        </label>
+        <label>
+          Your Seed
+          <input type="text" id="play-linked-player-seed" maxlength="10" autocomplete="off" spellcheck="false" required>
+        </label>
+        <label>
+          Mission Name
+          <input type="text" id="play-linked-mission-name" required>
+        </label>
+        <label>
+          Game Length (Rounds)
+          <input type="number" id="play-linked-game-length" min="1" max="20" step="1" value="5" required>
+        </label>
+        <label>
+          Starting Supply
+          <input type="number" id="play-linked-starting-supply" min="0" max="200" step="1" value="10" required>
+        </label>
+        <label>
+          Supply Per Round
+          <input type="number" id="play-linked-supply-per-round" min="0" max="50" step="1" value="2" required>
+        </label>
+        <label>
+          Game Size
+          <input type="number" id="play-linked-game-size" min="1" max="100000" step="1" value="2000" required>
+        </label>
+      </div>
+      <div class="play-dialog-actions">
+        <button class="btn ghost" type="button" id="play-linked-cancel-btn">Cancel</button>
+        <button class="btn" type="submit">Start Linked Game</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="play-join-game-dialog" class="play-dialog">
+    <form method="dialog" id="play-join-game-form" class="play-dialog-inner">
+      <h3>Join Linked Game</h3>
+      <div class="play-form-grid">
+        <label>
+          Join Code
+          <input type="text" id="play-join-code" maxlength="10" autocomplete="off" spellcheck="false" required>
+        </label>
+        <label>
+          Your Name
+          <input type="text" id="play-join-name" required>
+        </label>
+        <label>
+          Your Seed
+          <input type="text" id="play-join-seed" maxlength="10" autocomplete="off" spellcheck="false" required>
+        </label>
+      </div>
+      <div class="play-dialog-actions">
+        <button class="btn ghost" type="button" id="play-join-cancel-btn">Cancel</button>
+        <button class="btn" type="submit">Join Game</button>
       </div>
     </form>
   </dialog>
