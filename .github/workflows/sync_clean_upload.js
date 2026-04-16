@@ -7,7 +7,7 @@ import { writeFileSync } from 'fs';
 
 const ARMY_UNITS_URL = 'https://firestore.googleapis.com/v1/projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents/army_units?key=AIzaSyDHRhS4FIO_1s_2Tn2C77noJRgbs-y_mks';
 const OUTPUT_PATH = 'army_units_cleaned.json';
-const BUCKET = process.env.BUCKET || process.env.GCLOUD_PROJECT + '.appspot.com' || 'starcrafttmgbeta.appspot.com';
+const BUCKET = 'starcrafttmgbeta.appspot.com';
 const DEST_PATH = 'public/army_units_cleaned.json';
 
 function cleanFirestoreDump(raw) {
