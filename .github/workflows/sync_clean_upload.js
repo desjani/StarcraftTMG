@@ -6,9 +6,9 @@ import { Storage } from '@google-cloud/storage';
 import { writeFileSync } from 'fs';
 
 const ARMY_UNITS_URL = 'https://firestore.googleapis.com/v1/projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents/army_units?key=AIzaSyDHRhS4FIO_1s_2Tn2C77noJRgbs-y_mks';
-const OUTPUT_PATH = 'army_units_cleaned.json';
-const BUCKET = 'starcrafttmgbeta.appspot.com';
-const DEST_PATH = 'public/army_units_cleaned.json';
+
+import { mkdirSync } from 'fs';
+const OUTPUT_PATH = 'data/army_units_cleaned.json';
 
 function cleanFirestoreDump(raw) {
   const docs = raw.documents || [];
@@ -128,16 +128,9 @@ async function main() {
 
   // Clean and group
   const cleaned = cleanFirestoreDump(raw);
+  mkdirSync('data', { recursive: true });
   writeFileSync(OUTPUT_PATH, cleaned);
-
-  // Upload to Cloud Storage
-  await storage.bucket(BUCKET).upload(OUTPUT_PATH, {
-    destination: DEST_PATH,
-    contentType: 'application/json',
-    public: true,
-    resumable: false
-  });
-  console.log('army_units_cleaned.json updated in Cloud Storage.');
+  console.log('army_units_cleaned.json written to /data in repo.');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
