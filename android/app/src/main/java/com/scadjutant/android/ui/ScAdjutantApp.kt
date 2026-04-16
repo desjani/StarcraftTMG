@@ -11,6 +11,7 @@ import android.graphics.Bitmap
 import android.view.View
 import android.view.ViewGroup
 import android.view.View.MeasureSpec
+import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -282,6 +283,7 @@ private fun LibraryScreen(
 ) {
     val favoriteNames = favorites.associate { it.seed to it.name }
     val currentRosterName = roster?.let { favoriteNames[it.seed] ?: "${it.factionCard} (${it.seed})" }.orEmpty()
+    val currentRosterAlreadySaved = roster?.let { current -> favorites.any { it.seed == current.seed } } == true
     var favoriteDraft by rememberSaveable(currentRosterName) { mutableStateOf(currentRosterName) }
     var editingFavoriteSeed by rememberSaveable { mutableStateOf<String?>(null) }
     var editingFavoriteName by rememberSaveable { mutableStateOf("") }
@@ -325,52 +327,9 @@ private fun LibraryScreen(
             }
         }
 
-        if (roster != null) {
-            item {
-                WireCard {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth(0.64f)) {
-                                Text("Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                                Text(
-                                    "Save this roster into your favorites library with a custom name.",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Icon(
-                                imageVector = Icons.Rounded.Favorite,
-                                contentDescription = null,
-                                tint = factionAccent(roster.faction),
-                            )
-                        }
-                        OutlinedTextField(
-                            value = favoriteDraft,
-                            onValueChange = { favoriteDraft = it },
-                            label = { Text("Favorite name") },
-                            supportingText = { Text("How this roster appears in your library.") },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Button(
-                            onClick = { onSaveFavorite(favoriteDraft) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("Save to favorites")
-                        }
-                    }
-                }
-            }
-        }
-
         item {
             LibrarySectionCard(
-                title = "History",
+                title = "Recent Seeds",
                 icon = { Icon(Icons.Rounded.History, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 emptyText = "No recent seeds yet.",
                 isEmpty = recentSeeds.isEmpty(),
@@ -378,6 +337,39 @@ private fun LibraryScreen(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     recentSeeds.forEach { seed ->
                         SeedPill(label = seed, onClick = { onLoadRecent(seed) })
+                    }
+                }
+            }
+        }
+
+        if (roster != null && !currentRosterAlreadySaved) {
+            item {
+                WireCard {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text("Save to Favorites", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            OutlinedTextField(
+                                value = favoriteDraft,
+                                onValueChange = { favoriteDraft = it },
+                                label = { Text("Favorite name") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Button(
+                                onClick = { onSaveFavorite(favoriteDraft) },
+                                modifier = Modifier.height(56.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                            ) {
+                                Icon(Icons.Rounded.Save, contentDescription = "Save to favorites")
+                            }
+                        }
                     }
                 }
             }
@@ -591,10 +583,10 @@ private fun RosterSummaryCard(
                         )
                         Text(
                             text = "· ${roster.factionCard.uppercase()}",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.headlineSmall,
                             color = factionAccent(roster.faction),
                             fontFamily = OrbitronFontFamily,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                     if (showToolbar) {
@@ -647,7 +639,7 @@ private fun RosterSummaryCard(
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         visibleSlots.forEach { (key, value) ->
                             MetaPill(
-                                label = "${TypeAbbreviation[key] ?: key.firstOrNull() ?: '?'}:${value.used}/${value.avail}",
+                                label = "${TypeAbbreviation[key] ?: key.firstOrNull() ?: '?'}: ${value.used}/${value.avail}",
                                 accent = slotAccent(key),
                             )
                         }
@@ -999,44 +991,56 @@ private fun shareRosterCard(
         ViewGroup.LayoutParams(targetWidth, ViewGroup.LayoutParams.WRAP_CONTENT),
     )
 
-    composeView.post {
-        runCatching {
-            val widthSpec = MeasureSpec.makeMeasureSpec(targetWidth.coerceAtLeast(1), MeasureSpec.EXACTLY)
-            val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-            composeView.measure(widthSpec, heightSpec)
-            val measuredWidth = composeView.measuredWidth.coerceAtLeast(1)
-            val measuredHeight = composeView.measuredHeight.coerceAtLeast(1)
-            composeView.layout(0, 0, measuredWidth, measuredHeight)
-            val bitmap = Bitmap.createBitmap(
-                measuredWidth,
-                measuredHeight,
-                Bitmap.Config.ARGB_8888,
-            )
-            val canvas = Canvas(bitmap)
-            composeView.draw(canvas)
+    var captured = false
+    val preDrawListener = object : ViewTreeObserver.OnPreDrawListener {
+        override fun onPreDraw(): Boolean {
+            if (captured) return true
+            captured = true
+            if (composeView.viewTreeObserver.isAlive) {
+                composeView.viewTreeObserver.removeOnPreDrawListener(this)
+            }
+            composeView.post {
+                runCatching {
+                    val widthSpec = MeasureSpec.makeMeasureSpec(targetWidth.coerceAtLeast(1), MeasureSpec.EXACTLY)
+                    val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+                    composeView.measure(widthSpec, heightSpec)
+                    val measuredWidth = composeView.measuredWidth.coerceAtLeast(1)
+                    val measuredHeight = composeView.measuredHeight.coerceAtLeast(1)
+                    composeView.layout(0, 0, measuredWidth, measuredHeight)
+                    val bitmap = Bitmap.createBitmap(
+                        measuredWidth,
+                        measuredHeight,
+                        Bitmap.Config.ARGB_8888,
+                    )
+                    val canvas = Canvas(bitmap)
+                    composeView.draw(canvas)
 
-            val shareDir = File(context.cacheDir, "shared_images").apply { mkdirs() }
-            val outputFile = File(shareDir, "roster-$seed.png")
-            FileOutputStream(outputFile).use { stream ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                    val shareDir = File(context.cacheDir, "shared_images").apply { mkdirs() }
+                    val outputFile = File(shareDir, "roster-$seed.png")
+                    FileOutputStream(outputFile).use { stream ->
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                    }
+                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", outputFile)
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "image/png"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    activity.startActivity(Intent.createChooser(shareIntent, "Share roster card"))
+                }.onFailure { error ->
+                    Toast.makeText(
+                        context,
+                        error.message ?: "Unable to share the roster card right now.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+
+                rootView.removeView(composeView)
             }
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", outputFile)
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            activity.startActivity(Intent.createChooser(shareIntent, "Share roster card"))
-        }.onFailure { error ->
-            Toast.makeText(
-                context,
-                error.message ?: "Unable to share the roster card right now.",
-                Toast.LENGTH_LONG,
-            ).show()
+            return true
         }
-
-        rootView.removeView(composeView)
     }
+    composeView.viewTreeObserver.addOnPreDrawListener(preDrawListener)
 }
 
 @Composable
