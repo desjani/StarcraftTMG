@@ -1,0 +1,918 @@
+{
+  "createdAt": "2026-02-28T10:55:31.240Z",
+  "id": "TTPIBA",
+  "state": {
+    "gasLimit": 200,
+    "mineralsUsed": 2000,
+    "slotsUsed": {
+      "Core": 8,
+      "Elite": 5,
+      "Hero": 1,
+      "Support": 0,
+      "Air": 0
+    },
+    "roster": [
+      {
+        "id": "pylon",
+        "unitType": "Other",
+        "models": 1,
+        "size": "small",
+        "availableUpgrades": [
+          {
+            "activation": "<Passive>",
+            "costS": 0,
+            "phase": "Any Phase",
+            "name": "Structure",
+            "description": "This Unit cannot be Activated in any Phase and cannot perform actions. Additionally, its Current Supply Value is treated as 0, and it can never Control or Contest Mission Markers, ignoring the standard Zero Supply Exception. This Unit cannot be a target of an ability, unless stated otherwise.",
+            "costL": 0,
+            "linkedTo": ""
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Any Phase",
+            "costS": 0,
+            "description": "Once per Round, when a Friendly Unit Within 4\" of this Pylon uses a Special Ability that costs Psionic Energy, that ability’s PE cost is reduced by 1.",
+            "name": "Khalai Ingenuity",
+            "costL": 0,
+            "linkedTo": ""
+          },
+          {
+            "phase": "Movement Phase",
+            "costS": 0,
+            "description": "Once per Round, the controlling player may deploy a GROUND Unit from Reserves using this Pylon base as Entry Edge. This Unit's Activation ends.",
+            "name": "Warp Conduit",
+            "costL": 0,
+            "linkedTo": "",
+            "activation": "<Passive>"
+          }
+        ],
+        "uid": 1772263607504.5503,
+        "baseCost": 0,
+        "name": "Pylon",
+        "supply": 0,
+        "stats": {
+          "speed": "-",
+          "size": "3",
+          "armor": "5+",
+          "hp": "8",
+          "shield": "2",
+          "evade": "-"
+        },
+        "activeUpgrades": []
+      },
+      {
+        "models": 1,
+        "id": "artanis",
+        "unitType": "Hero",
+        "availableUpgrades": [
+          {
+            "phase": "Any Phase",
+            "costS": 0,
+            "name": "Commander",
+            "description": "Treat this Unit’s Supply characteristic as being increased by 1 for the purposes of Controlling and Contesting Mission Markers, completing objectives, and resolving Disengage checks.",
+            "costL": 0,
+            "linkedTo": "",
+            "activation": "<Passive>"
+          },
+          {
+            "activation": "<Passive>",
+            "costL": 0,
+            "linkedTo": "",
+            "costS": 0,
+            "phase": "Movement Phase",
+            "name": "Phase Prism",
+            "description": "When Deploying from Reserves, this unit may be placed in base-to-base contact with a Friendly unengaged unit. Immediately remove that Friendly unit from the battlefield and return it to Reserves. This placement counts as this Unit's Move action, and its Activation ends immediately."
+          },
+          {
+            "activation": "<Reaction>\n(1 Psionic Energy)",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Hierarch’s Stand",
+            "description": "When another Friendly Unit Within 8\" is declared as the target of a Ranged Attack and this Unit is a valid target, redirect the attack to this Unit. This Unit is eligible to make an Evade Roll against the redirected attack. This special ability remains active until the End of the current Activation.",
+            "costS": 0,
+            "phase": "Assault Phase"
+          },
+          {
+            "activation": "<Reaction>\n(1 Psionic Energy)",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Lightning Dash",
+            "description": "After this Unit resolves a successful Charge action, it may declare a second Charge action against a different Enemy Unit, ignoring the restriction on Charging while Engaged. The Devastating Charge ability does not trigger a second time.",
+            "phase": "Assault Phase",
+            "costS": 0
+          },
+          {
+            "name": "Devastating Charge",
+            "description": "Immediately after this Unit completes a successful Charge resolve the IMPACT (6) 4+ effect.",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "linkedTo": "",
+            "costL": 0,
+            "activation": "<Passive>"
+          },
+          {
+            "name": "Twilight Blades Strike",
+            "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 2+ | DMG: 3\nSURGE: Armoured (D3)",
+            "phase": "Combat Phase",
+            "costS": 0,
+            "linkedTo": "-",
+            "costL": 0,
+            "activation": ""
+          },
+          {
+            "linkedTo": "-",
+            "costL": 0,
+            "name": "Twilight Blades Sweep",
+            "description": "RANGE: E | TARGET: Ground | RoA: 6 | HIT: 2+ | DMG: 1\nSURGE: Light (D3+1)",
+            "costS": 0,
+            "phase": "Combat Phase",
+            "activation": ""
+          }
+        ],
+        "size": "small",
+        "name": "Artanis",
+        "baseCost": 250,
+        "uid": 1772263608479.5479,
+        "activeUpgrades": [],
+        "stats": {
+          "speed": "7",
+          "size": "2",
+          "hp": "8",
+          "armor": "4+",
+          "evade": "5+",
+          "shield": "4"
+        },
+        "supply": 1
+      },
+      {
+        "uid": 1772263613280.7131,
+        "baseCost": 270,
+        "name": "Stalker",
+        "supply": 2,
+        "stats": {
+          "shield": "2",
+          "evade": "6+",
+          "speed": "4/8",
+          "size": "3",
+          "armor": "4+",
+          "hp": "7"
+        },
+        "activeUpgrades": [
+          1
+        ],
+        "id": "stalker",
+        "unitType": "Elite",
+        "models": 2,
+        "size": "large",
+        "availableUpgrades": [
+          {
+            "activation": "<Passive>",
+            "phase": "Any Phase",
+            "costS": 0,
+            "name": "Squadron",
+            "description": "This Unit’s Horizontal Coherency is 4\".",
+            "costL": 0,
+            "linkedTo": ""
+          },
+          {
+            "name": "Path of Shadows",
+            "description": "This Unit gains HIDDEN until it performs another action.",
+            "costS": 20,
+            "phase": "Any Phase",
+            "linkedTo": "",
+            "costL": 40,
+            "activation": "<Active>\n(1 Psionic Energy)"
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "phase": "Movement Phase",
+            "costS": 0,
+            "name": "Blink",
+            "description": "Resolve the PLACE (6) effect. Models placed by this effect cannot be set up within the Engagement Range of any Enemy Unit.",
+            "costL": 0,
+            "linkedTo": ""
+          },
+          {
+            "costL": 30,
+            "linkedTo": "",
+            "costS": 20,
+            "phase": "Assault Phase",
+            "name": "Fury of the Nerazim",
+            "description": "When this Unit attacks an Enemy Unit that has already been Activated during this Phase, its Particle Disruptors gain INSTANT for that attack.",
+            "activation": "<Passive>"
+          },
+          {
+            "activation": "",
+            "description": "RANGE: 12 | TARGET: All | RoA: 4 | HIT: 3+ | DMG: 2\nSURGE: Armoured (D3)",
+            "name": "Particle Disruptors",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "linkedTo": "-",
+            "costL": 0
+          },
+          {
+            "activation": "",
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "name": "Stomp",
+            "phase": "Combat Phase",
+            "costS": 0
+          }
+        ]
+      },
+      {
+        "supply": 1,
+        "stats": {
+          "size": "3",
+          "speed": "4/8",
+          "hp": "7",
+          "armor": "4+",
+          "shield": "2",
+          "evade": "6+"
+        },
+        "activeUpgrades": [],
+        "uid": 1772263614170.4944,
+        "baseCost": 150,
+        "name": "Stalker",
+        "size": "small",
+        "availableUpgrades": [
+          {
+            "activation": "<Passive>",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "This Unit’s Horizontal Coherency is 4\".",
+            "name": "Squadron",
+            "phase": "Any Phase",
+            "costS": 0
+          },
+          {
+            "linkedTo": "",
+            "costL": 40,
+            "name": "Path of Shadows",
+            "description": "This Unit gains HIDDEN until it performs another action.",
+            "phase": "Any Phase",
+            "costS": 20,
+            "activation": "<Active>\n(1 Psionic Energy)"
+          },
+          {
+            "linkedTo": "",
+            "costL": 0,
+            "description": "Resolve the PLACE (6) effect. Models placed by this effect cannot be set up within the Engagement Range of any Enemy Unit.",
+            "name": "Blink",
+            "costS": 0,
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Psionic Energy)"
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Assault Phase",
+            "costS": 20,
+            "description": "When this Unit attacks an Enemy Unit that has already been Activated during this Phase, its Particle Disruptors gain INSTANT for that attack.",
+            "name": "Fury of the Nerazim",
+            "costL": 30,
+            "linkedTo": ""
+          },
+          {
+            "activation": "",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "name": "Particle Disruptors",
+            "description": "RANGE: 12 | TARGET: All | RoA: 4 | HIT: 3+ | DMG: 2\nSURGE: Armoured (D3)",
+            "costL": 0,
+            "linkedTo": "-"
+          },
+          {
+            "activation": "",
+            "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "name": "Stomp",
+            "costS": 0,
+            "phase": "Combat Phase",
+            "linkedTo": "-",
+            "costL": 0
+          }
+        ],
+        "id": "stalker",
+        "unitType": "Elite",
+        "models": 1
+      },
+      {
+        "activeUpgrades": [],
+        "supply": 1,
+        "stats": {
+          "shield": "2",
+          "evade": "6+",
+          "armor": "4+",
+          "hp": "7",
+          "size": "3",
+          "speed": "4/8"
+        },
+        "name": "Stalker",
+        "uid": 1772263614888.0864,
+        "baseCost": 150,
+        "availableUpgrades": [
+          {
+            "description": "This Unit’s Horizontal Coherency is 4\".",
+            "name": "Squadron",
+            "costS": 0,
+            "phase": "Any Phase",
+            "linkedTo": "",
+            "costL": 0,
+            "activation": "<Passive>"
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "linkedTo": "",
+            "costL": 40,
+            "name": "Path of Shadows",
+            "description": "This Unit gains HIDDEN until it performs another action.",
+            "costS": 20,
+            "phase": "Any Phase"
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Blink",
+            "description": "Resolve the PLACE (6) effect. Models placed by this effect cannot be set up within the Engagement Range of any Enemy Unit.",
+            "costS": 0,
+            "phase": "Movement Phase"
+          },
+          {
+            "linkedTo": "",
+            "costL": 30,
+            "name": "Fury of the Nerazim",
+            "description": "When this Unit attacks an Enemy Unit that has already been Activated during this Phase, its Particle Disruptors gain INSTANT for that attack.",
+            "costS": 20,
+            "phase": "Assault Phase",
+            "activation": "<Passive>"
+          },
+          {
+            "costS": 0,
+            "phase": "Assault Phase",
+            "name": "Particle Disruptors",
+            "description": "RANGE: 12 | TARGET: All | RoA: 4 | HIT: 3+ | DMG: 2\nSURGE: Armoured (D3)",
+            "costL": 0,
+            "linkedTo": "-",
+            "activation": ""
+          },
+          {
+            "activation": "",
+            "costS": 0,
+            "phase": "Combat Phase",
+            "name": "Stomp",
+            "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
+            "costL": 0,
+            "linkedTo": "-"
+          }
+        ],
+        "size": "small",
+        "models": 1,
+        "id": "stalker",
+        "unitType": "Elite"
+      },
+      {
+        "name": "Stalker",
+        "baseCost": 150,
+        "uid": 1772263618678.9712,
+        "activeUpgrades": [],
+        "stats": {
+          "shield": "2",
+          "evade": "6+",
+          "armor": "4+",
+          "hp": "7",
+          "speed": "4/8",
+          "size": "3"
+        },
+        "supply": 1,
+        "models": 1,
+        "unitType": "Elite",
+        "id": "stalker",
+        "availableUpgrades": [
+          {
+            "activation": "<Passive>",
+            "description": "This Unit’s Horizontal Coherency is 4\".",
+            "name": "Squadron",
+            "costS": 0,
+            "phase": "Any Phase",
+            "linkedTo": "",
+            "costL": 0
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "costS": 20,
+            "phase": "Any Phase",
+            "name": "Path of Shadows",
+            "description": "This Unit gains HIDDEN until it performs another action.",
+            "costL": 40,
+            "linkedTo": ""
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "costL": 0,
+            "linkedTo": "",
+            "costS": 0,
+            "phase": "Movement Phase",
+            "description": "Resolve the PLACE (6) effect. Models placed by this effect cannot be set up within the Engagement Range of any Enemy Unit.",
+            "name": "Blink"
+          },
+          {
+            "name": "Fury of the Nerazim",
+            "description": "When this Unit attacks an Enemy Unit that has already been Activated during this Phase, its Particle Disruptors gain INSTANT for that attack.",
+            "costS": 20,
+            "phase": "Assault Phase",
+            "linkedTo": "",
+            "costL": 30,
+            "activation": "<Passive>"
+          },
+          {
+            "activation": "",
+            "costL": 0,
+            "linkedTo": "-",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "description": "RANGE: 12 | TARGET: All | RoA: 4 | HIT: 3+ | DMG: 2\nSURGE: Armoured (D3)",
+            "name": "Particle Disruptors"
+          },
+          {
+            "activation": "",
+            "costL": 0,
+            "linkedTo": "-",
+            "costS": 0,
+            "phase": "Combat Phase",
+            "name": "Stomp",
+            "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -"
+          }
+        ],
+        "size": "small"
+      },
+      {
+        "models": 3,
+        "unitType": "Core",
+        "id": "zealot",
+        "availableUpgrades": [
+          {
+            "phase": "Any Phase",
+            "costS": 10,
+            "name": "My Life for Aiur",
+            "description": "When this Unit resolves IMPACT, each eligible model generates 1 additional IMPACT die.",
+            "costL": 10,
+            "linkedTo": "",
+            "activation": "<Passive>"
+          },
+          {
+            "linkedTo": "",
+            "costL": 20,
+            "description": "This Unit performs a 2\" Move action. This does not count towards its action limit.",
+            "name": "Leg Enhancements",
+            "costS": 20,
+            "phase": "Movement Phase",
+            "activation": "<Active>\n(1 Psionic Energy)"
+          },
+          {
+            "costS": 0,
+            "phase": "Assault Phase",
+            "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and select the highest result to add to the Unit’s Speed characteristic.",
+            "name": "Charge",
+            "costL": 0,
+            "linkedTo": "",
+            "activation": "<Active>\n(1 Psionic Energy)"
+          },
+          {
+            "costL": 0,
+            "linkedTo": "",
+            "costS": 0,
+            "phase": "Assault Phase",
+            "name": "Devastating Charge",
+            "description": "Immediately after this Unit completes a successful Charge resolve the IMPACT (3) 4+ effect.",
+            "activation": "<Passive>"
+          },
+          {
+            "activation": "<Reaction>\n(0 Psionic Energy)",
+            "costL": 10,
+            "linkedTo": "",
+            "phase": "Assault Phase",
+            "costS": 10,
+            "name": "Zealous Round",
+            "description": "When this Unit is not Activated and receives Damage, the controlling player may count this Unit as Activated in this Phase (flip its Activation Marker) to reduce the Total Damage by 2."
+          },
+          {
+            "costL": 0,
+            "linkedTo": "-",
+            "costS": 0,
+            "phase": "Combat Phase",
+            "name": "Psi Blades",
+            "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
+            "activation": ""
+          },
+          {
+            "phase": "Combat Phase",
+            "costS": 20,
+            "name": "We Stand as One",
+            "description": "When this Unit makes a Close Combat Attack, if the target is Engaged with at least 1 other Friendly Unit, this Unit Close Combat Weapon gains PRECISION (2).",
+            "costL": 20,
+            "linkedTo": "",
+            "activation": "<Passive>"
+          }
+        ],
+        "size": "small",
+        "name": "Zealot",
+        "uid": 1772263636095.6907,
+        "baseCost": 170,
+        "activeUpgrades": [
+          0,
+          4
+        ],
+        "supply": 2,
+        "stats": {
+          "hp": "4",
+          "armor": "5+",
+          "speed": "4/7",
+          "size": "2",
+          "shield": "3",
+          "evade": "5+"
+        }
+      },
+      {
+        "id": "zealot",
+        "unitType": "Core",
+        "models": 3,
+        "size": "small",
+        "availableUpgrades": [
+          {
+            "activation": "<Passive>",
+            "description": "When this Unit resolves IMPACT, each eligible model generates 1 additional IMPACT die.",
+            "name": "My Life for Aiur",
+            "phase": "Any Phase",
+            "costS": 10,
+            "linkedTo": "",
+            "costL": 10
+          },
+          {
+            "costL": 20,
+            "linkedTo": "",
+            "costS": 20,
+            "phase": "Movement Phase",
+            "name": "Leg Enhancements",
+            "description": "This Unit performs a 2\" Move action. This does not count towards its action limit.",
+            "activation": "<Active>\n(1 Psionic Energy)"
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "costL": 0,
+            "linkedTo": "",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and select the highest result to add to the Unit’s Speed characteristic.",
+            "name": "Charge"
+          },
+          {
+            "activation": "<Passive>",
+            "linkedTo": "",
+            "costL": 0,
+            "name": "Devastating Charge",
+            "description": "Immediately after this Unit completes a successful Charge resolve the IMPACT (3) 4+ effect.",
+            "costS": 0,
+            "phase": "Assault Phase"
+          },
+          {
+            "activation": "<Reaction>\n(0 Psionic Energy)",
+            "costL": 10,
+            "linkedTo": "",
+            "costS": 10,
+            "phase": "Assault Phase",
+            "name": "Zealous Round",
+            "description": "When this Unit is not Activated and receives Damage, the controlling player may count this Unit as Activated in this Phase (flip its Activation Marker) to reduce the Total Damage by 2."
+          },
+          {
+            "linkedTo": "-",
+            "costL": 0,
+            "name": "Psi Blades",
+            "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
+            "phase": "Combat Phase",
+            "costS": 0,
+            "activation": ""
+          },
+          {
+            "phase": "Combat Phase",
+            "costS": 20,
+            "description": "When this Unit makes a Close Combat Attack, if the target is Engaged with at least 1 other Friendly Unit, this Unit Close Combat Weapon gains PRECISION (2).",
+            "name": "We Stand as One",
+            "costL": 20,
+            "linkedTo": "",
+            "activation": "<Passive>"
+          }
+        ],
+        "baseCost": 170,
+        "uid": 1772263638464.3325,
+        "name": "Zealot",
+        "stats": {
+          "armor": "5+",
+          "hp": "4",
+          "size": "2",
+          "speed": "4/7",
+          "shield": "3",
+          "evade": "5+"
+        },
+        "supply": 2,
+        "activeUpgrades": [
+          0,
+          4
+        ]
+      },
+      {
+        "name": "Zealot",
+        "baseCost": 170,
+        "uid": 1772263650011.374,
+        "activeUpgrades": [
+          0,
+          4,
+          1
+        ],
+        "stats": {
+          "shield": "3",
+          "evade": "5+",
+          "size": "2",
+          "speed": "4/7",
+          "hp": "4",
+          "armor": "5+"
+        },
+        "supply": 2,
+        "models": 3,
+        "id": "zealot",
+        "unitType": "Core",
+        "availableUpgrades": [
+          {
+            "phase": "Any Phase",
+            "costS": 10,
+            "description": "When this Unit resolves IMPACT, each eligible model generates 1 additional IMPACT die.",
+            "name": "My Life for Aiur",
+            "costL": 10,
+            "linkedTo": "",
+            "activation": "<Passive>"
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "phase": "Movement Phase",
+            "costS": 20,
+            "description": "This Unit performs a 2\" Move action. This does not count towards its action limit.",
+            "name": "Leg Enhancements",
+            "costL": 20,
+            "linkedTo": ""
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and select the highest result to add to the Unit’s Speed characteristic.",
+            "name": "Charge",
+            "costS": 0,
+            "phase": "Assault Phase"
+          },
+          {
+            "description": "Immediately after this Unit completes a successful Charge resolve the IMPACT (3) 4+ effect.",
+            "name": "Devastating Charge",
+            "costS": 0,
+            "phase": "Assault Phase",
+            "linkedTo": "",
+            "costL": 0,
+            "activation": "<Passive>"
+          },
+          {
+            "linkedTo": "",
+            "costL": 10,
+            "description": "When this Unit is not Activated and receives Damage, the controlling player may count this Unit as Activated in this Phase (flip its Activation Marker) to reduce the Total Damage by 2.",
+            "name": "Zealous Round",
+            "phase": "Assault Phase",
+            "costS": 10,
+            "activation": "<Reaction>\n(0 Psionic Energy)"
+          },
+          {
+            "activation": "",
+            "name": "Psi Blades",
+            "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
+            "phase": "Combat Phase",
+            "costS": 0,
+            "linkedTo": "-",
+            "costL": 0
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Combat Phase",
+            "costS": 20,
+            "description": "When this Unit makes a Close Combat Attack, if the target is Engaged with at least 1 other Friendly Unit, this Unit Close Combat Weapon gains PRECISION (2).",
+            "name": "We Stand as One",
+            "costL": 20,
+            "linkedTo": ""
+          }
+        ],
+        "size": "small"
+      },
+      {
+        "models": 4,
+        "id": "adept",
+        "unitType": "Core",
+        "availableUpgrades": [
+          {
+            "costL": 0,
+            "linkedTo": "",
+            "phase": "Any Phase",
+            "costS": 0,
+            "name": "Psionic Presence",
+            "description": "All Weapons of Friendly Units targeting an Enemy Unit Within 4\" of this Unit’s Shade token gain PRECISION (1).",
+            "activation": ""
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "phase": "Movement Phase",
+            "costS": 0,
+            "name": "Psionic Transfer",
+            "description": "Put a Shade token Wholly Within 12\" of any model in this Unit. At the End of the Round, the controlling player may place all models of this Unit in Coherency, treating Shade token as the Leading Model. The Shade token has DISPLACEMENT.",
+            "costL": 0,
+            "linkedTo": ""
+          },
+          {
+            "costL": 0,
+            "linkedTo": "-",
+            "costS": 0,
+            "phase": "Assault Phase",
+            "name": "Glaive Cannon",
+            "description": "RANGE: 8 | TARGET: All | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light (D3+1)\n\nANTI-EVADE (1)",
+            "activation": ""
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "name": "Resonating Glaves",
+            "description": "This Unit's Glaive Cannon gains BUFF RoA (1).",
+            "costS": 20,
+            "phase": "Assault Phase",
+            "linkedTo": "",
+            "costL": 20
+          },
+          {
+            "phase": "Assault Phase",
+            "costS": 10,
+            "name": "Guidance",
+            "description": "This Unit's Glaive Cannon Ranged weapon gains ANTI-EVADE (2).",
+            "costL": 10,
+            "linkedTo": "",
+            "activation": "<Passive>"
+          },
+          {
+            "costL": 20,
+            "linkedTo": "Strike",
+            "costS": 20,
+            "phase": "Combat Phase",
+            "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)\n\nPIERCE Light (2)",
+            "name": "Glaive Strike",
+            "activation": ""
+          },
+          {
+            "phase": "Combat Phase",
+            "costS": 0,
+            "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: -",
+            "name": "Strike",
+            "costL": 0,
+            "linkedTo": "-",
+            "activation": ""
+          }
+        ],
+        "size": "small",
+        "name": "Adept",
+        "baseCost": 150,
+        "uid": 1772263685092.1335,
+        "activeUpgrades": [
+          3,
+          5,
+          4
+        ],
+        "stats": {
+          "shield": "2",
+          "evade": "5+",
+          "hp": "3",
+          "armor": "5+",
+          "size": "2",
+          "speed": "5/8"
+        },
+        "supply": 1
+      },
+      {
+        "models": 4,
+        "unitType": "Core",
+        "id": "adept",
+        "availableUpgrades": [
+          {
+            "activation": "",
+            "linkedTo": "",
+            "costL": 0,
+            "description": "All Weapons of Friendly Units targeting an Enemy Unit Within 4\" of this Unit’s Shade token gain PRECISION (1).",
+            "name": "Psionic Presence",
+            "phase": "Any Phase",
+            "costS": 0
+          },
+          {
+            "activation": "<Active>\n(1 Psionic Energy)",
+            "name": "Psionic Transfer",
+            "description": "Put a Shade token Wholly Within 12\" of any model in this Unit. At the End of the Round, the controlling player may place all models of this Unit in Coherency, treating Shade token as the Leading Model. The Shade token has DISPLACEMENT.",
+            "costS": 0,
+            "phase": "Movement Phase",
+            "linkedTo": "",
+            "costL": 0
+          },
+          {
+            "activation": "",
+            "name": "Glaive Cannon",
+            "description": "RANGE: 8 | TARGET: All | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light (D3+1)\n\nANTI-EVADE (1)",
+            "phase": "Assault Phase",
+            "costS": 0,
+            "linkedTo": "-",
+            "costL": 0
+          },
+          {
+            "description": "This Unit's Glaive Cannon gains BUFF RoA (1).",
+            "name": "Resonating Glaves",
+            "phase": "Assault Phase",
+            "costS": 20,
+            "linkedTo": "",
+            "costL": 20,
+            "activation": "<Active>\n(1 Psionic Energy)"
+          },
+          {
+            "activation": "<Passive>",
+            "phase": "Assault Phase",
+            "costS": 10,
+            "description": "This Unit's Glaive Cannon Ranged weapon gains ANTI-EVADE (2).",
+            "name": "Guidance",
+            "costL": 10,
+            "linkedTo": ""
+          },
+          {
+            "name": "Glaive Strike",
+            "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)\n\nPIERCE Light (2)",
+            "phase": "Combat Phase",
+            "costS": 20,
+            "linkedTo": "Strike",
+            "costL": 20,
+            "activation": ""
+          },
+          {
+            "linkedTo": "-",
+            "costL": 0,
+            "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: -",
+            "name": "Strike",
+            "phase": "Combat Phase",
+            "costS": 0,
+            "activation": ""
+          }
+        ],
+        "size": "small",
+        "name": "Adept",
+        "baseCost": 150,
+        "uid": 1772263686018.8608,
+        "activeUpgrades": [
+          3,
+          5,
+          4
+        ],
+        "stats": {
+          "shield": "2",
+          "evade": "5+",
+          "hp": "3",
+          "armor": "5+",
+          "speed": "5/8",
+          "size": "2"
+        },
+        "supply": 1
+      }
+    ],
+    "factionCardId": "khalai",
+    "tacticalCardIds": [
+      "warp_prism",
+      "twilight_council",
+      "forge",
+      "gateway",
+      "nexus_overcharged",
+      "gateway"
+    ],
+    "missionIds": [
+      "mission_supply_drop",
+      "mission_hold_position"
+    ],
+    "gasUsed": 200,
+    "resourceTotal": 7,
+    "slotsAvailable": {
+      "Air": 0,
+      "Support": 1,
+      "Hero": 1,
+      "Elite": 5,
+      "Core": 8
+    },
+    "mineralsLimit": 2000,
+    "deploymentIds": [
+      "Nwd5bN4pLjjol85hdyBU",
+      "BRp1aN4Ebvu3Wuc8afJj"
+    ],
+    "faction": "Protoss",
+    "supplyUsed": 14
+  }
+}

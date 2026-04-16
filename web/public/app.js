@@ -2153,7 +2153,12 @@ function formatSlotBreakdown(slots = {}) {
   const extras = Object.keys(slots).filter(type => !ordered.includes(type));
   const keys = [...ordered, ...extras];
   return keys
-    .filter(type => slots[type] && Number(slots[type]?.avail ?? 0) > 0)
+    .filter(type => {
+      if (!slots[type]) return false;
+      const used = Number(slots[type]?.used ?? 0);
+      const avail = Number(slots[type]?.avail ?? 0);
+      return used > 0 || avail > 0;
+    })
     .map(type => {
       const short = TYPE_ABBR[type] ?? String(type).charAt(0).toUpperCase();
       const used = Number(slots[type]?.used ?? 0);
