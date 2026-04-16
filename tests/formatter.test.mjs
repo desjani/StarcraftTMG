@@ -15,7 +15,9 @@ import assert from 'assert/strict';
 import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadGameData } from '../lib/gameData.js';
 import { parseRoster } from '../lib/rosterParser.js';
+import { cleanSeed } from '../lib/seedCleaner.js';
 import { formatCompact, formatJson } from '../lib/formatter.js';
 
 const __dirname  = dirname(fileURLToPath(import.meta.url));
@@ -37,7 +39,8 @@ const CASES = [
 async function loadRoster(seed) {
   const path = join(FIXTURE_DIR, `${seed}.json`);
   const flat  = JSON.parse(await readFile(path, 'utf8'));
-  return parseRoster(flat);
+  const gameData = await loadGameData();
+  return parseRoster(cleanSeed(flat), { gameData });
 }
 
 export async function run({ test }) {

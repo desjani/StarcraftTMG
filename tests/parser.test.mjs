@@ -18,7 +18,9 @@ import assert from 'assert/strict';
 import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadGameData } from '../lib/gameData.js';
 import { parseRoster } from '../lib/rosterParser.js';
+import { cleanSeed } from '../lib/seedCleaner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_DIR = join(__dirname, 'fixtures');
@@ -76,6 +78,7 @@ function typeIndex(type) {
 
 export async function run({ test }) {
   const seeds = Object.keys(KNOWN);
+  const gameData = await loadGameData();
 
   // Load all fixtures up front
   const fixtures = {};
@@ -86,7 +89,7 @@ export async function run({ test }) {
   // Parse each fixture
   const rosters = {};
   for (const seed of seeds) {
-    rosters[seed] = parseRoster(fixtures[seed]);
+    rosters[seed] = parseRoster(cleanSeed(fixtures[seed]), { gameData });
   }
 
   // ── Identity ──────────────────────────────────────────────────────────────
@@ -351,15 +354,14 @@ export async function run({ test }) {
   test('[parser] tacticalCards option preserves rich tactical card metadata', () => {
     const synthetic = {
       id: 'SYNTH',
-      state: {
-        faction: 'Terran',
-        factionCardId: 'terran_armed_forces',
-        tacticalCardIds: ['orbital_command'],
-        roster: [],
-      },
+      faction: 'Terran',
+      factionCardId: 'terran_armed_forces',
+      tacticalCards: ['orbital_command'],
+      units: [],
     };
 
     const parsed = parseRoster(synthetic, {
+      gameData,
       tacticalCards: [{
         id: 'orbital_command',
         name: 'Orbital Command',
@@ -456,26 +458,22 @@ export async function run({ test }) {
   test('[parser] factionCardId raynor_s_raiders formats as Raynor\'s Raiders', () => {
     const synthetic = {
       id: 'SYNTH',
-      state: {
-        faction: 'Terran',
-        factionCardId: 'raynor_s_raiders',
-        roster: [],
-      },
+      faction: 'Terran',
+      factionCardId: 'raynor_s_raiders',
+      units: [],
     };
-    const parsed = parseRoster(synthetic);
+    const parsed = parseRoster(synthetic, { gameData });
     assert.equal(parsed.factionCard, "Raynor's Raiders");
   });
 
   test('[parser] factionCardId kerrigan_s_swarm formats as Kerrigan\'s Swarm', () => {
     const synthetic = {
       id: 'SYNTH',
-      state: {
-        faction: 'Zerg',
-        factionCardId: 'kerrigan_s_swarm',
-        roster: [],
-      },
+      faction: 'Zerg',
+      factionCardId: 'kerrigan_s_swarm',
+      units: [],
     };
-    const parsed = parseRoster(synthetic);
+    const parsed = parseRoster(synthetic, { gameData });
     assert.equal(parsed.factionCard, "Kerrigan's Swarm");
   });
 }

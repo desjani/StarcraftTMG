@@ -23,9 +23,10 @@ import express from 'express';
 import path    from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
-import { fetchRoster, fetchTacticalCards }   from '../lib/firestoreClient.js';
+import { fetchRoster }   from '../lib/firestoreClient.js';
+import { loadGameData } from '../lib/gameData.js';
 import { parseRoster }   from '../lib/rosterParser.js';
-import { formatCompact, formatJson } from '../lib/formatter.js';
+import { formatCompact } from '../lib/formatter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app       = express();
@@ -449,14 +450,17 @@ async function getBrowser() {
 // ── Static assets ─────────────────────────────────────────────────────────────
 // Expose lib/ so the browser can do: import { fetchRoster } from '/lib/firestoreClient.js'
 app.use('/lib',    express.static(path.join(__dirname, '../lib')));
+app.use('/data',   express.static(path.join(__dirname, '../data')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── API: parsed roster JSON ───────────────────────────────────────────────────
 app.get('/api/roster/:seed', async (req, res) => {
   try {
-    const flat   = await fetchRoster(req.params.seed);
-    const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
-    const roster = parseRoster(flat, { tacticalCards });
+    const [flat, gameData] = await Promise.all([
+      fetchRoster(req.params.seed),
+      loadGameData(),
+    ]);
+    const roster = parseRoster(flat, { gameData });
     res.json({ ok: true, roster });
   } catch (err) {
     const status = err.status === 404 ? 404 : 500;
@@ -477,9 +481,11 @@ app.get('/api/format/:seed', async (req, res) => {
   const showSlotBreakdown = req.query.slotBreakdown === '1' || req.query.slotBreakdown === 'true';
   const charLimit = parseInt(req.query.limit ?? '2000', 10);
   try {
-    const flat   = await fetchRoster(req.params.seed);
-    const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
-    const roster = parseRoster(flat, { tacticalCards });
+    const [flat, gameData] = await Promise.all([
+      fetchRoster(req.params.seed),
+      loadGameData(),
+    ]);
+    const roster = parseRoster(flat, { gameData });
     const output = formatCompact(roster, {
       plain,
       showStats,
@@ -502,10 +508,8 @@ app.get('/api/format/:seed', async (req, res) => {
 // ── API: roster JSON (formatted for readability) ──────────────────────────────
 app.get('/api/json/:seed', async (req, res) => {
   try {
-    const flat   = await fetchRoster(req.params.seed);
-    const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
-    const roster = parseRoster(flat, { tacticalCards });
-    res.type('text/plain').send(formatJson(roster));
+    const flat = await fetchRoster(req.params.seed);
+    res.type('text/plain').send(JSON.stringify(flat, null, 2));
   } catch (err) {
     const status = err.status === 404 ? 404 : 500;
     res.status(status).type('text/plain').send(`Error: ${err.message}`);

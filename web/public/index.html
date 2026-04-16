@@ -921,32 +921,25 @@
     }
     .aid-unit-header:hover { background: rgba(var(--protoss-rgb), .05); }
     .aid-unit-title-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr);
       align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      width: 100%;
+      column-gap: 8px;
     }
-    .aid-collapsed-statline {
-      display: none;
+    .aid-header-statline {
+      display: inline-flex;
       align-items: center;
+      justify-content: flex-end;
       flex-wrap: wrap;
       gap: 4px;
-      width: 100%;
-    }
-    .aid-unit.is-collapsed .aid-collapsed-statline {
-      display: inline-flex;
-    }
-    .aid-unit.is-collapsed .aid-unit-title-row {
-      display: grid;
-      grid-template-columns: var(--aid-collapsed-name-width, auto) minmax(0, 1fr);
-      align-items: center;
-      column-gap: 6px;
-      width: 100%;
+      min-width: 0;
+      justify-self: end;
     }
     .aid-unit.is-collapsed .aid-unit-title-row .unit-name {
       white-space: nowrap;
     }
-    .aid-collapsed-statline .stat-chip {
+    .aid-header-statline .stat-chip {
       padding: 1px 7px;
       font-size: .66rem;
     }
@@ -990,22 +983,54 @@
       padding-bottom: 0;
       pointer-events: none;
     }
-    .aid-stats-row {
+    .aid-meta-row {
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-top: 10px;
     }
-    .aid-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0; }
-    .aid-stats-right {
-      margin-left: auto;
+    .aid-meta-left,
+    .aid-meta-right {
+      display: flex;
+      align-items: flex-start;
+      min-width: 0;
+    }
+    .aid-meta-right { margin-left: auto; justify-content: flex-end; }
+    .aid-upgrade-bubbles { margin-left: auto; justify-content: flex-end; }
+    .aid-tags-inline {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 6px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .aid-tags-label {
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .aid-tags-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-start;
+    }
+    .aid-tag-pill {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(125, 180, 255, .22);
+      background: rgba(19, 31, 50, .6);
+      color: var(--text);
+      font-size: .7rem;
+      line-height: 1.2;
+      white-space: nowrap;
     }
-    .aid-upgrade-bubbles { margin-left: auto; justify-content: flex-end; }
     .aid-section-title {
       margin: 10px 0 6px;
       color: var(--muted);
@@ -1055,8 +1080,7 @@
       white-space: nowrap;
     }
     .aid-weapons-table tbody tr:last-child td { border-bottom: none; }
-    .aid-weapons-table tbody tr.is-active { color: var(--text); }
-    .aid-weapons-table tbody tr.is-inactive { color: var(--text); }
+    .aid-weapons-table tbody tr.is-modified { color: var(--text); }
     .aid-weapons-table .weapon-name {
       color: var(--text);
       font-weight: 600;
@@ -1091,12 +1115,12 @@
       font-weight: 700;
       background: rgba(19, 31, 50, .72);
     }
-    .aid-phase-tag.phase-any { color: var(--muted); }
-    .aid-phase-tag.phase-movement { color: var(--accent); }
-    .aid-phase-tag.phase-assault { color: var(--red); }
-    .aid-phase-tag.phase-combat { color: var(--yellow); }
-    .aid-phase-tag.phase-scoring { color: var(--green); }
-    .aid-phase-tag.phase-cleanup { color: var(--protoss); }
+    .aid-phase-tag.phase-any { color: var(--text); background: rgba(63, 79, 99, .85); border-color: rgba(143, 155, 168, .55); }
+    .aid-phase-tag.phase-movement { color: #f5fbff; background: rgba(31, 95, 158, .92); border-color: rgba(125, 180, 255, .62); }
+    .aid-phase-tag.phase-assault { color: #fff7f8; background: rgba(163, 56, 70, .92); border-color: rgba(232, 143, 156, .58); }
+    .aid-phase-tag.phase-combat { color: #1a1407; background: rgba(212, 169, 79, .95); border-color: rgba(255, 224, 156, .62); }
+    .aid-phase-tag.phase-scoring { color: #f4fff8; background: rgba(26, 122, 64, .92); border-color: rgba(128, 217, 163, .56); }
+    .aid-phase-tag.phase-cleanup { color: #faf7ff; background: rgba(122, 88, 199, .92); border-color: rgba(198, 173, 255, .6); }
     .aid-upgrades {
       display: flex;
       flex-direction: column;
@@ -1137,8 +1161,11 @@
       font-family: var(--mono);
       color: var(--muted);
     }
-    .aid-inline-activation { color: var(--protoss); }
-    .aid-inline-resource { color: var(--text); }
+    .aid-inline-activation.activation-active { color: #fffbea; background: rgba(166, 139, 67, .82); border-color: rgba(214, 191, 120, .5); }
+    .aid-inline-activation.activation-passive { color: #edf1f6; background: rgba(93, 103, 118, .78); border-color: rgba(146, 156, 170, .48); }
+    .aid-inline-activation.activation-reaction { color: #f7f2ff; background: rgba(100, 83, 143, .82); border-color: rgba(160, 144, 198, .52); }
+    .aid-inline-activation.activation-generic { color: #f1eef8; background: rgba(88, 83, 112, .8); border-color: rgba(150, 144, 173, .46); }
+    .aid-inline-resource { color: var(--text); background: rgba(32, 48, 74, .88); border-color: rgba(125, 180, 255, .4); }
     .aid-upg-desc {
       margin-top: 1px;
       color: var(--text);
@@ -1232,12 +1259,12 @@
       color: var(--text);
       background: rgba(19, 31, 50, .75);
     }
-    .aid-tact-phase-chip.phase-any { color: var(--muted); }
-    .aid-tact-phase-chip.phase-movement { color: var(--accent); }
-    .aid-tact-phase-chip.phase-assault { color: var(--red); }
-    .aid-tact-phase-chip.phase-combat { color: var(--yellow); }
-    .aid-tact-phase-chip.phase-scoring { color: var(--green); }
-    .aid-tact-phase-chip.phase-cleanup { color: var(--protoss); }
+    .aid-tact-phase-chip.phase-any { color: var(--text); background: rgba(63, 79, 99, .85); border-color: rgba(143, 155, 168, .55); }
+    .aid-tact-phase-chip.phase-movement { color: #f5fbff; background: rgba(31, 95, 158, .92); border-color: rgba(125, 180, 255, .62); }
+    .aid-tact-phase-chip.phase-assault { color: #fff7f8; background: rgba(163, 56, 70, .92); border-color: rgba(232, 143, 156, .58); }
+    .aid-tact-phase-chip.phase-combat { color: #1a1407; background: rgba(212, 169, 79, .95); border-color: rgba(255, 224, 156, .62); }
+    .aid-tact-phase-chip.phase-scoring { color: #f4fff8; background: rgba(26, 122, 64, .92); border-color: rgba(128, 217, 163, .56); }
+    .aid-tact-phase-chip.phase-cleanup { color: #faf7ff; background: rgba(122, 88, 199, .92); border-color: rgba(198, 173, 255, .6); }
     .aid-tact-slot-chip {
       gap: 0;
     }
@@ -2360,15 +2387,31 @@
           <div class="opt-row">
             <div class="opt-group">
               <span class="opt-group-title">Show/Hide</span>
-              <label class="opt-label"><input type="checkbox" id="aid-stats" checked> Stats</label>
-              <label class="opt-label"><input type="checkbox" id="aid-all-upgrades" checked> All upgrades</label>
-              <label class="opt-label"><input type="checkbox" id="aid-activation" checked> Activation info</label>
-              <label class="opt-label"><input type="checkbox" id="aid-tactical" checked> Tactical cards</label>
+              <label class="opt-label"><input type="checkbox" id="aid-show-header" checked> Header</label>
+              <label class="opt-label"><input type="checkbox" id="aid-show-units" checked> Units</label>
+              <label class="opt-label"><input type="checkbox" id="aid-show-tactical" checked> Tac Cards</label>
             </div>
             <div class="opt-group">
-              <span class="opt-group-title">Ability View</span>
-              <label class="opt-label"><input type="radio" name="aid-mode" id="aid-mode-all" checked> Show all abilities</label>
-              <label class="opt-label"><input type="radio" name="aid-mode" id="aid-mode-merged"> Merged buffs</label>
+              <span class="opt-group-title">Units</span>
+              <label class="opt-label"><input type="checkbox" id="aid-stats" checked> Stats</label>
+              <label class="opt-label"><input type="checkbox" id="aid-unit-weapons" checked> Weapons</label>
+              <label class="opt-label"><input type="checkbox" id="aid-unit-abilities" checked> Abilities</label>
+              <label class="opt-label"><input type="checkbox" id="aid-all-upgrades" checked> All upgrades</label>
+              <label class="opt-label"><input type="checkbox" id="aid-unit-paid-upgrades" checked> Paid upgrades</label>
+              <label class="opt-label"><input type="checkbox" id="aid-unit-tags" checked> Tags</label>
+              <label class="opt-label"><input type="checkbox" id="aid-activation" checked> Activation info</label>
+              <label class="opt-label"><input type="checkbox" id="aid-mode-merged"> Merged buffs</label>
+            </div>
+            <div class="opt-group">
+              <span class="opt-group-title">Tac Cards</span>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-art" checked> Art</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-meta" checked> Meta chips</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-gas" checked> Gas cost</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-tags" checked> Tags</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-abilities" checked> Abilities</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-phase" checked> Phase pills</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-activation" checked> Time pills</label>
+              <label class="opt-label"><input type="checkbox" id="aid-tact-descriptions" checked> Descriptions</label>
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ import {
   resolveLinkedWeaponReplacements, isWeaponProfile, parseWeaponProfile,
   renderAidWeaponsTable, formatAidRichText, formatSlotBreakdown,
   hasStatValue, groupAbilitiesByPhase, getPhaseTag, parseAidActivation,
+  getAidActivationStateClass,
   isNaturalAbility, formatTacticalSupplyTypes, renderAidTacticalCards,
   detectUnconditionalPassiveBuff, splitTraitTokens, mergeWeaponTraits,
   applyNumericDelta, extractBuffEffectTerms, normalizePhaseLabel,
@@ -24,15 +25,29 @@ import { getPlayTrackerCurrentHealth, renderPlayHealthReadout } from './play-sta
 
 export function renderPlayerAid(roster, opts = {}) {
   const {
-    showStats      = true,
-    allUpgrades    = true,
-    showActivation = true,
-    showTactical   = true,
-    mergedBuffs    = false,
-    dedupeUnits    = true,
-    playTrackers   = null,
-    unitKeyPrefix  = '',
-    rosterLabel    = '',
+    showHeader = true,
+    showUnits = true,
+    showStats = true,
+    showUnitWeapons = true,
+    showUnitAbilities = true,
+    allUpgrades = true,
+    showUnitPaidUpgrades = true,
+    showUnitTags = true,
+    showUnitActivation = true,
+    showTactical = true,
+    showTacticalArt = true,
+    showTacticalMeta = true,
+    showTacticalGas = true,
+    showTacticalTags = true,
+    showTacticalAbilities = true,
+    showTacticalPhase = true,
+    showTacticalActivation = true,
+    showTacticalDescriptions = true,
+    mergedBuffs = false,
+    dedupeUnits = true,
+    playTrackers = null,
+    unitKeyPrefix = '',
+    rosterLabel = '',
     collapsedUnits = new Set(),
     getTrackerDisabledAttrs = () => '',
   } = opts;
@@ -65,10 +80,12 @@ export function renderPlayerAid(roster, opts = {}) {
     const abbr   = { Hero: 'H', Core: 'C', Elite: 'E', Support: 'S', Air: 'A', Other: 'O' }[u.type] ?? '?';
     const models = u.models > 1 ? ` ×${u.models}` : '';
 
-    const aidUpgradePills = sortUpgradesForDisplay(u.activeUpgrades ?? [])
-      .filter(upg => Number(upg?.cost ?? 0) > 0)
-      .map(upg => `<span class="upg-pill">+ ${escapeHtml(upg.name)} <strong>${upg.cost}m</strong></span>`)
-      .join('');
+    const aidUpgradePills = showUnitPaidUpgrades
+      ? sortUpgradesForDisplay(u.activeUpgrades ?? [])
+        .filter(upg => Number(upg?.cost ?? 0) > 0)
+        .map(upg => `<span class="upg-pill">+ ${escapeHtml(upg.name)} <strong>${upg.cost}m</strong></span>`)
+        .join('')
+      : '';
 
     const upgradeList    = sortUpgradesForDisplay(u.allUpgrades ?? []);
     const weaponProfiles = resolveLinkedWeaponReplacements(
@@ -81,7 +98,7 @@ export function renderPlayerAid(roster, opts = {}) {
 
     const visibleUpgrades = upgradeList
       .filter(ug => !isWeaponProfile(ug))
-      .filter(ug => isNaturalAbility(ug) || ug.active);
+      .filter(ug => allUpgrades || isNaturalAbility(ug) || ug.active);
 
     // ── Buff merging ──────────────────────────────────────────────────────────
     const mergedBuffEntries = [];
@@ -157,7 +174,14 @@ export function renderPlayerAid(roster, opts = {}) {
     const buffedWeaponProfiles = weaponProfiles.map(weapon => {
       const key     = String(weapon.name || '').toLowerCase();
       const applied = weaponBuffMap.get(key);
-      if (!applied) return { ...weapon, nameHighlighted: !!weapon.active };
+      const isPaidWeaponUpgrade = !!weapon.active && !isNaturalAbility(weapon);
+      if (!applied) {
+        return {
+          ...weapon,
+          nameHighlighted: isPaidWeaponUpgrade,
+          isModified: isPaidWeaponUpgrade,
+        };
+      }
 
       const fieldHighlights = {};
       const applyField = (field, currentValue) => {
@@ -187,7 +211,7 @@ export function renderPlayerAid(roster, opts = {}) {
       const addedTraits  = [...new Set((applied.traits ?? []).map(x => String(x).trim()).filter(Boolean))];
       const mergedTraitsResult = mergeWeaponTraits(baseTraits, addedTraits);
       const hasChanges = Object.values(fieldHighlights).some(Boolean) || mergedTraitsResult.highlights.length;
-      if (!hasChanges) return weapon;
+      if (!hasChanges && !isPaidWeaponUpgrade) return weapon;
 
       return {
         ...weapon,
@@ -199,7 +223,8 @@ export function renderPlayerAid(roster, opts = {}) {
         traits: mergedTraitsResult.merged.join(' | '),
         fieldHighlights,
         traitHighlights: mergedTraitsResult.highlights,
-        nameHighlighted: !!weapon.active || hasChanges,
+        nameHighlighted: isPaidWeaponUpgrade || hasChanges,
+        isModified: isPaidWeaponUpgrade || hasChanges,
       };
     });
 
@@ -257,19 +282,31 @@ export function renderPlayerAid(roster, opts = {}) {
       <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>Dep</button>
     </div>` : '';
 
-    const collapsedStatlineHtml = showStats
-      ? `<div class="aid-collapsed-statline">${statChips}${supplyHtml}${mineralsHtml}${collapsedTrackerHtml}</div>`
+    const tagPillsHtml = String(u.tags || '')
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean)
+      .map(tag => `<span class="aid-tag-pill">${escapeHtml(tag)}</span>`)
+      .join('');
+    const tagsInlineHtml = showUnitTags && tagPillsHtml
+      ? `<div class="aid-tags-inline"><span class="aid-tags-label">Tags:</span><div class="aid-tags-pills">${tagPillsHtml}</div></div>`
       : '';
 
+    const headerStatlineHtml = showStats && isCollapsed
+      ? `<div class="aid-header-statline">${statChips}${supplyHtml}${mineralsHtml}${collapsedTrackerHtml}</div>`
+      : '';
     const statsHtml = showStats ? `
       <div class="aid-stats-row">
         <div class="aid-stats">${statChips}${supplyHtml}${mineralsHtml}</div>
-        <div class="aid-stats-right">
-          ${aidUpgradePills ? `<div class="unit-upgrades aid-upgrade-bubbles">${aidUpgradePills}</div>` : ''}
-        </div>
       </div>` : '';
 
-    const weaponsHtml = renderAidWeaponsTable(buffedWeaponProfiles, { mergedBuffs });
+    const metadataRowHtml = showStats && (tagsInlineHtml || aidUpgradePills) ? `
+      <div class="aid-meta-row">
+        <div class="aid-meta-left">${tagsInlineHtml}</div>
+        <div class="aid-meta-right">${aidUpgradePills ? `<div class="unit-upgrades aid-upgrade-bubbles">${aidUpgradePills}</div>` : ''}</div>
+      </div>` : '';
+
+    const weaponsHtml = showUnitWeapons ? renderAidWeaponsTable(buffedWeaponProfiles, { mergedBuffs }) : '';
 
     const mergedBuffsHtml = mergedBuffEntries.length ? `
       <div class="aid-merged-buffs">
@@ -277,7 +314,7 @@ export function renderPlayerAid(roster, opts = {}) {
       </div>` : '';
 
     const abilitiesByPhase = groupAbilitiesByPhase(displayedAbilities);
-    const upgradesHtml = displayedAbilities.length ? `
+    const upgradesHtml = showUnitAbilities && displayedAbilities.length ? `
       <div class="aid-section-title">Abilities</div>
       ${abilitiesByPhase.map(group => {
         const phaseTag   = getPhaseTag(group.phase);
@@ -292,10 +329,11 @@ export function renderPlayerAid(roster, opts = {}) {
                 const cls  = selectedUpgrade ? 'is-active' : (natural ? 'is-natural' : 'is-inactive');
                 const mark = selectedUpgrade ? '✓ ' : '';
                 const activation  = parseAidActivation(ug);
-                const activationHtml = showActivation && activation.state
-                  ? `<span class="aid-inline-chip aid-inline-activation">${escapeHtml(activation.state)}</span>`
+                const activationClass = getAidActivationStateClass(activation.state);
+                const activationHtml = showUnitActivation && activation.state
+                  ? `<span class="aid-inline-chip aid-inline-activation ${escapeHtml(activationClass)}">${escapeHtml(activation.state)}</span>`
                   : '';
-                const resourceHtml = showActivation && activation.resource
+                const resourceHtml = showUnitActivation && activation.resource
                   ? `<span class="aid-inline-chip aid-inline-resource">${formatAidRichText(activation.resource, { faction, factionClass, allowLineBreaks: false })}</span>`
                   : '';
                 const desc = ug.description
@@ -306,8 +344,6 @@ export function renderPlayerAid(roster, opts = {}) {
             </div>
           </div>`;
       }).join('')}` : '';
-
-    const tagsHtml = u.tags ? `<div class="aid-tags">${escapeHtml(String(u.tags))}</div>` : '';
 
     const trackerHtml = tracker ? `
       <div class="play-unit-trackers">
@@ -326,7 +362,8 @@ export function renderPlayerAid(roster, opts = {}) {
         </div>
       </div>` : '';
 
-    const hasBody = statsHtml || weaponsHtml || mergedBuffsHtml || upgradesHtml || tagsHtml;
+    const visibleMergedBuffsHtml = mergedBuffs ? mergedBuffsHtml : '';
+    const hasBody = statsHtml || metadataRowHtml || weaponsHtml || visibleMergedBuffsHtml || upgradesHtml;
 
     return `
       <div class="aid-unit${isCollapsed ? ' is-collapsed' : ''}${isDead ? ' play-dead' : ''}" data-aid-unit-key="${escapeHtml(unitKey)}">
@@ -335,23 +372,34 @@ export function renderPlayerAid(roster, opts = {}) {
           <div class="unit-info">
             <div class="aid-unit-title-row">
               <div class="unit-name">${escapeHtml(u.name)}${escapeHtml(models)}</div>
-              ${collapsedStatlineHtml}
+              ${headerStatlineHtml}
             </div>
           </div>
           ${showStats ? '' : `<div class="unit-cost">${u.totalCost}m</div>`}
           <span class="aid-collapse-indicator" aria-hidden="true"></span>
         </div>
-        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${tagsHtml}${statsHtml}${mergedBuffsHtml}${weaponsHtml}${upgradesHtml}</div></div>` : ''}
+        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${statsHtml}${visibleMergedBuffsHtml}${weaponsHtml}${upgradesHtml}${metadataRowHtml}</div></div>` : ''}
       </div>`;
   }).join('');
 
   const tacticalHtml = showTactical
-    ? renderAidTacticalCards(tacticalCardDetails ?? [], { faction, factionClass })
+    ? renderAidTacticalCards(tacticalCardDetails ?? [], {
+      faction,
+      factionClass,
+      showArt: showTacticalArt,
+      showMeta: showTacticalMeta,
+      showGas: showTacticalGas,
+      showTags: showTacticalTags,
+      showAbilities: showTacticalAbilities,
+      showPhase: showTacticalPhase,
+      showActivation: showTacticalActivation,
+      showDescriptions: showTacticalDescriptions,
+    })
     : '';
 
   return `
     <div class="roster-card ${factionClass}">
-      <div class="roster-header">
+      ${showHeader ? `<div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${rosterLabel ? `${escapeHtml(rosterLabel)} · ` : ''}${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
           <span>💎 ${m.used}/${m.limit}m</span>
@@ -361,8 +409,8 @@ export function renderPlayerAid(roster, opts = {}) {
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
           ${slotBreakdown ? `<span class="slot-breakdown-inline"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</span>` : ''}
         </div>
-      </div>
-      <div class="unit-list">${unitBlocks}</div>
+      </div>` : ''}
+      ${showUnits ? `<div class="unit-list">${unitBlocks}</div>` : ''}
       ${tacticalHtml ? `<div class="aid-tactical-section">${tacticalHtml}</div>` : ''}
     </div>`;
 }

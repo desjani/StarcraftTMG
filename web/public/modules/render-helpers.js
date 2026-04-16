@@ -133,7 +133,6 @@ export function renderAidWeaponsTable(weapons, { mergedBuffs = false } = {}) {
     return highlighted ? `<span class="aid-buff-highlight">${inner}</span>` : inner;
   };
   return `
-    <div class="aid-section-title">Weapons</div>
     <div class="aid-weapons-wrap">
       <table class="aid-weapons-table">
         <thead>
@@ -260,6 +259,14 @@ export function parseAidActivation(upgrade) {
     state: activationParts[0] ? activationParts[0].replace(/[<>]/g, '') : '',
     resource: activationParts[1] ? activationParts[1].replace(/[()]/g, '') : '',
   };
+}
+
+export function getAidActivationStateClass(state) {
+  const normalized = String(state || '').trim().toLowerCase();
+  if (normalized === 'active') return 'activation-active';
+  if (normalized === 'passive') return 'activation-passive';
+  if (normalized === 'reaction') return 'activation-reaction';
+  return 'activation-generic';
 }
 
 export function extractAidFactionResourceCost(resourceText, faction, factionClass) {
@@ -661,7 +668,18 @@ export function parseAidTacticalAbility(ability = {}) {
   return { name, activation, phase, description };
 }
 
-export function renderAidTacticalCards(cards = [], { faction, factionClass } = {}) {
+export function renderAidTacticalCards(cards = [], {
+  faction,
+  factionClass,
+  showArt = true,
+  showMeta = true,
+  showGas = true,
+  showTags = true,
+  showAbilities = true,
+  showPhase = true,
+  showActivation = true,
+  showDescriptions = true,
+} = {}) {
   const groupedCards = groupAidTacticalCards(cards);
   if (!groupedCards.length) return '';
 
@@ -671,24 +689,24 @@ export function renderAidTacticalCards(cards = [], { faction, factionClass } = {
     <div class="aid-tactical-grid">
       ${groupedCards.map(card => {
         const meta = [];
-        if (typeof card.resource === 'number') {
+        if (showMeta && typeof card.resource === 'number') {
           meta.push(`<span class="aid-inline-chip aid-inline-resource">${card.resource} <span class="resource-icon ${resourceConfig.className}">${resourceConfig.icon}</span></span>`);
         }
-        const supplyLetters = formatTacticalSupplyTypes(card.slots ?? {});
-        if (supplyLetters.length) {
+        const supplyLetters = showMeta ? formatTacticalSupplyTypes(card.slots ?? {}) : [];
+        if (showMeta && supplyLetters.length) {
           meta.push(`<span class="aid-inline-chip aid-tact-meta-chip aid-tact-slot-chip">${supplyLetters.map(({ type, letter }) => `<span class="aid-tact-slot aid-tact-slot-${escapeHtml(String(type).toLowerCase())}">${escapeHtml(letter)}</span>`).join('')}</span>`);
         }
-        if (card.isUnique) meta.push('<span class="aid-inline-chip aid-tact-meta-chip">Unique</span>');
+        if (showMeta && card.isUnique) meta.push('<span class="aid-inline-chip aid-tact-meta-chip">Unique</span>');
 
         const abilities = Array.isArray(card.abilities) ? card.abilities.map(parseAidTacticalAbility) : [];
-        const artHtml = card.frontUrl
+        const artHtml = showArt && card.frontUrl
           ? `<div class="aid-tact-art"><img src="${escapeHtml(card.frontUrl)}" alt="${escapeHtml(card.name)}"></div>`
           : '';
-        const gasHtml = typeof card.gasCost === 'number'
+        const gasHtml = showGas && typeof card.gasCost === 'number'
           ? `<div class="aid-tact-gas-cost">${card.gasCost}g</div>`
           : '';
         const countSuffix = card.count > 1 ? ` <span class="aid-tact-card-count">x${card.count}</span>` : '';
-        const tagsHtml = card.tags ? `<div class="aid-tags aid-tact-tags">${escapeHtml(card.tags)}</div>` : '';
+        const tagsHtml = showTags && card.tags ? `<div class="aid-tags aid-tact-tags">${escapeHtml(card.tags)}</div>` : '';
 
         return `
           <article class="aid-tact-card${artHtml ? ' has-art' : ''}">
@@ -701,14 +719,15 @@ export function renderAidTacticalCards(cards = [], { faction, factionClass } = {
               ${gasHtml}
             </div>
             ${tagsHtml}
-            <div class="aid-tact-abilities">
+            ${showAbilities ? `<div class="aid-tact-abilities">
               ${abilities.map(ability => {
                 const phaseClass = `phase-${String(normalizePhaseLabel(ability.phase)).toLowerCase()}`;
                 const phaseTag = getPhaseTag(ability.phase);
-                const activationHtml = ability.activation
-                  ? `<span class="aid-inline-chip aid-inline-activation">${escapeHtml(ability.activation)}</span>`
+                const activationClass = getAidActivationStateClass(ability.activation);
+                const activationHtml = showActivation && ability.activation
+                  ? `<span class="aid-inline-chip aid-inline-activation ${escapeHtml(activationClass)}">${escapeHtml(ability.activation)}</span>`
                   : '';
-                const phaseHtml = ability.phase
+                const phaseHtml = showPhase && ability.phase
                   ? `<span class="aid-inline-chip ${escapeHtml(phaseClass)} aid-tact-phase-chip">${escapeHtml(phaseTag)}</span>`
                   : '';
                 return `
@@ -717,10 +736,10 @@ export function renderAidTacticalCards(cards = [], { faction, factionClass } = {
                       <span class="aid-tact-ability-name">${escapeHtml(ability.name || 'Ability')}</span>
                       ${activationHtml}${phaseHtml}
                     </div>
-                    ${ability.description ? `<div class="aid-upg-desc">${formatAidRichText(ability.description, { faction, factionClass })}</div>` : ''}
+                    ${showDescriptions && ability.description ? `<div class="aid-upg-desc">${formatAidRichText(ability.description, { faction, factionClass })}</div>` : ''}
                   </div>`;
               }).join('')}
-            </div>
+            </div>` : ''}
           </article>`;
       }).join('')}
     </div>`;

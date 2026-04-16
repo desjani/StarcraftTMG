@@ -15,7 +15,8 @@ import {
   TextInputStyle,
 } from 'discord.js';
 
-import { fetchRoster, fetchTacticalCards } from '../../lib/firestoreClient.js';
+import { fetchRoster } from '../../lib/firestoreClient.js';
+import { loadGameData } from '../../lib/gameData.js';
 import { parseRoster } from '../../lib/rosterParser.js';
 import { formatCompact } from '../../lib/formatter.js';
 import { buildPublicRosterUrl, getPublicWebOrigin } from '../../lib/siteConfig.js';
@@ -369,9 +370,8 @@ export const rosterCommand = {
     seed = seed.trim().toUpperCase();
 
     try {
-      const flat = await fetchRoster(seed);
-      const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
-      const roster = parseRoster(flat, { tacticalCards });
+      const [flat, gameData] = await Promise.all([fetchRoster(seed), loadGameData()]);
+      const roster = parseRoster(flat, { gameData });
       const session = createSession({ userId: interaction.user.id, seed, roster });
       await renderSessionReply(interaction, session);
     } catch (err) {
@@ -405,9 +405,8 @@ export const rosterCommand = {
       await trackRosterModalSeed({ interaction, seed });
 
       try {
-        const flat = await fetchRoster(seed);
-        const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
-        const roster = parseRoster(flat, { tacticalCards });
+        const [flat, gameData] = await Promise.all([fetchRoster(seed), loadGameData()]);
+        const roster = parseRoster(flat, { gameData });
         const session = createSession({ userId: interaction.user.id, seed, roster });
         await renderSessionReply(interaction, session);
       } catch (err) {

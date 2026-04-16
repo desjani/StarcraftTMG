@@ -3,7 +3,8 @@
  * Imported as a module by index.html.
  * Reuses the same lib/ modules as the server and Discord bot.
  */
-import { fetchRoster, fetchTacticalCards } from './lib/firestoreClient.js';
+import { fetchRoster } from './lib/firestoreClient.js';
+import { loadGameData } from './lib/gameData.js';
 import {
   createLinkedMatch,
   createEmailPasswordAccount,
@@ -23,14 +24,49 @@ import {
   updateLinkedMatchSharedState,
   updateLinkedMatchSideState,
 } from './lib/cloudSync.js';
-import { parseRoster }           from './lib/rosterParser.js';
-import { formatCompact, formatJson } from './lib/formatter.js';
+import { buildResolvedRosterViewModel } from './lib/rosterViewModels.js';
+import { formatCompact } from './lib/formatter.js';
 import { createDebugLogger, getUserFacingError } from './appUtils.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let currentRoster    = null;
+let currentSeed      = null;
 let currentFormatted = '';
 let isLoadingRoster  = false;
+const gameDataPromise = loadGameData();
+let currentGameData = null;
+gameDataPromise.then((data) => {
+  currentGameData = data;
+});
+
+function getCurrentResolvedRoster() {
+  if (!currentSeed || !currentGameData) return null;
+  return buildResolvedRosterViewModel(currentSeed, currentGameData);
+}
+
+function getCurrentSeedId() {
+  return currentSeed?.id ?? '';
+}
+
+function ensurePlayModeStateFromCurrentSeed() {
+  const resolvedRoster = getCurrentResolvedRoster();
+  if (!resolvedRoster) return;
+  ensurePlayModeState(resolvedRoster);
+}
+
+async function syncCurrentSeedFromPlayState() {
+  const seedId = sanitizeSeed(playModeState?.playerSeed || '');
+  if (!seedId || getCurrentSeedId() === seedId) {
+    if (seedInput && seedId) seedInput.value = seedId;
+    return;
+  }
+  try {
+    currentSeed = await fetchRoster(seedId);
+    if (seedInput) seedInput.value = seedId;
+    refreshOutput();
+  } catch (err) {
+    debug.error('play.seed.sync.error', err, { seedId });
+  }
+}
 
 const debug = createDebugLogger({ search: window.location.search, storage: window.localStorage });
 
@@ -82,12 +118,25 @@ const cardSlots      = document.getElementById('card-slots');
 const downloadImgBtn = document.getElementById('download-img-btn');
 const copyImgBtn     = document.getElementById('copy-img-btn');
 // Player Aid options + controls
-const aidStats       = document.getElementById('aid-stats');
+const aidShowHeader = document.getElementById('aid-show-header');
+const aidShowUnits = document.getElementById('aid-show-units');
+const aidShowTactical = document.getElementById('aid-show-tactical');
+const aidStats = document.getElementById('aid-stats');
+const aidUnitWeapons = document.getElementById('aid-unit-weapons');
+const aidUnitAbilities = document.getElementById('aid-unit-abilities');
 const aidAllUpgrades = document.getElementById('aid-all-upgrades');
-const aidActivation  = document.getElementById('aid-activation');
-const aidTactical    = document.getElementById('aid-tactical');
-const aidModeAll     = document.getElementById('aid-mode-all');
-const aidModeMerged  = document.getElementById('aid-mode-merged');
+const aidUnitPaidUpgrades = document.getElementById('aid-unit-paid-upgrades');
+const aidUnitTags = document.getElementById('aid-unit-tags');
+const aidActivation = document.getElementById('aid-activation');
+const aidModeMerged = document.getElementById('aid-mode-merged');
+const aidTactArt = document.getElementById('aid-tact-art');
+const aidTactMeta = document.getElementById('aid-tact-meta');
+const aidTactGas = document.getElementById('aid-tact-gas');
+const aidTactTags = document.getElementById('aid-tact-tags');
+const aidTactAbilities = document.getElementById('aid-tact-abilities');
+const aidTactPhase = document.getElementById('aid-tact-phase');
+const aidTactActivation = document.getElementById('aid-tact-activation');
+const aidTactDescriptions = document.getElementById('aid-tact-descriptions');
 const aidCardEl      = document.getElementById('aid-card');
 const aidPrintBar    = document.getElementById('aid-print-bar');
 const aidCollapseAllBtn = document.getElementById('aid-collapse-all-btn');
@@ -359,7 +408,7 @@ function getPreferredPlayerName() {
 function getPreferredSeed() {
   return sanitizeSeed(
     playModeState?.playerSeed
-      || currentRoster?.seed
+      || currentSeed?.id
       || seedInput?.value
       || ''
   );
@@ -631,9 +680,7 @@ function applyLinkedPayload({ match, playerSide, opponentSide } = {}) {
   playModeState.linkedSide = linkedSession.side || null;
   updateLinkedReadyState(playModeState, { match, playerSide, opponentSide });
 
-  if (playModeState.playerRoster) {
-    currentRoster = playModeState.playerRoster;
-  }
+  syncCurrentSeedFromPlayState();
 }
 
 async function stopLinkedSession({ notify = false } = {}) {
@@ -807,11 +854,25 @@ function savePrefs() {
         slots:    cardSlots.checked,
       },
       aid: {
-        stats:       aidStats.checked,
+        showHeader: aidShowHeader.checked,
+        showUnits: aidShowUnits.checked,
+        showTactical: aidShowTactical.checked,
+        stats: aidStats.checked,
+        unitWeapons: aidUnitWeapons.checked,
+        unitAbilities: aidUnitAbilities.checked,
         allUpgrades: aidAllUpgrades.checked,
-        activation:  aidActivation.checked,
-        tactical:    aidTactical.checked,
-        mode:        aidModeMerged.checked ? 'merged' : 'all',
+        unitPaidUpgrades: aidUnitPaidUpgrades.checked,
+        unitTags: aidUnitTags.checked,
+        activation: aidActivation.checked,
+        tactArt: aidTactArt.checked,
+        tactMeta: aidTactMeta.checked,
+        tactGas: aidTactGas.checked,
+        tactTags: aidTactTags.checked,
+        tactAbilities: aidTactAbilities.checked,
+        tactPhase: aidTactPhase.checked,
+        tactActivation: aidTactActivation.checked,
+        tactDescriptions: aidTactDescriptions.checked,
+        mergedBuffs: aidModeMerged.checked,
       },
     }));
   } catch (_) { /* storage unavailable */ }
@@ -847,13 +908,25 @@ function loadPrefs() {
       cardSlots.checked    = !!p.card.slots;
     }
     if (p.aid) {
+      aidShowHeader.checked = p.aid.showHeader !== false;
+      aidShowUnits.checked = p.aid.showUnits !== false;
+      aidShowTactical.checked = p.aid.showTactical !== false && p.aid.tactical !== false;
       aidStats.checked       = p.aid.stats       !== false;
+      aidUnitWeapons.checked = p.aid.unitWeapons !== false;
+      aidUnitAbilities.checked = p.aid.unitAbilities !== false;
       aidAllUpgrades.checked = p.aid.allUpgrades !== false;
+      aidUnitPaidUpgrades.checked = p.aid.unitPaidUpgrades !== false;
+      aidUnitTags.checked = p.aid.unitTags !== false;
       aidActivation.checked  = p.aid.activation  !== false;
-      aidTactical.checked    = p.aid.tactical    !== false;
-      const mode = p.aid.mode === 'merged' ? 'merged' : 'all';
-      aidModeMerged.checked = mode === 'merged';
-      aidModeAll.checked = mode !== 'merged';
+      aidTactArt.checked = p.aid.tactArt !== false;
+      aidTactMeta.checked = p.aid.tactMeta !== false;
+      aidTactGas.checked = p.aid.tactGas !== false;
+      aidTactTags.checked = p.aid.tactTags !== false;
+      aidTactAbilities.checked = p.aid.tactAbilities !== false;
+      aidTactPhase.checked = p.aid.tactPhase !== false;
+      aidTactActivation.checked = p.aid.tactActivation !== false;
+      aidTactDescriptions.checked = p.aid.tactDescriptions !== false;
+      aidModeMerged.checked = !!(p.aid.mergedBuffs || p.aid.mode === 'merged');
     }
     // Legacy compatibility: old saved "raw" tab now maps to preview + raw mode.
     const savedTab = p.tab === 'raw' ? 'preview' : p.tab;
@@ -1274,8 +1347,8 @@ function loadPlayGameFromLibrary(gameId, source = 'inProgress', options = {}) {
   }
 
   if (playModeState.playerRoster) {
-    currentRoster = playModeState.playerRoster;
-    if (seedInput) seedInput.value = playModeState.playerSeed || playModeState.playerRoster.seed || '';
+    if (seedInput) seedInput.value = playModeState.playerSeed || '';
+    void syncCurrentSeedFromPlayState();
     refreshOutput();
     resultsEl.style.display = 'block';
     loadingBox.style.display = 'none';
@@ -1308,7 +1381,7 @@ function removePlayGameFromLibrary(gameId, source = 'inProgress') {
 
 function restoreActivePlayGame() {
   const id = playLibrary.activeGameId;
-  if (!id || currentRoster) return false;
+  if (!id || currentSeed) return false;
   return loadPlayGameFromLibrary(id, 'inProgress')
     || loadPlayGameFromLibrary(id, 'completed');
 }
@@ -1635,7 +1708,6 @@ function renderAidWeaponsTable(weapons, { mergedBuffs = false } = {}) {
     return highlighted ? `<span class="aid-buff-highlight">${inner}</span>` : inner;
   };
   return `
-    <div class="aid-section-title">Weapons</div>
     <div class="aid-weapons-wrap">
       <table class="aid-weapons-table">
         <thead>
@@ -1652,7 +1724,7 @@ function renderAidWeaponsTable(weapons, { mergedBuffs = false } = {}) {
         </thead>
         <tbody>
           ${weapons.map(weapon => `
-            <tr class="${weapon.active ? 'is-active' : 'is-inactive'}">
+            <tr class="${weapon.isModified ? 'is-modified' : ''}">
               <td class="weapon-name${weapon.nameHighlighted ? ' is-highlighted' : ''}">${escapeHtml(weapon.name)}</td>
               <td>${renderCell(weapon.range, mergedBuffs && !!weapon.fieldHighlights?.range)}</td>
               <td>${escapeHtml(weapon.target)}</td>
@@ -1796,6 +1868,14 @@ function parseAidActivation(upgrade) {
     state: activationParts[0] ? activationParts[0].replace(/[<>]/g, '') : '',
     resource: activationParts[1] ? activationParts[1].replace(/[()]/g, '') : '',
   };
+}
+
+function getAidActivationStateClass(state) {
+  const normalized = String(state || '').trim().toLowerCase();
+  if (normalized === 'active') return 'activation-active';
+  if (normalized === 'passive') return 'activation-passive';
+  if (normalized === 'reaction') return 'activation-reaction';
+  return 'activation-generic';
 }
 
 function extractAidFactionResourceCost(resourceText, faction, factionClass) {
@@ -2255,7 +2335,18 @@ function parseAidTacticalAbility(ability = {}) {
   };
 }
 
-function renderAidTacticalCards(cards = [], { faction, factionClass } = {}) {
+function renderAidTacticalCards(cards = [], {
+  faction,
+  factionClass,
+  showArt = true,
+  showMeta = true,
+  showGas = true,
+  showTags = true,
+  showAbilities = true,
+  showPhase = true,
+  showActivation = true,
+  showDescriptions = true,
+} = {}) {
   const groupedCards = groupAidTacticalCards(cards);
   if (!groupedCards.length) return '';
 
@@ -2265,24 +2356,24 @@ function renderAidTacticalCards(cards = [], { faction, factionClass } = {}) {
     <div class="aid-tactical-grid">
       ${groupedCards.map(card => {
         const meta = [];
-        if (typeof card.resource === 'number') {
+        if (showMeta && typeof card.resource === 'number') {
           meta.push(`<span class="aid-inline-chip aid-inline-resource">${card.resource} <span class="resource-icon ${resourceConfig.className}">${resourceConfig.icon}</span></span>`);
         }
-        const supplyLetters = formatTacticalSupplyTypes(card.slots ?? {});
-        if (supplyLetters.length) {
+        const supplyLetters = showMeta ? formatTacticalSupplyTypes(card.slots ?? {}) : [];
+        if (showMeta && supplyLetters.length) {
           meta.push(`<span class="aid-inline-chip aid-tact-meta-chip aid-tact-slot-chip">${supplyLetters.map(({ type, letter }) => `<span class="aid-tact-slot aid-tact-slot-${escapeHtml(String(type).toLowerCase())}">${escapeHtml(letter)}</span>`).join('')}</span>`);
         }
-        if (card.isUnique) meta.push('<span class="aid-inline-chip aid-tact-meta-chip">Unique</span>');
+        if (showMeta && card.isUnique) meta.push('<span class="aid-inline-chip aid-tact-meta-chip">Unique</span>');
 
         const abilities = Array.isArray(card.abilities) ? card.abilities.map(parseAidTacticalAbility) : [];
-        const artHtml = card.frontUrl
+        const artHtml = showArt && card.frontUrl
           ? `<div class="aid-tact-art"><img src="${escapeHtml(card.frontUrl)}" alt="${escapeHtml(card.name)}"></div>`
           : '';
-        const gasHtml = typeof card.gasCost === 'number'
+        const gasHtml = showGas && typeof card.gasCost === 'number'
           ? `<div class="aid-tact-gas-cost">${card.gasCost}g</div>`
           : '';
         const countSuffix = card.count > 1 ? ` <span class="aid-tact-card-count">x${card.count}</span>` : '';
-        const tagsHtml = card.tags
+        const tagsHtml = showTags && card.tags
           ? `<div class="aid-tags aid-tact-tags">${escapeHtml(card.tags)}</div>`
           : '';
 
@@ -2297,14 +2388,15 @@ function renderAidTacticalCards(cards = [], { faction, factionClass } = {}) {
               ${gasHtml}
             </div>
             ${tagsHtml}
-            <div class="aid-tact-abilities">
+            ${showAbilities ? `<div class="aid-tact-abilities">
               ${abilities.map(ability => {
                 const phaseClass = `phase-${String(normalizePhaseLabel(ability.phase)).toLowerCase()}`;
                 const phaseTag = getPhaseTag(ability.phase);
-                const activationHtml = ability.activation
-                  ? `<span class="aid-inline-chip aid-inline-activation">${escapeHtml(ability.activation)}</span>`
+                const activationClass = getAidActivationStateClass(ability.activation);
+                const activationHtml = showActivation && ability.activation
+                  ? `<span class="aid-inline-chip aid-inline-activation ${escapeHtml(activationClass)}">${escapeHtml(ability.activation)}</span>`
                   : '';
-                const phaseHtml = ability.phase
+                const phaseHtml = showPhase && ability.phase
                   ? `<span class="aid-inline-chip ${escapeHtml(phaseClass)} aid-tact-phase-chip">${escapeHtml(phaseTag)}</span>`
                   : '';
                 return `
@@ -2314,10 +2406,10 @@ function renderAidTacticalCards(cards = [], { faction, factionClass } = {}) {
                       ${activationHtml}
                       ${phaseHtml}
                     </div>
-                    ${ability.description ? `<div class="aid-upg-desc">${formatAidRichText(ability.description, { faction, factionClass })}</div>` : ''}
+                    ${showDescriptions && ability.description ? `<div class="aid-upg-desc">${formatAidRichText(ability.description, { faction, factionClass })}</div>` : ''}
                   </div>`;
               }).join('')}
-            </div>
+            </div>` : ''}
           </article>`;
       }).join('')}
     </div>`;
@@ -2407,15 +2499,29 @@ function renderRosterCard(roster, opts = {}) {
 // ─── Player Aid renderer ──────────────────────────────────────────────────────
 function renderPlayerAid(roster, opts = {}) {
   const {
-    showStats      = true,
-    allUpgrades    = true,
-    showActivation = true,
-    showTactical   = true,
-    mergedBuffs    = false,
-    dedupeUnits    = true,
-    playTrackers   = null,
-    unitKeyPrefix  = '',
-    rosterLabel    = '',
+    showHeader = true,
+    showUnits = true,
+    showStats = true,
+    showUnitWeapons = true,
+    showUnitAbilities = true,
+    allUpgrades = true,
+    showUnitPaidUpgrades = true,
+    showUnitTags = true,
+    showUnitActivation = true,
+    showTactical = true,
+    showTacticalArt = true,
+    showTacticalMeta = true,
+    showTacticalGas = true,
+    showTacticalTags = true,
+    showTacticalAbilities = true,
+    showTacticalPhase = true,
+    showTacticalActivation = true,
+    showTacticalDescriptions = true,
+    mergedBuffs = false,
+    dedupeUnits = true,
+    playTrackers = null,
+    unitKeyPrefix = '',
+    rosterLabel = '',
   } = opts;
   const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails, units, faction, factionCard, seed, slots } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
@@ -2443,10 +2549,12 @@ function renderPlayerAid(roster, opts = {}) {
     const abbr   = TYPE_ABBR[u.type] ?? '?';
     const models = u.models > 1 ? ` ×${u.models}` : '';
 
-    const aidUpgradePills = sortUpgradesForDisplay(u.activeUpgrades ?? [])
-      .filter(upg => Number(upg?.cost ?? 0) > 0)
-      .map(upg => `<span class="upg-pill">+ ${escapeHtml(upg.name)} <strong>${upg.cost}m</strong></span>`)
-      .join('');
+    const aidUpgradePills = showUnitPaidUpgrades
+      ? sortUpgradesForDisplay(u.activeUpgrades ?? [])
+        .filter(upg => Number(upg?.cost ?? 0) > 0)
+        .map(upg => `<span class="upg-pill">+ ${escapeHtml(upg.name)} <strong>${upg.cost}m</strong></span>`)
+        .join('')
+      : '';
 
     const upgradeList     = sortUpgradesForDisplay(u.allUpgrades ?? []);
     const weaponProfiles  = resolveLinkedWeaponReplacements(
@@ -2458,7 +2566,7 @@ function renderPlayerAid(roster, opts = {}) {
     ).sort(compareAidWeaponProfiles);
     const visibleUpgrades = upgradeList
       .filter(ug => !isWeaponProfile(ug))
-      .filter(ug => isNaturalAbility(ug) || ug.active);
+      .filter(ug => allUpgrades || isNaturalAbility(ug) || ug.active);
 
     const mergedBuffEntries = [];
     const weaponBuffMap = new Map();
@@ -2547,10 +2655,12 @@ function renderPlayerAid(roster, opts = {}) {
     const buffedWeaponProfiles = weaponProfiles.map(weapon => {
       const key = String(weapon.name || '').toLowerCase();
       const applied = weaponBuffMap.get(key);
+      const isPaidWeaponUpgrade = !!weapon.active && !isNaturalAbility(weapon);
       if (!applied) {
         return {
           ...weapon,
-          nameHighlighted: !!weapon.active,
+          nameHighlighted: isPaidWeaponUpgrade,
+          isModified: isPaidWeaponUpgrade,
         };
       }
 
@@ -2597,7 +2707,7 @@ function renderPlayerAid(roster, opts = {}) {
       const mergedTraits = mergedTraitsResult.merged.join(' | ');
 
       const hasChanges = Object.values(fieldHighlights).some(Boolean) || mergedTraitsResult.highlights.length;
-      if (!hasChanges) return weapon;
+      if (!hasChanges && !isPaidWeaponUpgrade) return weapon;
 
       return {
         ...weapon,
@@ -2609,7 +2719,8 @@ function renderPlayerAid(roster, opts = {}) {
         traits: mergedTraits,
         fieldHighlights,
         traitHighlights: mergedTraitsResult.highlights,
-        nameHighlighted: !!weapon.active || hasChanges,
+        nameHighlighted: isPaidWeaponUpgrade || hasChanges,
+        isModified: isPaidWeaponUpgrade || hasChanges,
       };
     });
 
@@ -2663,8 +2774,18 @@ function renderPlayerAid(roster, opts = {}) {
       <button class="btn ghost sm play-deployed-btn${tracker.deployed ? ' is-on' : ''}" type="button" data-play-action="toggle-deployed" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>Dep</button>
     </div>` : '';
 
-    const collapsedStatlineHtml = showStats
-      ? `<div class="aid-collapsed-statline">${statChips}${supplyHtml}${mineralsHtml}${collapsedTrackerHtml}</div>`
+    const tagPillsHtml = String(u.tags || '')
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean)
+      .map(tag => `<span class="aid-tag-pill">${escapeHtml(tag)}</span>`)
+      .join('');
+    const tagsInlineHtml = showUnitTags && tagPillsHtml
+      ? `<div class="aid-tags-inline"><span class="aid-tags-label">Tags:</span><div class="aid-tags-pills">${tagPillsHtml}</div></div>`
+      : '';
+
+    const headerStatlineHtml = showStats && isCollapsed
+      ? `<div class="aid-header-statline">${statChips}${supplyHtml}${mineralsHtml}${collapsedTrackerHtml}</div>`
       : '';
     const statsHtml = showStats ? `
       <div class="aid-stats-row">
@@ -2673,18 +2794,20 @@ function renderPlayerAid(roster, opts = {}) {
           ${supplyHtml}
           ${mineralsHtml}
         </div>
-        <div class="aid-stats-right">
-          ${aidUpgradePills ? `<div class="unit-upgrades aid-upgrade-bubbles">${aidUpgradePills}</div>` : ''}
-        </div>
+      </div>` : '';
+    const metadataRowHtml = showStats && (tagsInlineHtml || aidUpgradePills) ? `
+      <div class="aid-meta-row">
+        <div class="aid-meta-left">${tagsInlineHtml}</div>
+        <div class="aid-meta-right">${aidUpgradePills ? `<div class="unit-upgrades aid-upgrade-bubbles">${aidUpgradePills}</div>` : ''}</div>
       </div>` : '';
 
-    const weaponsHtml     = renderAidWeaponsTable(buffedWeaponProfiles, { mergedBuffs });
+    const weaponsHtml = showUnitWeapons ? renderAidWeaponsTable(buffedWeaponProfiles, { mergedBuffs }) : '';
     const mergedBuffsHtml = mergedBuffEntries.length ? `
       <div class="aid-merged-buffs">
         ${mergedBuffEntries.map(entry => `<span class="upg-pill aid-merged-pill">+ ${escapeHtml(entry.name)}: ${formatAidRichText(entry.highlights.join(', '), { allowLineBreaks: false, highlightTerms: entry.highlights })}</span>`).join('')}
       </div>` : '';
     const abilitiesByPhase = groupAbilitiesByPhase(displayedAbilities);
-    const upgradesHtml    = displayedAbilities.length ? `
+    const upgradesHtml = showUnitAbilities && displayedAbilities.length ? `
       <div class="aid-section-title">Abilities</div>
       ${abilitiesByPhase.map(group => {
         const phaseTag = getPhaseTag(group.phase);
@@ -2699,10 +2822,11 @@ function renderPlayerAid(roster, opts = {}) {
                 const cls  = selectedUpgrade ? 'is-active' : (natural ? 'is-natural' : 'is-inactive');
                 const mark = selectedUpgrade ? '✓ ' : '';
                 const activation = parseAidActivation(ug);
-                const activationHtml = showActivation && activation.state
-                  ? `<span class="aid-inline-chip aid-inline-activation">${escapeHtml(activation.state)}</span>`
+                const activationClass = getAidActivationStateClass(activation.state);
+                const activationHtml = showUnitActivation && activation.state
+                  ? `<span class="aid-inline-chip aid-inline-activation ${escapeHtml(activationClass)}">${escapeHtml(activation.state)}</span>`
                   : '';
-                const resourceHtml = showActivation && activation.resource
+                const resourceHtml = showUnitActivation && activation.resource
                   ? `<span class="aid-inline-chip aid-inline-resource">${formatAidRichText(activation.resource, { faction, factionClass, allowLineBreaks: false })}</span>`
                   : '';
                 const desc = ug.description
@@ -2714,11 +2838,8 @@ function renderPlayerAid(roster, opts = {}) {
           </div>`;
       }).join('')}` : '';
 
-    const tagsHtml = u.tags
-      ? `<div class="aid-tags">${escapeHtml(String(u.tags))}</div>`
-      : '';
-
-    const hasBody = statsHtml || weaponsHtml || mergedBuffsHtml || upgradesHtml || tagsHtml;
+    const visibleMergedBuffsHtml = mergedBuffs ? mergedBuffsHtml : '';
+    const hasBody = statsHtml || weaponsHtml || visibleMergedBuffsHtml || upgradesHtml || metadataRowHtml;
     const trackerHtml = tracker ? `
       <div class="play-unit-trackers">
         <div class="play-health-wrap">
@@ -2743,23 +2864,34 @@ function renderPlayerAid(roster, opts = {}) {
           <div class="unit-info">
             <div class="aid-unit-title-row">
               <div class="unit-name">${escapeHtml(u.name)}${escapeHtml(models)}</div>
-              ${collapsedStatlineHtml}
+              ${headerStatlineHtml}
             </div>
           </div>
           ${showStats ? '' : `<div class="unit-cost">${u.totalCost}m</div>`}
           <span class="aid-collapse-indicator" aria-hidden="true"></span>
         </div>
-        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${tagsHtml}${statsHtml}${mergedBuffsHtml}${weaponsHtml}${upgradesHtml}</div></div>` : ''}
+        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${statsHtml}${visibleMergedBuffsHtml}${weaponsHtml}${upgradesHtml}${metadataRowHtml}</div></div>` : ''}
       </div>`;
   }).join('');
 
   const tacticalHtml = showTactical
-    ? renderAidTacticalCards(tacticalCardDetails ?? [], { faction, factionClass })
+    ? renderAidTacticalCards(tacticalCardDetails ?? [], {
+      faction,
+      factionClass,
+      showArt: showTacticalArt,
+      showMeta: showTacticalMeta,
+      showGas: showTacticalGas,
+      showTags: showTacticalTags,
+      showAbilities: showTacticalAbilities,
+      showPhase: showTacticalPhase,
+      showActivation: showTacticalActivation,
+      showDescriptions: showTacticalDescriptions,
+    })
     : '';
 
   return `
     <div class="roster-card ${factionClass}">
-      <div class="roster-header">
+      ${showHeader ? `<div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${rosterLabel ? `${escapeHtml(rosterLabel)} · ` : ''}${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
           <span>💎 ${m.used}/${m.limit}m</span>
@@ -2769,8 +2901,8 @@ function renderPlayerAid(roster, opts = {}) {
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
           ${slotBreakdown ? `<span class="slot-breakdown-inline"><span class="slot-breakdown-label">Slots</span>${slotBreakdown}</span>` : ''}
         </div>
-      </div>
-      <div class="unit-list">${unitBlocks}</div>
+      </div>` : ''}
+      ${showUnits ? `<div class="unit-list">${unitBlocks}</div>` : ''}
       ${tacticalHtml ? `<div class="aid-tactical-section">${tacticalHtml}</div>` : ''}
     </div>`;
 }
@@ -2870,7 +3002,7 @@ function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
   const startingSupply = Math.min(200, Math.max(0, Number.isFinite(parsedStartingSupply) ? parsedStartingSupply : 10));
   const parsedSupplyPerRound = Number.parseInt(String(setup.supplyPerRound ?? 2), 10);
   const supplyPerRound = Math.min(50, Math.max(0, Number.isFinite(parsedSupplyPerRound) ? parsedSupplyPerRound : 2));
-  const playerSeed = sanitizeSeed(setup.playerSeed || playerRoster?.seed || currentRoster?.seed || '');
+  const playerSeed = sanitizeSeed(setup.playerSeed || playerRoster?.seed || currentSeed?.id || '');
   const opponentSeed = sanitizeSeed(setup.opponentSeed || opponentRoster?.seed || '');
   const unitsByKey = {
     ...createPlayUnitsByKey(playerRoster, 'player'),
@@ -2928,13 +3060,17 @@ function ensurePlayModeState(roster) {
   }
 }
 
+function formatSeedJson(seed) {
+  return JSON.stringify(seed ?? {}, null, 2);
+}
+
 async function loadRosterForPlay(seed) {
   const normalizedSeed = sanitizeSeed(seed);
   if (!normalizedSeed) return null;
-  if (currentRoster && currentRoster.seed === normalizedSeed) return currentRoster;
-  const flat = await fetchRoster(normalizedSeed);
-  const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
-  return parseRoster(flat, { tacticalCards });
+  const currentResolvedRoster = getCurrentResolvedRoster();
+  if (getCurrentSeedId() === normalizedSeed && currentResolvedRoster) return currentResolvedRoster;
+  const [flat, gameData] = await Promise.all([fetchRoster(normalizedSeed), gameDataPromise]);
+  return buildResolvedRosterViewModel(flat, gameData);
 }
 
 function getPlayCurrentPhase() {
@@ -3191,7 +3327,7 @@ function renderPlayMode(roster, { allowAutoSeed = true } = {}) {
 
 function refreshPlayModeOutput({ allowAutoSeed = true } = {}) {
   if (!playCardEl || !playDashboardEl) return;
-  if (allowAutoSeed && !playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (allowAutoSeed && !playModeState && currentSeed) ensurePlayModeStateFromCurrentSeed();
   if (playModeState?.hasStarted) persistCurrentPlayState();
   if (playNewGameActionsEl) {
     playNewGameActionsEl.style.display = playModeState?.hasStarted ? 'none' : '';
@@ -3201,7 +3337,7 @@ function refreshPlayModeOutput({ allowAutoSeed = true } = {}) {
   }
   playDashboardEl.innerHTML = buildPlayDashboard();
   renderPlayHistoryLists();
-  playCardEl.innerHTML = renderPlayMode(currentRoster, { allowAutoSeed });
+  playCardEl.innerHTML = renderPlayMode(getCurrentResolvedRoster(), { allowAutoSeed });
   updateLinkedUi();
   if (playModeState?.hasStarted) {
     const side = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
@@ -3230,11 +3366,11 @@ function refreshPlayModeOutput({ allowAutoSeed = true } = {}) {
 
 function openPlayNewGameDialog() {
   if (!playNewGameDialog) return;
-  if (!playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (!playModeState && currentSeed) ensurePlayModeStateFromCurrentSeed();
   if (playPlayerNameInput) playPlayerNameInput.value = playModeState?.playerName || 'Player';
   if (playOpponentNameInput) playOpponentNameInput.value = playModeState?.opponentName || 'Opponent';
   if (playOpponentFactionInput) playOpponentFactionInput.value = playModeState?.opponentFaction || 'Terran';
-  if (playPlayerSeedInput) playPlayerSeedInput.value = playModeState?.playerSeed || currentRoster?.seed || '';
+  if (playPlayerSeedInput) playPlayerSeedInput.value = playModeState?.playerSeed || currentSeed?.id || '';
   if (playOpponentSeedInput) playOpponentSeedInput.value = playModeState?.opponentSeed || '';
   if (playMissionNameInput) playMissionNameInput.value = playModeState?.missionName || 'Mission';
   if (playGameLengthInput) playGameLengthInput.value = String(playModeState?.gameLength || 5);
@@ -3246,7 +3382,7 @@ function openPlayNewGameDialog() {
 
 function openPlayNewLinkedGameDialog() {
   if (!playNewLinkedGameDialog) return;
-  if (!playModeState && currentRoster) ensurePlayModeState(currentRoster);
+  if (!playModeState && currentSeed) ensurePlayModeStateFromCurrentSeed();
   if (playLinkedPlayerNameInput) playLinkedPlayerNameInput.value = getPreferredPlayerName();
   if (playLinkedPlayerSeedInput) playLinkedPlayerSeedInput.value = getPreferredSeed();
   if (playLinkedMissionNameInput) playLinkedMissionNameInput.value = playModeState?.missionName || 'Mission';
@@ -3999,11 +4135,13 @@ async function copyImage(el, btn) {
 
 // ─── Output refresh ───────────────────────────────────────────────────────────
 function refreshOutput() {
-  if (!currentRoster) return;
+  if (!currentSeed || !currentGameData) return;
+  const resolvedRoster = getCurrentResolvedRoster();
+  if (!resolvedRoster) return;
 
   // ── Discord / Raw ───────────────────────────────────────────────────────────
   const selectedCharLimit = Math.max(500, parseInt(optLimit.value, 10) || 2000);
-  currentFormatted = formatCompact(currentRoster, {
+  currentFormatted = formatCompact(resolvedRoster, {
     plain:                   optPlain.checked,
     showStats:               optStats.checked,
     abbreviateUpgrades:      optAbbr.checked,
@@ -4032,7 +4170,7 @@ function refreshOutput() {
   }
 
   // ── Roster Card ─────────────────────────────────────────────────────────────
-  rosterCardEl.innerHTML = renderRosterCard(currentRoster, {
+  rosterCardEl.innerHTML = renderRosterCard(resolvedRoster, {
     showUpgrades: cardUpgrades.checked,
     showStats:    cardStats.checked,
     showSize:     cardSize.checked,
@@ -4047,12 +4185,26 @@ function refreshOutput() {
   copyImgBtn.style.display     = 'inline-block';
 
   // ── Player Aid ──────────────────────────────────────────────────────────────
-  aidCardEl.innerHTML = renderPlayerAid(currentRoster, {
-    showStats:      aidStats.checked,
-    allUpgrades:    aidAllUpgrades.checked,
-    showActivation: aidActivation.checked,
-    showTactical:   aidTactical.checked,
-    mergedBuffs:    aidModeMerged.checked,
+  aidCardEl.innerHTML = renderPlayerAid(resolvedRoster, {
+    showHeader: aidShowHeader.checked,
+    showUnits: aidShowUnits.checked,
+    showStats: aidStats.checked,
+    showUnitWeapons: aidUnitWeapons.checked,
+    showUnitAbilities: aidUnitAbilities.checked,
+    allUpgrades: aidAllUpgrades.checked,
+    showUnitPaidUpgrades: aidUnitPaidUpgrades.checked,
+    showUnitTags: aidUnitTags.checked,
+    showUnitActivation: aidActivation.checked,
+    showTactical: aidShowTactical.checked,
+    showTacticalArt: aidTactArt.checked,
+    showTacticalMeta: aidTactMeta.checked,
+    showTacticalGas: aidTactGas.checked,
+    showTacticalTags: aidTactTags.checked,
+    showTacticalAbilities: aidTactAbilities.checked,
+    showTacticalPhase: aidTactPhase.checked,
+    showTacticalActivation: aidTactActivation.checked,
+    showTacticalDescriptions: aidTactDescriptions.checked,
+    mergedBuffs: aidModeMerged.checked,
   });
   scheduleAidCollapsedStatlineAlignment();
   aidPrintBar.style.display = 'flex';
@@ -4061,7 +4213,7 @@ function refreshOutput() {
   refreshPlayModeOutput();
 
   // ── JSON ────────────────────────────────────────────────────────────────────
-  jsonBox.textContent = formatJson(currentRoster);
+  jsonBox.textContent = formatSeedJson(currentSeed);
 }
 
 // ─── Load handler ─────────────────────────────────────────────────────────────
@@ -4082,9 +4234,9 @@ async function loadRoster() {
   debug.log('roster.load.start', { seed });
 
   try {
-    const flat = await fetchRoster(seed);
-    const tacticalCards = await fetchTacticalCards(flat.state?.tacticalCardIds ?? []);
-    currentRoster = parseRoster(flat, { tacticalCards });
+    const [flat, gameData] = await Promise.all([fetchRoster(seed), gameDataPromise]);
+    currentSeed = flat;
+    const resolvedRoster = getCurrentResolvedRoster();
     refreshOutput();
     addRecentSeed(seed);
     if (!recentCollapsed) {
@@ -4098,9 +4250,9 @@ async function loadRoster() {
     resultsEl.style.display  = 'block';
     debug.log('roster.load.ok', {
       seed,
-      unitCount: currentRoster.units.length,
-      tacticalCount: currentRoster.tacticalCards.length,
-      faction: currentRoster.faction,
+      unitCount: resolvedRoster?.units.length ?? 0,
+      tacticalCount: resolvedRoster?.tacticalCards.length ?? 0,
+      faction: resolvedRoster?.faction ?? 'Unknown',
     });
   } catch (err) {
     loadingBox.style.display = 'none';
@@ -4121,7 +4273,7 @@ async function loadRoster() {
 function syncUrlToState() {
   try {
     const url = new URL(window.location.href);
-    if (currentRoster?.seed) url.searchParams.set('s', currentRoster.seed);
+    if (currentSeed?.id) url.searchParams.set('s', currentSeed.id);
     const activeTab = document.querySelector('.tab.active')?.dataset.tab;
     if (activeTab && activeTab !== 'preview') {
       url.searchParams.set('tab', activeTab);
@@ -4244,17 +4396,17 @@ favoriteSeedsEl.addEventListener('click', e => {
 });
 
 document.getElementById('copy-json-btn').addEventListener('click',    () => {
-  if (!currentRoster) {
+  if (!currentSeed) {
     showToast('Load a roster first.', 'error', 1600);
     return;
   }
-  copyText(formatJson(currentRoster));
+  copyText(formatSeedJson(currentSeed));
 });
-const getSeed = () => currentRoster?.seed ?? 'roster';
+const getSeed = () => getCurrentSeedId() || 'roster';
 downloadImgBtn.addEventListener('click', () => downloadImage(rosterCardEl, `roster-${getSeed()}.png`,     downloadImgBtn));
 copyImgBtn.addEventListener(    'click', () => copyImage(    rosterCardEl,                               copyImgBtn));
 function openAidPrintWindow() {
-  if (!currentRoster) return;
+  if (!currentSeed) return;
   const seed = getSeed();
   const cardHtml = aidCardEl.innerHTML;
   const isInkFriendly = JSON.parse(localStorage.getItem('aidPrintInkFriendly') || 'false');
@@ -4363,8 +4515,22 @@ function openAidPrintWindow() {
     .badge-Other   { color: #4b5563; border-color: #b3bcc8; background: #f4f6f9; }
     .unit-info { flex: 1; }
     .unit-name { font-weight: 700; font-size: .88rem; color: #111; }
-    .aid-unit-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .aid-collapsed-statline { display: none !important; }
+    .aid-unit-title-row {
+      display: grid;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+      align-items: center;
+      column-gap: 8px;
+      width: 100%;
+    }
+    .aid-header-statline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 5px;
+      min-width: 0;
+      justify-self: end;
+    }
     .unit-cost { font-size: .78rem; font-weight: 700; color: var(--print-gold);
                  white-space: nowrap; }
     .aid-body-wrap { display: block !important; }
@@ -4379,8 +4545,26 @@ function openAidPrintWindow() {
     /* stats */
     .aid-stats-row { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 8px; }
     .aid-stats { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 0; }
+    .aid-meta-row { display: flex; align-items: flex-start; gap: 6px; margin-top: 10px; }
+    .aid-meta-left,
+    .aid-meta-right { display: flex; align-items: flex-start; min-width: 0; }
+    .aid-meta-right { margin-left: auto; justify-content: flex-end; }
     .unit-upgrades { display: inline-flex; flex-wrap: wrap; gap: 5px; }
     .aid-upgrade-bubbles { margin-left: auto; justify-content: flex-end; }
+    .aid-tags-inline {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 6px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .aid-tags-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: flex-start;
+    }
     .upg-pill {
       display: inline-flex;
       align-items: center;
@@ -4847,9 +5031,9 @@ function renderAidDeckTacticalFrontCard(card, { faction, factionClass } = {}) {
 }
 
 function openAidCardDeckPrintWindow() {
-  if (!currentRoster) return;
+  const roster = getCurrentResolvedRoster();
+  if (!roster) return;
   const seed = getSeed();
-  const roster = currentRoster;
   const factionClass = `faction-${String(roster.faction).toLowerCase()}`;
   const isInkFriendly = JSON.parse(localStorage.getItem('aidPrintInkFriendly') || 'false');
 
@@ -5935,14 +6119,14 @@ if (seedHistorySectionEl) {
 
 if (playNewGameBtn) {
   playNewGameBtn.addEventListener('click', () => {
-    if (!currentRoster) return;
+    if (!currentSeed) return;
     requestPlayDialog('standard');
   });
 }
 
 if (playNewLinkedGameBtn) {
   playNewLinkedGameBtn.addEventListener('click', () => {
-    if (!currentRoster) return;
+    if (!currentSeed) return;
     requestPlayDialog('linked');
   });
 }
@@ -6082,7 +6266,7 @@ if (cloudSignOutBtn) {
 if (playNewGameForm) {
   playNewGameForm.addEventListener('submit', async e => {
     e.preventDefault();
-    const playerSeed = sanitizeSeed(playPlayerSeedInput?.value || currentRoster?.seed || '');
+    const playerSeed = sanitizeSeed(playPlayerSeedInput?.value || currentSeed?.id || '');
     const opponentSeed = sanitizeSeed(playOpponentSeedInput?.value || '');
     if (!playerSeed) {
       playNewGameDialog?.close();
@@ -6121,7 +6305,7 @@ if (playNewLinkedGameForm) {
       showToast('Sign in is required to start a linked live game.', 'error');
       return;
     }
-    const playerSeed = sanitizeSeed(playLinkedPlayerSeedInput?.value || currentRoster?.seed || '');
+    const playerSeed = sanitizeSeed(playLinkedPlayerSeedInput?.value || currentSeed?.id || '');
     if (!playerSeed) {
       playNewLinkedGameDialog?.close();
       return;
@@ -6213,7 +6397,7 @@ function refreshAndSave() { refreshOutput(); savePrefs(); }
 [cardUpgrades, cardStats, cardSize, cardCost, cardTactical, cardTactResource, cardTactGas, cardTactSupply, cardSlots]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 // Player Aid options
-[aidStats, aidAllUpgrades, aidActivation, aidTactical, aidModeAll, aidModeMerged]
+[aidShowHeader, aidShowUnits, aidShowTactical, aidStats, aidUnitWeapons, aidUnitAbilities, aidAllUpgrades, aidUnitPaidUpgrades, aidUnitTags, aidActivation, aidModeMerged, aidTactArt, aidTactMeta, aidTactGas, aidTactTags, aidTactAbilities, aidTactPhase, aidTactActivation, aidTactDescriptions]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 
 window.addEventListener('resize', () => scheduleAidCollapsedStatlineAlignment());
