@@ -21,7 +21,51 @@ import {
   detectUnconditionalPassiveBuff, splitTraitTokens, mergeWeaponTraits,
   applyNumericDelta, extractBuffEffectTerms, normalizePhaseLabel,
 } from './render-helpers.js';
-import { getPlayTrackerCurrentHealth, renderPlayHealthReadout } from './play-state.js';
+import {
+  getPlayTrackerCurrentHealth,
+  getPlayTrackerRemainingModels,
+  getPlayTrackerSupplyTier,
+  renderPlayHealthReadout,
+} from './play-state.js';
+
+function renderPlaySupplyProfile(tracker, fallbackSupply = 0) {
+  const profile = Array.isArray(tracker?.squadProfile) ? tracker.squadProfile : [];
+  if (!profile.length) return '';
+  const { activeTier, currentSupply } = getPlayTrackerSupplyTier(tracker);
+  const baseSupply = Number(tracker?.baseSupply ?? fallbackSupply ?? 0) || 0;
+  const formatModelCountLabel = (tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (Number.isFinite(min) && Number.isFinite(max) && min === max) return String(min);
+    return String(tier?.modelCount ?? '-');
+  };
+  return `
+    <div class="aid-supply-profile">
+      <span class="aid-supply-profile-label">Supply Profile:</span>
+      <div class="aid-supply-profile-pills">
+        ${profile.map((tier) => {
+          const isActive = !!activeTier && Number(activeTier.tier) === Number(tier?.tier);
+          const isDiminished = isActive && currentSupply < baseSupply;
+          return `<span class="aid-supply-tier-pill${isActive ? ' is-active' : ''}${isDiminished ? ' is-diminished' : ''}">${escapeHtml(formatModelCountLabel(tier))} = ◆${escapeHtml(String(tier?.supply ?? 0))}</span>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function resolveCollapsedSlashStat(value, tracker, fallbackModels = 1) {
+  const raw = String(value ?? '').trim();
+  if (!raw.includes('/')) return { value: raw, isDiminished: false };
+  const parts = raw.split('/').map(part => part.trim()).filter(Boolean);
+  if (parts.length < 2) return { value: raw, isDiminished: false };
+  const remainingModels = tracker
+    ? getPlayTrackerRemainingModels(tracker)
+    : Math.max(0, Number(fallbackModels ?? 1) || 0);
+  const useSingleModelValue = remainingModels <= 1;
+  return {
+    value: useSingleModelValue ? parts[1] : parts[0],
+    isDiminished: useSingleModelValue && parts[0] !== parts[1],
+  };
+}
 
 export function renderPlayerAid(roster, opts = {}) {
   const {
@@ -30,7 +74,7 @@ export function renderPlayerAid(roster, opts = {}) {
     showStats = true,
     showUnitWeapons = true,
     showUnitAbilities = true,
-    allUpgrades = true,
+    allUpgrades = false,
     showUnitPaidUpgrades = true,
     showUnitTags = true,
     showUnitActivation = true,
@@ -240,13 +284,15 @@ export function renderPlayerAid(roster, opts = {}) {
       unitStatHighlights[field] = applied.changed;
     }
 
-    let displaySupply   = u.supply;
+    const trackerSupplyState = tracker ? getPlayTrackerSupplyTier(tracker) : null;
+    let displaySupply   = trackerSupplyState ? trackerSupplyState.currentSupply : u.supply;
     let supplyHighlighted = false;
     if (Number(unitStatDeltas.supply ?? 0)) {
-      const appliedSupply   = applyNumericDelta(u.supply, Number(unitStatDeltas.supply));
+      const appliedSupply   = applyNumericDelta(displaySupply, Number(unitStatDeltas.supply));
       displaySupply         = appliedSupply.value;
       supplyHighlighted     = appliedSupply.changed;
     }
+    const diminishedSupply = !!trackerSupplyState && trackerSupplyState.currentSupply < Number(u.supply ?? 0);
 
     // ── Stat chips HTML ───────────────────────────────────────────────────────
     const statChips = [
@@ -263,11 +309,41 @@ export function renderPlayerAid(roster, opts = {}) {
         return `<span class="stat-chip">${label} ${valueHtml}</span>`;
       })
       .join('');
+    const collapsedStatChips = [
+      ['HP', buffedUnitStats.hp, 'hp'],
+      ['ARM', buffedUnitStats.armor, 'armor'],
+      ['EVD', buffedUnitStats.evade, 'evade'],
+      ['SPD', buffedUnitStats.speed, 'speed'],
+      ['SH', buffedUnitStats.shield, 'shield'],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value, field]) => {
+        const collapsedValue = resolveCollapsedSlashStat(value, tracker, u.models);
+        const highlighted = (mergedBuffs && !!unitStatHighlights[field]) || collapsedValue.isDiminished;
+        const valueHtml = highlighted
+          ? `<strong class="aid-buff-highlight">${escapeHtml(String(collapsedValue.value))}</strong>`
+          : `<strong>${escapeHtml(String(collapsedValue.value))}</strong>`;
+        const chipClasses = [
+          'stat-chip',
+          `stat-chip-${escapeHtml(field)}`,
+          'stat-chip-stacked',
+          collapsedValue.isDiminished ? 'is-diminished' : '',
+        ].filter(Boolean).join(' ');
+        return `<span class="${chipClasses}"><span class="stat-chip-label">${label}</span>${valueHtml}</span>`;
+      })
+      .join('');
 
     const supplyHtml = mergedBuffs && supplyHighlighted
-      ? `<span class="stat-chip stat-chip-supply">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
-      : `<span class="stat-chip stat-chip-supply">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+      ? `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+    const collapsedSupplyHtml = mergedBuffs && supplyHighlighted
+      ? `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong>${escapeHtml(String(displaySupply))}</strong></span>`;
     const mineralsHtml = `<span class="stat-chip stat-chip-minerals"><strong>${u.totalCost}m</strong></span>`;
+    const supplyProfileHtml = renderPlaySupplyProfile(
+      tracker ?? { squadProfile: u.squadProfile, startingModels: u.models, baseSupply: u.supply },
+      u.supply,
+    );
 
     // ── Tracker HTML ──────────────────────────────────────────────────────────
     const trackerDisabledAttrs = tracker ? getTrackerDisabledAttrs(tracker.side) : '';
@@ -292,8 +368,8 @@ export function renderPlayerAid(roster, opts = {}) {
       ? `<div class="aid-tags-inline"><span class="aid-tags-label">Tags:</span><div class="aid-tags-pills">${tagPillsHtml}</div></div>`
       : '';
 
-    const headerStatlineHtml = showStats && isCollapsed
-      ? `<div class="aid-header-statline">${statChips}${supplyHtml}${mineralsHtml}${collapsedTrackerHtml}</div>`
+    const headerStatlineHtml = showStats
+      ? `<div class="aid-header-statline aid-collapsed-grid${tracker ? ' is-play-mode' : ''}">${collapsedStatChips}${collapsedSupplyHtml}${collapsedTrackerHtml}</div>`
       : '';
     const statsHtml = showStats ? `
       <div class="aid-stats-row">
@@ -363,7 +439,7 @@ export function renderPlayerAid(roster, opts = {}) {
       </div>` : '';
 
     const visibleMergedBuffsHtml = mergedBuffs ? mergedBuffsHtml : '';
-    const hasBody = statsHtml || metadataRowHtml || weaponsHtml || visibleMergedBuffsHtml || upgradesHtml;
+    const hasBody = statsHtml || supplyProfileHtml || metadataRowHtml || weaponsHtml || visibleMergedBuffsHtml || upgradesHtml;
 
     return `
       <div class="aid-unit${isCollapsed ? ' is-collapsed' : ''}${isDead ? ' play-dead' : ''}" data-aid-unit-key="${escapeHtml(unitKey)}">
@@ -378,7 +454,7 @@ export function renderPlayerAid(roster, opts = {}) {
           ${showStats ? '' : `<div class="unit-cost">${u.totalCost}m</div>`}
           <span class="aid-collapse-indicator" aria-hidden="true"></span>
         </div>
-        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${statsHtml}${visibleMergedBuffsHtml}${weaponsHtml}${upgradesHtml}${metadataRowHtml}</div></div>` : ''}
+        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${statsHtml}${supplyProfileHtml}${visibleMergedBuffsHtml}${weaponsHtml}${upgradesHtml}${metadataRowHtml}</div></div>` : ''}
       </div>`;
   }).join('');
 

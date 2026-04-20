@@ -2,6 +2,33 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Web: Start Local Server",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "${workspaceFolder}/scripts/start-web-if-needed.sh"
+      ],
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^(Starting web server|Web server already running).*$",
+          "endsPattern": "^(✅  Web UI → http://localhost:3000|Web server already running on http://localhost:3000)$"
+        }
+      }
+    },
+    {
       "label": "Unraid: Update Container + Commands",
       "type": "shell",
       "command": "powershell",

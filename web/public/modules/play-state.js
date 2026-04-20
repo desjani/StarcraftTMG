@@ -9,7 +9,7 @@ import { PLAY_PHASES } from './constants.js';
 
 // ─── Linked consensus helpers ─────────────────────────────────────────────────
 export function createEmptyLinkedConsensus() {
-  return { pass: null, endGame: null };
+  return { pass: null, endGame: null, firstPlayerChoice: null, startGame: null };
 }
 
 // ─── Game ID ──────────────────────────────────────────────────────────────────
@@ -36,9 +36,13 @@ export function createPlayUnitsByKey(roster, side) {
     }
     unitsByKey[key] = {
       key, side,
+      unitName: String(u?.name ?? ''),
+      startingModels: models,
       maxHealthPools,
       currentHealthPools: maxHealthPools.map(pool => ({ ...pool })),
       supply: Number(u?.supply ?? 0) || 0,
+      baseSupply: Number(u?.supply ?? 0) || 0,
+      squadProfile: Array.isArray(u?.squadProfile) ? cloneDeep(u.squadProfile) : [],
       deployed: false,
       activation: { movement: false, assault: false, combat: false },
     };
@@ -51,10 +55,73 @@ export function getPlayTrackerCurrentHealth(tracker) {
   return (tracker?.currentHealthPools ?? []).reduce((sum, pool) => sum + Number(pool?.value || 0), 0);
 }
 
+export function getPlayTrackerRemainingModels(tracker) {
+  const pools = tracker?.currentHealthPools ?? [];
+  if (!pools.length) {
+    return Math.max(0, Number(tracker?.startingModels ?? 0) || 0);
+  }
+  return pools.reduce((count, pool) => {
+    if (pool?.type === 'shield') return count;
+    return count + (Number(pool?.value || 0) > 0 ? 1 : 0);
+  }, 0);
+}
+
+export function getPlayTrackerSupplyTier(tracker) {
+  const remainingModels = getPlayTrackerRemainingModels(tracker);
+  const profile = Array.isArray(tracker?.squadProfile) ? tracker.squadProfile : [];
+  const activeTier = profile.find((tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return false;
+    return remainingModels >= min && remainingModels <= max;
+  }) ?? null;
+  return {
+    remainingModels,
+    activeTier,
+    currentSupply: remainingModels <= 0
+      ? 0
+      : activeTier
+        ? Number(activeTier.supply ?? 0)
+        : Number(tracker?.baseSupply ?? tracker?.supply ?? 0) || 0,
+  };
+}
+
+export function getPlayTrackerCurrentSupply(tracker) {
+  return getPlayTrackerSupplyTier(tracker).currentSupply;
+}
+
 export function renderPlayHealthReadout(tracker) {
   const pools    = tracker?.currentHealthPools ?? [];
   const maxPools = tracker?.maxHealthPools ?? [];
   if (!pools.length) return '<span class="play-health-empty">-</span>';
+  const hpPoolIndexes = pools
+    .map((pool, index) => ({ pool, index }))
+    .filter(({ pool }) => pool?.type !== 'shield');
+  const shouldCollapseHpPools = hpPoolIndexes.length > 1
+    && hpPoolIndexes.every(({ index }) => Number(maxPools[index]?.value || 0) === 1);
+  if (shouldCollapseHpPools) {
+    const collapsedHpValue = hpPoolIndexes.reduce((sum, { pool }) => sum + Number(pool?.value || 0), 0);
+    const hpMaxValue = hpPoolIndexes.length;
+    const segments = [];
+    const hpCls = [
+      'play-health-segment',
+      'is-hp',
+      collapsedHpValue <= 0 ? 'is-zero' : '',
+      collapsedHpValue > 0 && collapsedHpValue >= hpMaxValue ? 'is-full' : '',
+    ].filter(Boolean).join(' ');
+    segments.push(`<span class="${hpCls}">${escapeHtml(String(collapsedHpValue))}</span>`);
+    pools.forEach((pool, index) => {
+      if (pool?.type !== 'shield') return;
+      const value = Number(pool.value || 0);
+      const shieldCls = [
+        'play-health-segment',
+        'is-shield',
+        value <= 0 ? 'is-zero' : '',
+      ].filter(Boolean).join(' ');
+      segments.push(`<span class="${shieldCls}">${escapeHtml(String(pool.value))}</span>`);
+    });
+    return segments.join('<span class="play-health-sep">/</span>');
+  }
   return pools.map((pool, index) => {
     const value    = Number(pool.value || 0);
     const maxValue = Number(maxPools[index]?.value || 0);
@@ -122,7 +189,7 @@ export function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
     playerSeed, opponentSeed, playerRoster, opponentRoster,
     playerName:     String(setup.playerName   || 'Player').trim()   || 'Player',
     opponentName:   String(setup.opponentName || 'Opponent').trim() || 'Opponent',
-    opponentFaction: setup.opponentFaction || 'Terran',
+    opponentFaction: setup.opponentFaction || opponentRoster?.faction || 'Unknown',
     missionName:    String(setup.missionName  || 'Mission').trim()  || 'Mission',
     gameLength, startingSupply, supplyPerRound, gameSize,
     hasStarted:    !!setup.hasStarted,
@@ -135,6 +202,7 @@ export function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
     playerResource: 0, opponentResource: 0,
     round: 1, phaseIndex: 0,
     firstPlayer: 'player',
+    firstPlayerChosen: Boolean(setup.firstPlayerChosen),
     queuedFirstPlayer: setup.queuedFirstPlayer === 'opponent'
       ? 'opponent'
       : (setup.queuedFirstPlayer === 'player' ? 'player' : null),
@@ -189,6 +257,7 @@ export function clonePlaySnapshot(state) {
     round:            state.round,
     phaseIndex:       state.phaseIndex,
     firstPlayer:      state.firstPlayer,
+    firstPlayerChosen: Boolean(state.firstPlayerChosen),
     playerResource:   state.playerResource,
     opponentResource: state.opponentResource,
     playerScore:      state.playerScore,
@@ -203,6 +272,7 @@ export function restoreSnapshotIntoState(state, snapshot) {
   state.round            = snapshot.round;
   state.phaseIndex       = snapshot.phaseIndex;
   state.firstPlayer      = snapshot.firstPlayer;
+  state.firstPlayerChosen = Boolean(snapshot.firstPlayerChosen);
   state.playerResource   = snapshot.playerResource;
   state.opponentResource = snapshot.opponentResource;
   state.playerScore      = snapshot.playerScore;

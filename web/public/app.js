@@ -29,6 +29,8 @@ import { formatCompact } from './lib/formatter.js';
 import { createDebugLogger, getUserFacingError } from './appUtils.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
+const DISCORD_FREE_MESSAGE_LIMIT = 2000;
+
 let currentSeed      = null;
 let currentFormatted = '';
 let isLoadingRoster  = false;
@@ -45,6 +47,11 @@ function getCurrentResolvedRoster() {
 
 function getCurrentSeedId() {
   return currentSeed?.id ?? '';
+}
+
+function syncLoadedRosterLayout() {
+  const hasVisibleRoster = resultsEl && resultsEl.style.display !== 'none';
+  document.body.classList.toggle('has-loaded-roster', hasVisibleRoster);
 }
 
 function ensurePlayModeStateFromCurrentSeed() {
@@ -85,15 +92,21 @@ const recentSeedsEl  = document.getElementById('recent-seeds');
 const favoriteSeedsEl = document.getElementById('favorite-seeds');
 const noRecentEl     = document.getElementById('no-recent');
 const noFavoritesEl  = document.getElementById('no-favorites');
+const rosterImageVisibilityOptsEl = document.getElementById('roster-image-visibility-opts');
+const rosterImageUnitOptsEl = document.getElementById('roster-image-unit-opts');
+const rosterImageTacticalOptsEl = document.getElementById('roster-image-tactical-opts');
+const rosterDiscordOptsEl = document.getElementById('roster-discord-opts');
+const rosterDiscordToolsEl = document.getElementById('roster-discord-tools');
 const previewContent = document.getElementById('preview-content');
 const rawBox         = document.getElementById('raw-box');
 const discordModeToggle = document.getElementById('discord-mode-toggle');
 const rosterCardEl   = document.getElementById('roster-card');
+const rosterDiscordViewEl = document.getElementById('roster-discord-view');
+const rosterJsonViewEl = document.getElementById('roster-json-view');
 const jsonBox        = document.getElementById('json-box');
 const charCounter    = document.getElementById('char-counter');
 const optCharReadout = document.getElementById('opt-char-readout');
 const discordLimitWarning = document.getElementById('discord-limit-warning');
-const discordOpts    = document.getElementById('discord-opts');
 // Discord / Raw options
 const optPlain         = document.getElementById('opt-plain');
 const optStats         = document.getElementById('opt-stats');
@@ -115,6 +128,9 @@ const cardTactResource = document.getElementById('card-tact-resource');
 const cardTactGas    = document.getElementById('card-tact-gas');
 const cardTactSupply = document.getElementById('card-tact-supply');
 const cardSlots      = document.getElementById('card-slots');
+const rosterViewImage = document.getElementById('roster-view-image');
+const rosterViewDiscord = document.getElementById('roster-view-discord');
+const rosterViewJson = document.getElementById('roster-view-json');
 const downloadImgBtn = document.getElementById('download-img-btn');
 const copyImgBtn     = document.getElementById('copy-img-btn');
 // Player Aid options + controls
@@ -124,11 +140,11 @@ const aidShowTactical = document.getElementById('aid-show-tactical');
 const aidStats = document.getElementById('aid-stats');
 const aidUnitWeapons = document.getElementById('aid-unit-weapons');
 const aidUnitAbilities = document.getElementById('aid-unit-abilities');
-const aidAllUpgrades = document.getElementById('aid-all-upgrades');
 const aidUnitPaidUpgrades = document.getElementById('aid-unit-paid-upgrades');
 const aidUnitTags = document.getElementById('aid-unit-tags');
 const aidActivation = document.getElementById('aid-activation');
-const aidModeMerged = document.getElementById('aid-mode-merged');
+const aidBuffModeSeparated = document.getElementById('aid-buff-mode-separated');
+const aidBuffModeMerged = document.getElementById('aid-buff-mode-merged');
 const aidTactArt = document.getElementById('aid-tact-art');
 const aidTactMeta = document.getElementById('aid-tact-meta');
 const aidTactGas = document.getElementById('aid-tact-gas');
@@ -156,7 +172,6 @@ const playNewGameDialog = document.getElementById('play-new-game-dialog');
 const playNewGameForm = document.getElementById('play-new-game-form');
 const playPlayerNameInput = document.getElementById('play-player-name');
 const playOpponentNameInput = document.getElementById('play-opponent-name');
-const playOpponentFactionInput = document.getElementById('play-opponent-faction');
 const playPlayerSeedInput = document.getElementById('play-player-seed');
 const playOpponentSeedInput = document.getElementById('play-opponent-seed');
 const playMissionNameInput = document.getElementById('play-mission-name');
@@ -197,6 +212,7 @@ const cloudAuthEmailCreateBtn = document.getElementById('cloud-auth-email-create
 const cloudAuthEmailResetBtn = document.getElementById('cloud-auth-email-reset-btn');
 const cloudAuthError = document.getElementById('cloud-auth-error');
 let discordMode      = 'preview';
+let rosterPanelMode  = 'image';
 let recentCollapsed  = false;
 let seedHistory = { recentSeeds: [], favorites: [] };
 let playModeState = null;
@@ -205,6 +221,8 @@ let cloudUser = null;
 let cloudSyncTimer = null;
 let cloudSyncInFlight = false;
 let cloudSyncPending = false;
+let lastSavedPlayLibraryJson = null;
+let lastSavedSeedHistoryJson = null;
 let linkedSyncTimer = null;
 let linkedSyncInFlight = false;
 let linkedSyncPending = false;
@@ -215,26 +233,28 @@ let linkedSession = {
   ready: false,
   unsubscribe: null,
 };
+const processedLinkedConsensusRequestIds = new Set();
 let pendingNewGameDialogMode = 'standard';
 
-const PLAY_PHASES = ['Movement', 'Assault', 'Combat', 'Scoring'];
+const PLAY_PHASES = ['Pregame', 'Movement', 'Assault', 'Combat', 'Scoring'];
 
 function createEmptyLinkedConsensus() {
-  return { pass: null, endGame: null };
+  return { pass: null, endGame: null, firstPlayerChoice: null, randomFirstPlayer: null, startGame: null };
 }
 
 function normalizeLinkedConsensus(consensus) {
   const src = consensus && typeof consensus === 'object' ? consensus : {};
-  const normalizeEndGameRequest = (value) => {
+  const normalizeApprovalRequest = (value, type) => {
     if (!value || typeof value !== 'object') return null;
     return {
-      type: 'end-game',
-      requestId: String(value.requestId || `end-game-${Date.now()}`),
+      type,
+      requestId: String(value.requestId || `${type}-${Date.now()}`),
       requestedBy: value.requestedBy === 'opponent' ? 'opponent' : 'player',
       playerApproved: Boolean(value.playerApproved),
       opponentApproved: Boolean(value.opponentApproved),
       targetRound: Number(value.targetRound || 0),
       targetPhaseIndex: Number(value.targetPhaseIndex || 0),
+      choice: value.choice === 'opponent' ? 'opponent' : 'player',
     };
   };
 
@@ -266,12 +286,23 @@ function normalizeLinkedConsensus(consensus) {
 
   return {
     pass,
-    endGame: normalizeEndGameRequest(src.endGame),
+    endGame: normalizeApprovalRequest(src.endGame, 'end-game'),
+    firstPlayerChoice: normalizeApprovalRequest(src.firstPlayerChoice, 'first-player'),
+    randomFirstPlayer: normalizeApprovalRequest(src.randomFirstPlayer, 'random-first-player'),
+    startGame: normalizeApprovalRequest(src.startGame, 'start-game'),
   };
 }
 
 function hasBothLinkedApprovals(request) {
   return Boolean(request?.playerApproved && request?.opponentApproved);
+}
+
+function markLinkedConsensusRequestProcessed(requestId) {
+  if (requestId) processedLinkedConsensusRequestIds.add(String(requestId));
+}
+
+function hasProcessedLinkedConsensusRequest(requestId) {
+  return requestId ? processedLinkedConsensusRequestIds.has(String(requestId)) : false;
 }
 
 // Initialize ink-friendly preference from localStorage
@@ -492,11 +523,21 @@ function getUnitsBySide(unitsByKey, side) {
 function buildLinkedUnitsBySide({ roster = null, side = 'player', existingUnitsByKey = null, incomingUnitsByKey = null } = {}) {
   const normalizedSide = side === 'opponent' ? 'opponent' : 'player';
   const fallbackUnitsByKey = roster ? createPlayUnitsByKey(roster, normalizedSide) : {};
-  return {
-    ...fallbackUnitsByKey,
-    ...getUnitsBySide(existingUnitsByKey, normalizedSide),
-    ...getUnitsBySide(incomingUnitsByKey, normalizedSide),
-  };
+  const existingScoped = getUnitsBySide(existingUnitsByKey, normalizedSide);
+  const incomingScoped = getUnitsBySide(incomingUnitsByKey, normalizedSide);
+  const merged = {};
+  for (const key of new Set([
+    ...Object.keys(fallbackUnitsByKey),
+    ...Object.keys(existingScoped),
+    ...Object.keys(incomingScoped),
+  ])) {
+    merged[key] = {
+      ...(fallbackUnitsByKey[key] ?? {}),
+      ...(existingScoped[key] ?? {}),
+      ...(incomingScoped[key] ?? {}),
+    };
+  }
+  return merged;
 }
 
 function isLinkedSideEditable(side) {
@@ -515,6 +556,7 @@ function buildLinkedSharedState(state) {
     round: Number(state?.round || 1),
     phaseIndex: Number(state?.phaseIndex || 0),
     firstPlayer: state?.firstPlayer === 'opponent' ? 'opponent' : 'player',
+    firstPlayerChosen: Boolean(state?.firstPlayerChosen),
     missionName: String(state?.missionName || 'Mission'),
     gameLength: Number(state?.gameLength || 5),
     startingSupply: Number(state?.startingSupply || 10),
@@ -609,7 +651,9 @@ function applyLinkedPayload({ match, playerSide, opponentSide } = {}) {
     startingSupply: shared.startingSupply ?? 10,
     supplyPerRound: shared.supplyPerRound ?? 2,
     gameSize: shared.gameSize ?? 2000,
+    linkedSide: linkedSession.side === 'opponent' ? 'opponent' : 'player',
     queuedFirstPlayer: shared.queuedFirstPlayer === 'opponent' ? 'opponent' : (shared.queuedFirstPlayer === 'player' ? 'player' : null),
+    firstPlayerChosen: Boolean(shared.firstPlayerChosen),
     hasStarted: Boolean(shared.hasStarted ?? true),
   };
   const consensus = normalizeLinkedConsensus(shared.consensus);
@@ -631,6 +675,7 @@ function applyLinkedPayload({ match, playerSide, opponentSide } = {}) {
     playModeState.supplyPerRound = setup.supplyPerRound;
     playModeState.gameSize = setup.gameSize;
     playModeState.queuedFirstPlayer = setup.queuedFirstPlayer;
+    playModeState.firstPlayerChosen = Boolean(setup.firstPlayerChosen);
     playModeState.hasStarted = setup.hasStarted;
   }
 
@@ -665,7 +710,8 @@ function applyLinkedPayload({ match, playerSide, opponentSide } = {}) {
   playModeState.round = Number(shared.round || 1);
   playModeState.phaseIndex = Number(shared.phaseIndex || 0);
   playModeState.firstPlayer = shared.firstPlayer === 'opponent' ? 'opponent' : 'player';
-  playModeState.activeBoardSide = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
+  playModeState.firstPlayerChosen = Boolean(shared.firstPlayerChosen);
+  playModeState.activeBoardSide = linkedSession.side === 'opponent' ? 'opponent' : 'player';
   playModeState.playerScore = Number(playerSide.score || 0);
   playModeState.opponentScore = Number(opponentSide.score || 0);
   playModeState.playerResource = Number(playerSide.resource || 0);
@@ -679,6 +725,33 @@ function applyLinkedPayload({ match, playerSide, opponentSide } = {}) {
   playModeState.linkedMatchId = match.matchId || linkedSession.matchId || null;
   playModeState.linkedSide = linkedSession.side || null;
   updateLinkedReadyState(playModeState, { match, playerSide, opponentSide });
+
+  const approvedFirstPlayerChoice = playModeState.linkedConsensus?.firstPlayerChoice;
+  if (approvedFirstPlayerChoice && hasBothLinkedApprovals(approvedFirstPlayerChoice) && !hasProcessedLinkedConsensusRequest(approvedFirstPlayerChoice.requestId)) {
+    playModeState.firstPlayer = approvedFirstPlayerChoice.choice === 'opponent' ? 'opponent' : 'player';
+    playModeState.firstPlayerChosen = true;
+    markLinkedConsensusRequestProcessed(approvedFirstPlayerChoice.requestId);
+  }
+
+  const approvedRandomFirstPlayer = playModeState.linkedConsensus?.randomFirstPlayer;
+  if (approvedRandomFirstPlayer && hasBothLinkedApprovals(approvedRandomFirstPlayer) && !hasProcessedLinkedConsensusRequest(approvedRandomFirstPlayer.requestId)) {
+    playModeState.firstPlayer = approvedRandomFirstPlayer.choice === 'opponent' ? 'opponent' : 'player';
+    playModeState.firstPlayerChosen = true;
+    markLinkedConsensusRequestProcessed(approvedRandomFirstPlayer.requestId);
+  }
+
+  const approvedStartGame = playModeState.linkedConsensus?.startGame;
+  if (approvedStartGame && hasBothLinkedApprovals(approvedStartGame) && !hasProcessedLinkedConsensusRequest(approvedStartGame.requestId)) {
+    if (!playModeState.firstPlayerChosen) {
+      playModeState.firstPlayer = approvedStartGame.choice === 'opponent' ? 'opponent' : 'player';
+      playModeState.firstPlayerChosen = true;
+    }
+    if (getPlayCurrentPhase() === 'Pregame') {
+      playModeState.history.push(clonePlaySnapshot());
+      applyPhaseTarget(playModeState, getNextPhaseTarget(playModeState));
+    }
+    markLinkedConsensusRequestProcessed(approvedStartGame.requestId);
+  }
 
   syncCurrentSeedFromPlayState();
 }
@@ -696,6 +769,7 @@ async function stopLinkedSession({ notify = false } = {}) {
   }
   linkedSyncInFlight = false;
   linkedSyncPending = false;
+  processedLinkedConsensusRequestIds.clear();
   updateLinkedUi();
   if (notify) showToast('Left linked live game.');
 }
@@ -822,7 +896,7 @@ function closeCloudAuthDialog() {
 
 function savePrefs() {
   try {
-    const activeTab = document.querySelector('.tab.active')?.dataset.tab ?? 'preview';
+    const activeTab = document.querySelector('.tab.active')?.dataset.tab ?? 'roster';
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       seed: seedInput.value.trim().toUpperCase(),
       tab:  activeTab,
@@ -860,7 +934,6 @@ function savePrefs() {
         stats: aidStats.checked,
         unitWeapons: aidUnitWeapons.checked,
         unitAbilities: aidUnitAbilities.checked,
-        allUpgrades: aidAllUpgrades.checked,
         unitPaidUpgrades: aidUnitPaidUpgrades.checked,
         unitTags: aidUnitTags.checked,
         activation: aidActivation.checked,
@@ -872,7 +945,7 @@ function savePrefs() {
         tactPhase: aidTactPhase.checked,
         tactActivation: aidTactActivation.checked,
         tactDescriptions: aidTactDescriptions.checked,
-        mergedBuffs: aidModeMerged.checked,
+        buffMode: aidBuffModeMerged.checked ? 'merged' : 'separated',
       },
     }));
   } catch (_) { /* storage unavailable */ }
@@ -914,7 +987,6 @@ function loadPrefs() {
       aidStats.checked       = p.aid.stats       !== false;
       aidUnitWeapons.checked = p.aid.unitWeapons !== false;
       aidUnitAbilities.checked = p.aid.unitAbilities !== false;
-      aidAllUpgrades.checked = p.aid.allUpgrades !== false;
       aidUnitPaidUpgrades.checked = p.aid.unitPaidUpgrades !== false;
       aidUnitTags.checked = p.aid.unitTags !== false;
       aidActivation.checked  = p.aid.activation  !== false;
@@ -926,15 +998,21 @@ function loadPrefs() {
       aidTactPhase.checked = p.aid.tactPhase !== false;
       aidTactActivation.checked = p.aid.tactActivation !== false;
       aidTactDescriptions.checked = p.aid.tactDescriptions !== false;
-      aidModeMerged.checked = !!(p.aid.mergedBuffs || p.aid.mode === 'merged');
+      const buffMode = p.aid.buffMode === 'merged' || p.aid.mergedBuffs || p.aid.mode === 'merged'
+        ? 'merged'
+        : 'separated';
+      aidBuffModeMerged.checked = buffMode === 'merged';
+      aidBuffModeSeparated.checked = buffMode !== 'merged';
     }
-    // Legacy compatibility: old saved "raw" tab now maps to preview + raw mode.
-    const savedTab = p.tab === 'raw' ? 'preview' : p.tab;
+    // Legacy compatibility: old saved Discord-first tabs now map into roster.
+    const savedTab = p.tab === 'raw' || p.tab === 'preview' || p.tab === 'json'
+      ? 'roster'
+      : p.tab;
     const savedMode = p.discordMode ?? (p.tab === 'raw' ? 'raw' : 'preview');
     recentCollapsed = !!p.ui?.recentCollapsed;
     applyRecentCollapsed(false);
     setDiscordMode(savedMode, { save: false });
-    if (savedTab && savedTab !== 'preview') {
+    if (savedTab && savedTab !== 'roster') {
       const tabEl = document.querySelector(`.tab[data-tab="${savedTab}"]`);
       if (tabEl) tabEl.click();
     }
@@ -950,8 +1028,31 @@ function setDiscordMode(mode, { save = true } = {}) {
   if (save) savePrefs();
 }
 
+function setRosterPanelMode(mode, { save = true } = {}) {
+  rosterPanelMode = ['discord', 'json'].includes(mode) ? mode : 'image';
+  const showImage = rosterPanelMode === 'image';
+  const showDiscord = rosterPanelMode === 'discord';
+  const showJson = rosterPanelMode === 'json';
+  if (rosterViewImage) rosterViewImage.checked = showImage;
+  if (rosterViewDiscord) rosterViewDiscord.checked = showDiscord;
+  if (rosterViewJson) rosterViewJson.checked = showJson;
+  if (rosterImageVisibilityOptsEl) rosterImageVisibilityOptsEl.hidden = !showImage;
+  if (rosterImageUnitOptsEl) rosterImageUnitOptsEl.hidden = !showImage;
+  if (rosterImageTacticalOptsEl) rosterImageTacticalOptsEl.hidden = !showImage;
+  if (rosterCardEl) rosterCardEl.hidden = !showImage;
+  if (rosterDiscordViewEl) rosterDiscordViewEl.hidden = !showDiscord;
+  if (rosterJsonViewEl) rosterJsonViewEl.hidden = !showJson;
+  if (rosterDiscordOptsEl) rosterDiscordOptsEl.hidden = !showDiscord;
+  if (rosterDiscordToolsEl) rosterDiscordToolsEl.hidden = !showDiscord;
+  if (discordLimitWarning) discordLimitWarning.hidden = !showDiscord || discordLimitWarning.style.display === 'none';
+  if (downloadImgBtn) downloadImgBtn.style.display = showImage ? 'inline-block' : 'none';
+  if (copyImgBtn) copyImgBtn.style.display = showImage ? 'inline-block' : 'none';
+  if (save) savePrefs();
+}
+
 function applyRecentCollapsed(save = true) {
   seedHistorySectionEl.style.display = recentCollapsed ? 'none' : '';
+  document.body.classList.toggle('history-open', !recentCollapsed);
   recentToggleBtn.textContent = recentCollapsed ? 'Show History' : 'Hide History';
   if (save) savePrefs();
 }
@@ -961,9 +1062,17 @@ function sanitizeSeed(seed) {
 }
 
 function saveSeedHistory() {
+  let serialized = '';
   try {
-    localStorage.setItem(SEED_HISTORY_KEY, JSON.stringify(seedHistory));
+    serialized = JSON.stringify(seedHistory);
+  } catch (_) {
+    return;
+  }
+  if (serialized === lastSavedSeedHistoryJson) return;
+  try {
+    localStorage.setItem(SEED_HISTORY_KEY, serialized);
   } catch (_) { /* storage unavailable */ }
+  lastSavedSeedHistoryJson = serialized;
   scheduleCloudSync();
 }
 
@@ -984,6 +1093,7 @@ function loadSeedHistory() {
         }))
         .filter(f => f.name && f.seed),
     };
+    lastSavedSeedHistoryJson = JSON.stringify(seedHistory);
   } catch (_) { /* corrupt storage — ignore */ }
 }
 
@@ -1073,9 +1183,17 @@ function restoreSnapshotIntoState(state, snapshot) {
 }
 
 function savePlayLibrary() {
+  let serialized = '';
   try {
-    localStorage.setItem(PLAY_LIBRARY_KEY, JSON.stringify(playLibrary));
+    serialized = JSON.stringify(playLibrary);
+  } catch (_) {
+    return;
+  }
+  if (serialized === lastSavedPlayLibraryJson) return;
+  try {
+    localStorage.setItem(PLAY_LIBRARY_KEY, serialized);
   } catch (_) { /* storage unavailable */ }
+  lastSavedPlayLibraryJson = serialized;
   scheduleCloudSync();
 }
 
@@ -1089,8 +1207,10 @@ function loadPlayLibrary() {
       inProgress: Array.isArray(parsed?.inProgress) ? parsed.inProgress : [],
       completed: Array.isArray(parsed?.completed) ? parsed.completed : [],
     };
+    lastSavedPlayLibraryJson = JSON.stringify(playLibrary);
   } catch (_) {
     playLibrary = { activeGameId: null, inProgress: [], completed: [] };
+    lastSavedPlayLibraryJson = JSON.stringify(playLibrary);
   }
 }
 
@@ -1170,7 +1290,6 @@ async function bootstrapCloudLibrary(user) {
       applyPlayLibrary(cloudLibrary, { save: true });
       applySeedHistory(cloudSeedHistory, { save: true });
       setCloudSyncStatus('Cloud loaded');
-      if (!playModeState) restoreActivePlayGame();
       return;
     }
 
@@ -1186,7 +1305,6 @@ async function bootstrapCloudLibrary(user) {
         const mergedSeedHistory = mergeSeedHistories(localSeedHistory, cloudSeedHistory, MAX_RECENT_SEEDS);
         if (!librariesEqual(playLibrary, merged)) {
           applyPlayLibrary(merged, { save: true });
-          if (!playModeState) restoreActivePlayGame();
         }
         if (!librariesEqual(seedHistory, mergedSeedHistory)) {
           applySeedHistory(mergedSeedHistory, { save: true });
@@ -1354,6 +1472,7 @@ function loadPlayGameFromLibrary(gameId, source = 'inProgress', options = {}) {
     loadingBox.style.display = 'none';
     errorBox.style.display = 'none';
     document.body.classList.remove('preload');
+    syncLoadedRosterLayout();
     const playTab = document.querySelector('.tab[data-tab="play"]');
     if (playTab) activateTab(playTab);
   } else {
@@ -1377,13 +1496,6 @@ function removePlayGameFromLibrary(gameId, source = 'inProgress') {
     playLibrary.activeGameId = playModeState?.gameId || null;
   }
   savePlayLibrary();
-}
-
-function restoreActivePlayGame() {
-  const id = playLibrary.activeGameId;
-  if (!id || currentSeed) return false;
-  return loadPlayGameFromLibrary(id, 'inProgress')
-    || loadPlayGameFromLibrary(id, 'completed');
 }
 
 function buildInProgressGamesHtml() {
@@ -2504,7 +2616,7 @@ function renderPlayerAid(roster, opts = {}) {
     showStats = true,
     showUnitWeapons = true,
     showUnitAbilities = true,
-    allUpgrades = true,
+    allUpgrades = false,
     showUnitPaidUpgrades = true,
     showUnitTags = true,
     showUnitActivation = true,
@@ -2735,13 +2847,15 @@ function renderPlayerAid(roster, opts = {}) {
       unitStatHighlights[field] = applied.changed;
     }
 
-    let displaySupply = u.supply;
+    const trackerSupplyState = tracker ? getPlayTrackerSupplyTier(tracker) : null;
+    let displaySupply = trackerSupplyState ? trackerSupplyState.currentSupply : u.supply;
     let supplyHighlighted = false;
     if (Number(unitStatDeltas.supply ?? 0)) {
-      const appliedSupply = applyNumericDelta(u.supply, Number(unitStatDeltas.supply));
+      const appliedSupply = applyNumericDelta(displaySupply, Number(unitStatDeltas.supply));
       displaySupply = appliedSupply.value;
       supplyHighlighted = appliedSupply.changed;
     }
+    const diminishedSupply = !!trackerSupplyState && trackerSupplyState.currentSupply < Number(u.supply ?? 0);
 
     const statChips = [
       ['HP', buffedUnitStats.hp, 'hp'],
@@ -2759,10 +2873,40 @@ function renderPlayerAid(roster, opts = {}) {
         return `<span class="stat-chip">${label} ${valueHtml}</span>`;
       })
       .join('');
+    const collapsedStatChips = [
+      ['HP', buffedUnitStats.hp, 'hp'],
+      ['ARM', buffedUnitStats.armor, 'armor'],
+      ['EVD', buffedUnitStats.evade, 'evade'],
+      ['SPD', buffedUnitStats.speed, 'speed'],
+      ['SH', buffedUnitStats.shield, 'shield'],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value, field]) => {
+        const collapsedValue = resolveCollapsedSlashStat(value, tracker, u.models);
+        const highlighted = (mergedBuffs && !!unitStatHighlights[field]) || collapsedValue.isDiminished;
+        const valueHtml = highlighted
+          ? `<strong class="aid-buff-highlight">${escapeHtml(String(collapsedValue.value))}</strong>`
+          : `<strong>${escapeHtml(String(collapsedValue.value))}</strong>`;
+        const chipClasses = [
+          'stat-chip',
+          `stat-chip-${escapeHtml(field)}`,
+          'stat-chip-stacked',
+          collapsedValue.isDiminished ? 'is-diminished' : '',
+        ].filter(Boolean).join(' ');
+        return `<span class="${chipClasses}"><span class="stat-chip-label">${label}</span>${valueHtml}</span>`;
+      })
+      .join('');
     const supplyHtml = mergedBuffs && supplyHighlighted
-      ? `<span class="stat-chip stat-chip-supply">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
-      : `<span class="stat-chip stat-chip-supply">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+      ? `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+    const collapsedSupplyHtml = mergedBuffs && supplyHighlighted
+      ? `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong>${escapeHtml(String(displaySupply))}</strong></span>`;
     const mineralsHtml = `<span class="stat-chip stat-chip-minerals"><strong>${u.totalCost}m</strong></span>`;
+    const supplyProfileHtml = renderPlaySupplyProfile(
+      tracker ?? { squadProfile: u.squadProfile, startingModels: u.models, baseSupply: u.supply },
+      u.supply,
+    );
     const trackerDisabledAttrs = tracker ? getLinkedTrackerDisabledAttrs(tracker.side) : '';
     const collapsedTrackerHtml = tracker ? `<div class="play-collapsed-trackers">
       <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>-</button>
@@ -2784,8 +2928,8 @@ function renderPlayerAid(roster, opts = {}) {
       ? `<div class="aid-tags-inline"><span class="aid-tags-label">Tags:</span><div class="aid-tags-pills">${tagPillsHtml}</div></div>`
       : '';
 
-    const headerStatlineHtml = showStats && isCollapsed
-      ? `<div class="aid-header-statline">${statChips}${supplyHtml}${mineralsHtml}${collapsedTrackerHtml}</div>`
+    const headerStatlineHtml = showStats
+      ? `<div class="aid-header-statline aid-collapsed-grid${tracker ? ' is-play-mode' : ''}">${collapsedStatChips}${collapsedSupplyHtml}${collapsedTrackerHtml}</div>`
       : '';
     const statsHtml = showStats ? `
       <div class="aid-stats-row">
@@ -2839,7 +2983,7 @@ function renderPlayerAid(roster, opts = {}) {
       }).join('')}` : '';
 
     const visibleMergedBuffsHtml = mergedBuffs ? mergedBuffsHtml : '';
-    const hasBody = statsHtml || weaponsHtml || visibleMergedBuffsHtml || upgradesHtml || metadataRowHtml;
+    const hasBody = statsHtml || supplyProfileHtml || weaponsHtml || visibleMergedBuffsHtml || upgradesHtml || metadataRowHtml;
     const trackerHtml = tracker ? `
       <div class="play-unit-trackers">
         <div class="play-health-wrap">
@@ -2870,7 +3014,7 @@ function renderPlayerAid(roster, opts = {}) {
           ${showStats ? '' : `<div class="unit-cost">${u.totalCost}m</div>`}
           <span class="aid-collapse-indicator" aria-hidden="true"></span>
         </div>
-        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${statsHtml}${visibleMergedBuffsHtml}${weaponsHtml}${upgradesHtml}${metadataRowHtml}</div></div>` : ''}
+        ${hasBody ? `<div class="aid-body-wrap"><div class="aid-body">${trackerHtml}${statsHtml}${supplyProfileHtml}${visibleMergedBuffsHtml}${weaponsHtml}${upgradesHtml}${metadataRowHtml}</div></div>` : ''}
       </div>`;
   }).join('');
 
@@ -2926,9 +3070,13 @@ function createPlayUnitsByKey(roster, side) {
     unitsByKey[key] = {
       key,
       side,
+      unitName: String(u?.name ?? ''),
+      startingModels: models,
       maxHealthPools,
       currentHealthPools: maxHealthPools.map(pool => ({ ...pool })),
       supply: Number(u?.supply ?? 0) || 0,
+      baseSupply: Number(u?.supply ?? 0) || 0,
+      squadProfile: Array.isArray(u?.squadProfile) ? JSON.parse(JSON.stringify(u.squadProfile)) : [],
       deployed: false,
       activation: {
         movement: false,
@@ -2940,6 +3088,80 @@ function createPlayUnitsByKey(roster, side) {
   return unitsByKey;
 }
 
+function getPlayTrackerRemainingModels(tracker) {
+  const pools = tracker?.currentHealthPools ?? [];
+  if (!pools.length) {
+    return Math.max(0, Number(tracker?.startingModels ?? 0) || 0);
+  }
+  return pools.reduce((count, pool) => {
+    if (pool?.type === 'shield') return count;
+    return count + (Number(pool?.value || 0) > 0 ? 1 : 0);
+  }, 0);
+}
+
+function getPlayTrackerSupplyTier(tracker) {
+  const remainingModels = getPlayTrackerRemainingModels(tracker);
+  const profile = Array.isArray(tracker?.squadProfile) ? tracker.squadProfile : [];
+  const activeTier = profile.find((tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return false;
+    return remainingModels >= min && remainingModels <= max;
+  }) ?? null;
+  return {
+    remainingModels,
+    activeTier,
+    currentSupply: remainingModels <= 0
+      ? 0
+      : activeTier
+        ? Number(activeTier.supply ?? 0)
+        : Number(tracker?.baseSupply ?? tracker?.supply ?? 0) || 0,
+  };
+}
+
+function getPlayTrackerCurrentSupply(tracker) {
+  return getPlayTrackerSupplyTier(tracker).currentSupply;
+}
+
+function renderPlaySupplyProfile(tracker, fallbackSupply = 0) {
+  const profile = Array.isArray(tracker?.squadProfile) ? tracker.squadProfile : [];
+  if (!profile.length) return '';
+  const { activeTier, currentSupply } = getPlayTrackerSupplyTier(tracker);
+  const baseSupply = Number(tracker?.baseSupply ?? fallbackSupply ?? 0) || 0;
+  const formatModelCountLabel = (tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (Number.isFinite(min) && Number.isFinite(max) && min === max) return String(min);
+    return String(tier?.modelCount ?? '-');
+  };
+  return `
+    <div class="aid-supply-profile">
+      <span class="aid-supply-profile-label">Supply Profile:</span>
+      <div class="aid-supply-profile-pills">
+        ${profile.map((tier) => {
+          const isActive = !!activeTier && Number(activeTier.tier) === Number(tier?.tier);
+          const isDiminished = isActive && currentSupply < baseSupply;
+          return `<span class="aid-supply-tier-pill${isActive ? ' is-active' : ''}${isDiminished ? ' is-diminished' : ''}">${escapeHtml(formatModelCountLabel(tier))} = ◆${escapeHtml(String(tier?.supply ?? 0))}</span>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function resolveCollapsedSlashStat(value, tracker, fallbackModels = 1) {
+  const raw = String(value ?? '').trim();
+  if (!raw.includes('/')) return { value: raw, isDiminished: false };
+  const parts = raw.split('/').map(part => part.trim()).filter(Boolean);
+  if (parts.length < 2) return { value: raw, isDiminished: false };
+  const remainingModels = tracker
+    ? getPlayTrackerRemainingModels(tracker)
+    : Math.max(0, Number(fallbackModels ?? 1) || 0);
+  const useSingleModelValue = remainingModels <= 1;
+  return {
+    value: useSingleModelValue ? parts[1] : parts[0],
+    isDiminished: useSingleModelValue && parts[0] !== parts[1],
+  };
+}
+
 function getPlayTrackerCurrentHealth(tracker) {
   return (tracker?.currentHealthPools ?? []).reduce((sum, pool) => sum + Number(pool?.value || 0), 0);
 }
@@ -2948,6 +3170,34 @@ function renderPlayHealthReadout(tracker) {
   const pools = tracker?.currentHealthPools ?? [];
   const maxPools = tracker?.maxHealthPools ?? [];
   if (!pools.length) return '<span class="play-health-empty">-</span>';
+  const hpPoolIndexes = pools
+    .map((pool, index) => ({ pool, index }))
+    .filter(({ pool }) => pool?.type !== 'shield');
+  const shouldCollapseHpPools = hpPoolIndexes.length > 1
+    && hpPoolIndexes.every(({ index }) => Number(maxPools[index]?.value || 0) === 1);
+  if (shouldCollapseHpPools) {
+    const collapsedHpValue = hpPoolIndexes.reduce((sum, { pool }) => sum + Number(pool?.value || 0), 0);
+    const hpMaxValue = hpPoolIndexes.length;
+    const segments = [];
+    const hpCls = [
+      'play-health-segment',
+      'is-hp',
+      collapsedHpValue <= 0 ? 'is-zero' : '',
+      collapsedHpValue > 0 && collapsedHpValue >= hpMaxValue ? 'is-full' : '',
+    ].filter(Boolean).join(' ');
+    segments.push(`<span class="${hpCls}">${escapeHtml(String(collapsedHpValue))}</span>`);
+    pools.forEach((pool, index) => {
+      if (pool?.type !== 'shield') return;
+      const value = Number(pool.value || 0);
+      const shieldCls = [
+        'play-health-segment',
+        'is-shield',
+        value <= 0 ? 'is-zero' : '',
+      ].filter(Boolean).join(' ');
+      segments.push(`<span class="${shieldCls}">${escapeHtml(String(pool.value))}</span>`);
+    });
+    return segments.join('<span class="play-health-sep">/</span>');
+  }
   return pools.map((pool, index) => {
     const value = Number(pool.value || 0);
     const maxValue = Number(maxPools[index]?.value || 0);
@@ -3016,7 +3266,7 @@ function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
     opponentRoster,
     playerName: String(setup.playerName || 'Player').trim() || 'Player',
     opponentName: String(setup.opponentName || 'Opponent').trim() || 'Opponent',
-    opponentFaction: setup.opponentFaction || 'Terran',
+    opponentFaction: setup.opponentFaction || opponentRoster?.faction || 'Unknown',
     missionName: String(setup.missionName || 'Mission').trim() || 'Mission',
     gameLength,
     startingSupply,
@@ -3035,10 +3285,11 @@ function createPlayModeState(playerRoster, opponentRoster, setup = {}) {
     round: 1,
     phaseIndex: 0,
     firstPlayer: 'player',
+    firstPlayerChosen: Boolean(setup.firstPlayerChosen),
     queuedFirstPlayer: setup.queuedFirstPlayer === 'opponent'
       ? 'opponent'
       : (setup.queuedFirstPlayer === 'player' ? 'player' : null),
-    activeBoardSide: 'player',
+    activeBoardSide: setup.linkedSide === 'opponent' ? 'opponent' : 'player',
     collapsedHealthWidthBySide: {
       player: null,
       opponent: null,
@@ -3083,6 +3334,7 @@ function clonePlaySnapshot() {
     round: playModeState.round,
     phaseIndex: playModeState.phaseIndex,
     firstPlayer: playModeState.firstPlayer,
+    firstPlayerChosen: Boolean(playModeState.firstPlayerChosen),
     playerResource: playModeState.playerResource,
     opponentResource: playModeState.opponentResource,
     playerScore: playModeState.playerScore,
@@ -3097,6 +3349,7 @@ function restorePlaySnapshot(snapshot) {
   playModeState.round = snapshot.round;
   playModeState.phaseIndex = snapshot.phaseIndex;
   playModeState.firstPlayer = snapshot.firstPlayer;
+  playModeState.firstPlayerChosen = Boolean(snapshot.firstPlayerChosen);
   playModeState.playerResource = snapshot.playerResource;
   playModeState.opponentResource = snapshot.opponentResource;
   playModeState.playerScore = snapshot.playerScore;
@@ -3128,12 +3381,13 @@ function buildPlayDashboard() {
   const supplyCap = playModeState.startingSupply + Math.max(0, playModeState.round - 1) * playModeState.supplyPerRound;
   const getSupplyOnBoard = (side) => trackers
     .filter(t => t.side === side && t.deployed && getPlayTrackerCurrentHealth(t) > 0)
-    .reduce((sum, t) => sum + Number(t.supply || 0), 0);
+    .reduce((sum, t) => sum + getPlayTrackerCurrentSupply(t), 0);
   const playerSupplyOnBoard = getSupplyOnBoard('player');
   const opponentSupplyOnBoard = getSupplyOnBoard('opponent');
   const playerSupplyAvailable = Math.max(0, Number(supplyCap || 0) - playerSupplyOnBoard);
   const opponentSupplyAvailable = Math.max(0, Number(supplyCap || 0) - opponentSupplyOnBoard);
   const isScoringPhase = currentPhase === 'Scoring';
+  const isPregamePhase = currentPhase === 'Pregame';
   const firstPlayerLabel = isScoringPhase
     ? 'Scoring'
     : (playModeState.firstPlayer === 'player' ? playModeState.playerName : playModeState.opponentName);
@@ -3164,15 +3418,43 @@ function buildPlayDashboard() {
     : '';
 
   const endGameRequest = linkedGameplay ? consensus.endGame : null;
+  const firstPlayerChoiceRequest = linkedGameplay ? consensus.firstPlayerChoice : null;
+  const randomFirstPlayerRequest = linkedGameplay ? consensus.randomFirstPlayer : null;
+  const startGameRequest = linkedGameplay ? consensus.startGame : null;
   const localEndGameApproved = Boolean(endGameRequest && (localSide === 'player' ? endGameRequest.playerApproved : endGameRequest.opponentApproved));
   const endGameAwaitingOther = Boolean(endGameRequest && localEndGameApproved && !hasBothLinkedApprovals(endGameRequest));
   const endGameRequestedByOther = Boolean(endGameRequest && !localEndGameApproved && !hasBothLinkedApprovals(endGameRequest));
   const endGameRequesterName = endGameRequest?.requestedBy
     ? getLinkedSideDisplayName(endGameRequest.requestedBy)
     : 'Opponent';
+  const localStartGameApproved = Boolean(startGameRequest && (localSide === 'player' ? startGameRequest.playerApproved : startGameRequest.opponentApproved));
+  const startGameAwaitingOther = Boolean(startGameRequest && localStartGameApproved && !hasBothLinkedApprovals(startGameRequest));
+  const startGameRequestedByOther = Boolean(startGameRequest && !localStartGameApproved && !hasBothLinkedApprovals(startGameRequest));
+  const localFirstPlayerApproved = Boolean(firstPlayerChoiceRequest && (localSide === 'player' ? firstPlayerChoiceRequest.playerApproved : firstPlayerChoiceRequest.opponentApproved));
+  const firstPlayerAwaitingOther = Boolean(firstPlayerChoiceRequest && localFirstPlayerApproved && !hasBothLinkedApprovals(firstPlayerChoiceRequest));
+  const firstPlayerRequestedByOther = Boolean(firstPlayerChoiceRequest && !localFirstPlayerApproved && !hasBothLinkedApprovals(firstPlayerChoiceRequest));
+  const localRandomFirstPlayerApproved = Boolean(randomFirstPlayerRequest && (localSide === 'player' ? randomFirstPlayerRequest.playerApproved : randomFirstPlayerRequest.opponentApproved));
+  const randomFirstPlayerAwaitingOther = Boolean(randomFirstPlayerRequest && localRandomFirstPlayerApproved && !hasBothLinkedApprovals(randomFirstPlayerRequest));
+  const randomFirstPlayerRequestedByOther = Boolean(randomFirstPlayerRequest && !localRandomFirstPlayerApproved && !hasBothLinkedApprovals(randomFirstPlayerRequest));
   let flowStatusText = '';
   if (linkedGameplay) {
-    if (endGameAwaitingOther) {
+    if (isPregamePhase && startGameAwaitingOther) {
+      flowStatusText = `Waiting for ${getLinkedSideDisplayName(otherSide)} to confirm game start.`;
+    } else if (isPregamePhase && startGameRequestedByOther) {
+      flowStatusText = `${getLinkedSideDisplayName(otherSide)} requested game start.`;
+    } else if (isPregamePhase && randomFirstPlayerAwaitingOther) {
+      const targetName = randomFirstPlayerRequest?.choice === 'opponent' ? playModeState.opponentName : playModeState.playerName;
+      flowStatusText = `Waiting for ${getLinkedSideDisplayName(otherSide)} to confirm random selection of ${targetName}.`;
+    } else if (isPregamePhase && randomFirstPlayerRequestedByOther) {
+      const targetName = randomFirstPlayerRequest?.choice === 'opponent' ? playModeState.opponentName : playModeState.playerName;
+      flowStatusText = `${getLinkedSideDisplayName(otherSide)} randomly selected ${targetName}.`;
+    } else if (isPregamePhase && firstPlayerAwaitingOther) {
+      const targetName = firstPlayerChoiceRequest?.choice === 'opponent' ? playModeState.opponentName : playModeState.playerName;
+      flowStatusText = `Waiting for ${getLinkedSideDisplayName(otherSide)} to confirm ${targetName} as first player.`;
+    } else if (isPregamePhase && firstPlayerRequestedByOther) {
+      const targetName = firstPlayerChoiceRequest?.choice === 'opponent' ? playModeState.opponentName : playModeState.playerName;
+      flowStatusText = `${getLinkedSideDisplayName(otherSide)} proposed ${targetName} as first player.`;
+    } else if (endGameAwaitingOther) {
       flowStatusText = `Waiting for ${getLinkedSideDisplayName(otherSide)} to confirm end game.`;
     } else if (endGameRequestedByOther) {
       flowStatusText = `${endGameRequesterName} requested end game.`;
@@ -3191,16 +3473,69 @@ function buildPlayDashboard() {
     : '■ End Game';
 
   const phaseActionLabel = linkedGameplay
-    ? (localPassed ? 'Passed' : 'Pass')
+    ? (() => {
+      if (isPregamePhase) {
+        if (startGameAwaitingOther) return 'Start Pending';
+        if (startGameRequestedByOther) return 'Confirm Start';
+        return 'Start Game';
+      }
+      return localPassed ? 'Passed' : 'Pass';
+    })()
     : (() => {
+      if (isPregamePhase) {
+        return 'Start Game';
+      }
       if (currentPhase === 'Scoring') {
         return playModeState.round >= playModeState.gameLength ? 'End Game' : 'Next Round';
       }
       return 'Next Phase';
     })();
 
-  const phaseActionClass = linkedGameplay && localPassed ? 'btn ghost sm is-passed' : 'btn sm';
-  const phaseAction = linkedGameplay ? 'phase-pass' : 'phase-next';
+  const phaseActionClass = linkedGameplay && !isPregamePhase && localPassed ? 'btn ghost sm is-passed' : 'btn sm';
+  const phaseAction = linkedGameplay
+    ? (isPregamePhase ? 'start-game' : 'phase-pass')
+    : 'phase-next';
+  const hasPendingRandomFirstPlayer = Boolean(randomFirstPlayerRequest && !hasBothLinkedApprovals(randomFirstPlayerRequest));
+  const randomFirstPlayerLabel = hasPendingRandomFirstPlayer
+    ? (randomFirstPlayerRequestedByOther ? 'Confirm Randomly Select' : 'Randomly Select Pending')
+    : 'Randomly Select';
+  const hasPendingFirstPlayerChoice = Boolean(firstPlayerChoiceRequest && !hasBothLinkedApprovals(firstPlayerChoiceRequest));
+  const pendingFirstPlayerChoice = hasPendingFirstPlayerChoice
+    ? (firstPlayerChoiceRequest.choice === 'opponent' ? 'opponent' : 'player')
+    : null;
+  const isConfirmingFirstPlayerChoice = hasPendingFirstPlayerChoice && firstPlayerRequestedByOther;
+  const playerFirstButtonLabel = hasPendingFirstPlayerChoice && pendingFirstPlayerChoice === 'player'
+    ? (isConfirmingFirstPlayerChoice ? `Confirm ${playModeState.playerName}` : `${playModeState.playerName} Pending`)
+    : playModeState.playerName;
+  const opponentFirstButtonLabel = hasPendingFirstPlayerChoice && pendingFirstPlayerChoice === 'opponent'
+    ? (isConfirmingFirstPlayerChoice ? `Confirm ${playModeState.opponentName}` : `${playModeState.opponentName} Pending`)
+    : playModeState.opponentName;
+  const playerFirstButtonClass = [
+    'btn',
+    'ghost',
+    'sm',
+    'play-first-player-btn',
+    playModeState.firstPlayer === 'player' ? playerFactionClass : '',
+    hasPendingFirstPlayerChoice && pendingFirstPlayerChoice === 'player' ? 'is-active' : '',
+  ].filter(Boolean).join(' ');
+  const opponentFirstButtonClass = [
+    'btn',
+    'ghost',
+    'sm',
+    'play-first-player-btn',
+    playModeState.firstPlayer === 'opponent' ? opponentFactionClass : '',
+    hasPendingFirstPlayerChoice && pendingFirstPlayerChoice === 'opponent' ? 'is-active' : '',
+  ].filter(Boolean).join(' ');
+  const disableDirectFirstPlayerChoice = hasPendingRandomFirstPlayer;
+  const disableRandomFirstPlayer = linkedGameplay && hasPendingFirstPlayerChoice && !isConfirmingFirstPlayerChoice;
+  const disableStartGame = isPregamePhase
+    && ((hasPendingFirstPlayerChoice && !isConfirmingFirstPlayerChoice) || hasPendingRandomFirstPlayer);
+  const pregameControlsHtml = `
+    <div class="play-inline-controls" style="display:flex;flex-wrap:wrap;gap:8px;">
+      <button class="${escapeHtml(playerFirstButtonClass)}" style="flex:1 1 0;" type="button" data-play-action="set-first-player" data-choice="player" ${disableDirectFirstPlayerChoice ? 'disabled' : ''}>${escapeHtml(playerFirstButtonLabel)}</button>
+      <button class="${escapeHtml(opponentFirstButtonClass)}" style="flex:1 1 0;" type="button" data-play-action="set-first-player" data-choice="opponent" ${disableDirectFirstPlayerChoice ? 'disabled' : ''}>${escapeHtml(opponentFirstButtonLabel)}</button>
+      <button class="btn ghost sm${hasPendingRandomFirstPlayer ? ' is-active' : ''}" style="flex:1 1 0;" type="button" data-play-action="roll-first-player" ${disableRandomFirstPlayer ? 'disabled' : ''}>${escapeHtml(randomFirstPlayerLabel)}</button>
+    </div>`;
 
   return `
     <div class="play-topbar">
@@ -3256,10 +3591,12 @@ function buildPlayDashboard() {
         </div>
       </div>
       <div class="play-stat">
-        <div class="play-stat-label">First Player</div>
-        <div class="play-inline-controls">
+        <div class="play-stat-label">${isPregamePhase ? 'Who Goes First' : 'First Player'}</div>
+        ${isPregamePhase
+          ? pregameControlsHtml
+          : `<div class="play-inline-controls">
           <button class="btn ghost play-first-player-btn ${escapeHtml(firstPlayerFactionClass)}" type="button" data-play-action="toggle-first-player" ${isScoringPhase ? 'disabled' : ''}>${escapeHtml(firstPlayerLabel)}</button>
-        </div>
+        </div>`}
       </div>
       <div class="play-stat">
         <div class="play-stat-label">Round Tracker</div>
@@ -3271,7 +3608,7 @@ function buildPlayDashboard() {
         <div class="play-stat-label">Flow</div>
         <div class="play-phase-actions">
           <button class="btn ghost sm" type="button" data-play-action="phase-back">Back</button>
-          <button class="${phaseActionClass}" type="button" data-play-action="${phaseAction}">${escapeHtml(phaseActionLabel)}</button>
+          <button class="${phaseActionClass}" type="button" data-play-action="${phaseAction}" ${disableStartGame ? 'disabled' : ''}>${escapeHtml(phaseActionLabel)}</button>
         </div>
         ${flowStatusHtml}
       </div>
@@ -3285,8 +3622,7 @@ function renderPlayMode(roster, { allowAutoSeed = true } = {}) {
   playModeState.activeBoardSide = activeSide;
   const playerBoardHtml = renderPlayerAid(playModeState.playerRoster, {
     showStats: true,
-    allUpgrades: true,
-    showActivation: true,
+    showUnitActivation: true,
     showTactical: true,
     mergedBuffs: true,
     dedupeUnits: false,
@@ -3297,8 +3633,7 @@ function renderPlayMode(roster, { allowAutoSeed = true } = {}) {
   const opponentBoardHtml = playModeState.opponentRoster
     ? renderPlayerAid(playModeState.opponentRoster, {
       showStats: true,
-      allUpgrades: true,
-      showActivation: true,
+      showUnitActivation: true,
       showTactical: true,
       mergedBuffs: true,
       dedupeUnits: false,
@@ -3341,12 +3676,11 @@ function refreshPlayModeOutput({ allowAutoSeed = true } = {}) {
   updateLinkedUi();
   if (playModeState?.hasStarted) {
     const side = playModeState.activeBoardSide === 'opponent' ? 'opponent' : 'player';
-    const hpWidth = playModeState.collapsedHealthWidthBySide?.[side] ?? null;
+    const hpWidth = getPlayCollapsedHealthWidth(side);
     if (hpWidth) {
       playCardEl.style.setProperty('--play-collapsed-health-width', hpWidth);
     } else {
       playCardEl.style.removeProperty('--play-collapsed-health-width');
-      freezePlayCollapsedHealthWidth(side);
     }
 
     const nameWidth = playModeState.collapsedNameWidthBySide?.[side] ?? null;
@@ -3369,7 +3703,6 @@ function openPlayNewGameDialog() {
   if (!playModeState && currentSeed) ensurePlayModeStateFromCurrentSeed();
   if (playPlayerNameInput) playPlayerNameInput.value = playModeState?.playerName || 'Player';
   if (playOpponentNameInput) playOpponentNameInput.value = playModeState?.opponentName || 'Opponent';
-  if (playOpponentFactionInput) playOpponentFactionInput.value = playModeState?.opponentFaction || 'Terran';
   if (playPlayerSeedInput) playPlayerSeedInput.value = playModeState?.playerSeed || currentSeed?.id || '';
   if (playOpponentSeedInput) playOpponentSeedInput.value = playModeState?.opponentSeed || '';
   if (playMissionNameInput) playMissionNameInput.value = playModeState?.missionName || 'Mission';
@@ -3480,6 +3813,113 @@ function approveLinkedActionRequest(request) {
     playerApproved: request.playerApproved || side === 'player',
     opponentApproved: request.opponentApproved || side === 'opponent',
   };
+}
+
+function clearLinkedPregameRequests(exceptKey = '') {
+  if (!playModeState) return;
+  if (!playModeState.linkedConsensus) {
+    playModeState.linkedConsensus = createEmptyLinkedConsensus();
+  }
+  const keep = String(exceptKey || '');
+  for (const key of ['firstPlayerChoice', 'randomFirstPlayer', 'startGame']) {
+    if (key === keep) continue;
+    playModeState.linkedConsensus[key] = null;
+  }
+}
+
+function requestLinkedFirstPlayerChoice(choice) {
+  if (!playModeState) return;
+  if (!playModeState.linkedConsensus) {
+    playModeState.linkedConsensus = createEmptyLinkedConsensus();
+  }
+  clearLinkedPregameRequests('firstPlayerChoice');
+  const normalizedChoice = choice === 'opponent' ? 'opponent' : 'player';
+  const existing = playModeState.linkedConsensus.firstPlayerChoice;
+  const request = existing && existing.choice === normalizedChoice
+    ? approveLinkedActionRequest(existing)
+    : {
+      ...createLinkedActionRequest('first-player', Number(playModeState.round || 1), Number(playModeState.phaseIndex || 0)),
+      choice: normalizedChoice,
+    };
+  playModeState.linkedConsensus.firstPlayerChoice = request;
+  if (!hasBothLinkedApprovals(request)) {
+    const displayName = normalizedChoice === 'player' ? playModeState.playerName : playModeState.opponentName;
+    showToast(`First player set to ${displayName}. Waiting for opponent confirmation.`);
+    refreshPlayModeOutput();
+    scheduleLinkedSync(0);
+    return;
+  }
+  playModeState.firstPlayer = normalizedChoice;
+  playModeState.firstPlayerChosen = true;
+  markLinkedConsensusRequestProcessed(request.requestId);
+  showToast('First player confirmed by both players.');
+  refreshPlayModeOutput();
+  scheduleLinkedSync(0);
+}
+
+function requestLinkedRandomFirstPlayer() {
+  if (!playModeState) return;
+  if (!playModeState.linkedConsensus) {
+    playModeState.linkedConsensus = createEmptyLinkedConsensus();
+  }
+  clearLinkedPregameRequests('randomFirstPlayer');
+  const existing = playModeState.linkedConsensus.randomFirstPlayer;
+  const request = existing
+    ? approveLinkedActionRequest(existing)
+    : {
+      ...createLinkedActionRequest('random-first-player', Number(playModeState.round || 1), Number(playModeState.phaseIndex || 0)),
+      choice: Math.random() < 0.5 ? 'player' : 'opponent',
+    };
+  playModeState.linkedConsensus.randomFirstPlayer = request;
+  if (!hasBothLinkedApprovals(request)) {
+    const displayName = request.choice === 'opponent' ? playModeState.opponentName : playModeState.playerName;
+    showToast(`Random selection chose ${displayName}. Waiting for opponent confirmation.`);
+    refreshPlayModeOutput();
+    scheduleLinkedSync(0);
+    return;
+  }
+  playModeState.firstPlayer = request.choice === 'opponent' ? 'opponent' : 'player';
+  playModeState.firstPlayerChosen = true;
+  markLinkedConsensusRequestProcessed(request.requestId);
+  showToast('Random first player confirmed by both players.');
+  refreshPlayModeOutput();
+  scheduleLinkedSync(0);
+}
+
+function requestLinkedStartGame() {
+  if (!playModeState) return;
+  if (!playModeState.linkedConsensus) {
+    playModeState.linkedConsensus = createEmptyLinkedConsensus();
+  }
+  clearLinkedPregameRequests('startGame');
+  const existing = playModeState.linkedConsensus.startGame;
+  const request = existing
+    ? approveLinkedActionRequest(existing)
+    : {
+      ...createLinkedActionRequest('start-game', Number(playModeState.round || 1), Number(playModeState.phaseIndex || 0)),
+      choice: playModeState.firstPlayerChosen
+        ? playModeState.firstPlayer
+        : (Math.random() < 0.5 ? 'player' : 'opponent'),
+    };
+  playModeState.linkedConsensus.startGame = request;
+  if (!hasBothLinkedApprovals(request)) {
+    showToast('Start game requested. Waiting for opponent confirmation.');
+    refreshPlayModeOutput();
+    scheduleLinkedSync(0);
+    return;
+  }
+  if (getPlayCurrentPhase() === 'Pregame') {
+    if (!playModeState.firstPlayerChosen) {
+      playModeState.firstPlayer = request.choice === 'opponent' ? 'opponent' : 'player';
+      playModeState.firstPlayerChosen = true;
+    }
+    playModeState.history.push(clonePlaySnapshot());
+    applyPhaseTarget(playModeState, getNextPhaseTarget(playModeState));
+  }
+  markLinkedConsensusRequestProcessed(request.requestId);
+  showToast('Game start confirmed.');
+  refreshPlayModeOutput();
+  scheduleLinkedSync(0);
 }
 
 function toggleLinkedPassState(passState, side) {
@@ -3756,6 +4196,41 @@ function handlePlayAction(actionEl) {
     refreshPlayModeOutput();
     return;
   }
+  if (action === 'set-first-player') {
+    const choice = actionEl.dataset.choice === 'opponent' ? 'opponent' : 'player';
+    if (isLinkedModeActive()) {
+      requestLinkedFirstPlayerChoice(choice);
+      return;
+    }
+    playModeState.firstPlayer = choice;
+    playModeState.firstPlayerChosen = true;
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'roll-first-player') {
+    const choice = Math.random() < 0.5 ? 'player' : 'opponent';
+    if (isLinkedModeActive()) {
+      requestLinkedRandomFirstPlayer();
+      return;
+    }
+    playModeState.firstPlayer = choice;
+    playModeState.firstPlayerChosen = true;
+    showToast(`${choice === 'player' ? playModeState.playerName : playModeState.opponentName} goes first.`);
+    refreshPlayModeOutput();
+    return;
+  }
+  if (action === 'start-game') {
+    if (isLinkedModeActive()) {
+      requestLinkedStartGame();
+      return;
+    }
+    if (!playModeState.firstPlayerChosen) {
+      playModeState.firstPlayer = Math.random() < 0.5 ? 'player' : 'opponent';
+      playModeState.firstPlayerChosen = true;
+    }
+    handlePlayNextStep();
+    return;
+  }
   if (action === 'toggle-deployed') {
     if (!tracker) return;
     tracker.deployed = !tracker.deployed;
@@ -3868,18 +4343,15 @@ function setPlaySideUnitsCollapsed(sidePrefix, collapsed) {
   scheduleAidCollapsedStatlineAlignment();
 }
 
-function freezePlayCollapsedHealthWidth(side) {
-  if (!playModeState || !playCardEl) return;
+function getPlayCollapsedHealthWidth(side) {
+  if (!playModeState) return null;
   const normalizedSide = side === 'opponent' ? 'opponent' : 'player';
-  if (playModeState.collapsedHealthWidthBySide?.[normalizedSide]) return;
   const trackers = Object.values(playModeState.unitsByKey ?? {}).filter(t => t.side === normalizedSide);
-  if (!trackers.length) return;
+  if (!trackers.length) return null;
 
   let maxChars = 0;
   for (const tracker of trackers) {
-    const maxPools = Array.isArray(tracker?.maxHealthPools) ? tracker.maxHealthPools : [];
-    if (!maxPools.length) continue;
-    const text = maxPools.map(pool => String(pool?.value ?? 0)).join('/');
+    const text = renderPlayHealthReadout(tracker).replace(/<[^>]+>/g, '');
     const length = text.length;
     if (Number.isFinite(length) && length > maxChars) maxChars = length;
   }
@@ -3890,10 +4362,9 @@ function freezePlayCollapsedHealthWidth(side) {
       playModeState.collapsedHealthWidthBySide = { player: null, opponent: null };
     }
     playModeState.collapsedHealthWidthBySide[normalizedSide] = widthValue;
-    if (playModeState.activeBoardSide === normalizedSide) {
-      playCardEl.style.setProperty('--play-collapsed-health-width', widthValue);
-    }
+    return widthValue;
   }
+  return null;
 }
 
 function syncAidCollapsedStatlineAlignment() {
@@ -4140,7 +4611,7 @@ function refreshOutput() {
   if (!resolvedRoster) return;
 
   // ── Discord / Raw ───────────────────────────────────────────────────────────
-  const selectedCharLimit = Math.max(500, parseInt(optLimit.value, 10) || 2000);
+  const selectedCharLimit = Math.max(500, parseInt(optLimit.value, 10) || DISCORD_FREE_MESSAGE_LIMIT);
   currentFormatted = formatCompact(resolvedRoster, {
     plain:                   optPlain.checked,
     showStats:               optStats.checked,
@@ -4164,9 +4635,11 @@ function refreshOutput() {
     const overflow = (len - selectedCharLimit).toLocaleString();
     discordLimitWarning.textContent = `Current output exceeds the selected character limit by ${overflow} characters and may fail when pasted to Discord.`;
     discordLimitWarning.style.display = 'block';
+    discordLimitWarning.hidden = rosterPanelMode !== 'discord';
   } else {
     discordLimitWarning.textContent = '';
     discordLimitWarning.style.display = 'none';
+    discordLimitWarning.hidden = true;
   }
 
   // ── Roster Card ─────────────────────────────────────────────────────────────
@@ -4181,8 +4654,8 @@ function refreshOutput() {
     showTacticalSupply: cardTactSupply.checked,
     showSlots:    cardSlots.checked,
   });
-  downloadImgBtn.style.display = 'inline-block';
-  copyImgBtn.style.display     = 'inline-block';
+  jsonBox.textContent = formatSeedJson(currentSeed);
+  setRosterPanelMode(rosterPanelMode, { save: false });
 
   // ── Player Aid ──────────────────────────────────────────────────────────────
   aidCardEl.innerHTML = renderPlayerAid(resolvedRoster, {
@@ -4191,7 +4664,6 @@ function refreshOutput() {
     showStats: aidStats.checked,
     showUnitWeapons: aidUnitWeapons.checked,
     showUnitAbilities: aidUnitAbilities.checked,
-    allUpgrades: aidAllUpgrades.checked,
     showUnitPaidUpgrades: aidUnitPaidUpgrades.checked,
     showUnitTags: aidUnitTags.checked,
     showUnitActivation: aidActivation.checked,
@@ -4204,7 +4676,7 @@ function refreshOutput() {
     showTacticalPhase: aidTactPhase.checked,
     showTacticalActivation: aidTactActivation.checked,
     showTacticalDescriptions: aidTactDescriptions.checked,
-    mergedBuffs: aidModeMerged.checked,
+    mergedBuffs: aidBuffModeMerged.checked,
   });
   scheduleAidCollapsedStatlineAlignment();
   aidPrintBar.style.display = 'flex';
@@ -4212,8 +4684,6 @@ function refreshOutput() {
   // ── Play Mode ──────────────────────────────────────────────────────────────
   refreshPlayModeOutput();
 
-  // ── JSON ────────────────────────────────────────────────────────────────────
-  jsonBox.textContent = formatSeedJson(currentSeed);
 }
 
 // ─── Load handler ─────────────────────────────────────────────────────────────
@@ -4227,6 +4697,7 @@ async function loadRoster() {
 
   isLoadingRoster = true;
   resultsEl.style.display = 'none';
+  syncLoadedRosterLayout();
   errorBox.style.display  = 'none';
   loadingBox.style.display = 'block';
   loadBtn.disabled = true;
@@ -4248,6 +4719,7 @@ async function loadRoster() {
     document.body.classList.remove('preload');
     loadingBox.style.display = 'none';
     resultsEl.style.display  = 'block';
+    syncLoadedRosterLayout();
     debug.log('roster.load.ok', {
       seed,
       unitCount: resolvedRoster?.units.length ?? 0,
@@ -4261,6 +4733,7 @@ async function loadRoster() {
       : escapeHtml(getUserFacingError('Load roster', err));
     errorBox.innerHTML = `<div class="error">❌ ${msg}</div>`;
     errorBox.style.display = 'block';
+    syncLoadedRosterLayout();
     debug.error('roster.load.error', err, { seed });
   } finally {
     isLoadingRoster = false;
@@ -4275,7 +4748,7 @@ function syncUrlToState() {
     const url = new URL(window.location.href);
     if (currentSeed?.id) url.searchParams.set('s', currentSeed.id);
     const activeTab = document.querySelector('.tab.active')?.dataset.tab;
-    if (activeTab && activeTab !== 'preview') {
+    if (activeTab && activeTab !== 'roster') {
       url.searchParams.set('tab', activeTab);
     } else {
       url.searchParams.delete('tab');
@@ -4285,7 +4758,6 @@ function syncUrlToState() {
 }
 
 // ─── Tab switcher ─────────────────────────────────────────────────────────────
-const DISCORD_TABS = new Set(['preview']);
 const tabs = Array.from(document.querySelectorAll('.tab'));
 
 function activateTab(tab, { setFocus = false } = {}) {
@@ -4302,7 +4774,6 @@ function activateTab(tab, { setFocus = false } = {}) {
     panel.hidden = !isActive;
   });
   if (setFocus) tab.focus();
-  discordOpts.style.display = DISCORD_TABS.has(tab.dataset.tab) ? '' : 'none';
   savePrefs();
   syncUrlToState();
 }
@@ -4347,6 +4818,13 @@ function copyText(text) {
 }
 document.getElementById('copy-preview-btn').addEventListener('click', () => copyText(currentFormatted));
 discordModeToggle.addEventListener('change', () => setDiscordMode(discordModeToggle.checked ? 'raw' : 'preview'));
+[rosterViewImage, rosterViewDiscord, rosterViewJson].forEach((el) => {
+  el.addEventListener('change', () => {
+    if (rosterViewDiscord.checked) setRosterPanelMode('discord', { save: false });
+    else if (rosterViewJson.checked) setRosterPanelMode('json', { save: false });
+    else setRosterPanelMode('image', { save: false });
+  });
+});
 saveFavoriteBtn.addEventListener('click', () => {
   const seed = sanitizeSeed(seedInput.value);
   if (!seed) {
@@ -4587,8 +5065,55 @@ function openAidPrintWindow() {
       background: #fff3f3;
     }
     .stat-chip.stat-chip-supply strong { color: var(--print-supply); }
+    .stat-chip.stat-chip-supply.is-diminished {
+      border-color: #d5868b;
+      background: #ffe5e7;
+      color: #a13a46;
+    }
+    .stat-chip.stat-chip-supply.is-diminished strong { color: #a13a46; }
     .stat-chip strong.aid-buff-highlight { color: #1a7a40; }
     .aid-buff-highlight { color: #1a7a40; font-weight: 700; }
+    .aid-supply-profile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .aid-supply-profile-label {
+      color: #666;
+      font-size: .66rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .aid-supply-profile-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .aid-supply-tier-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 8px;
+      border-radius: 999px;
+      border: 1px solid #c4cfdb;
+      background: #f6f8fb;
+      color: #5f6e80;
+      font-size: .69rem;
+      white-space: nowrap;
+    }
+    .aid-supply-tier-pill.is-active {
+      border-color: #8bb5de;
+      background: #eef6ff;
+      color: #1f5f9e;
+    }
+    .aid-supply-tier-pill.is-diminished {
+      border-color: #d5868b;
+      background: #ffe5e7;
+      color: #a13a46;
+    }
 
     /* weapons table */
     .aid-section-title { font-size: .63rem; text-transform: uppercase;
@@ -6280,7 +6805,7 @@ if (playNewGameForm) {
         opponentSeed,
         playerName: playPlayerNameInput?.value,
         opponentName: playOpponentNameInput?.value,
-        opponentFaction: playOpponentFactionInput?.value,
+        opponentFaction: opponentRoster?.faction || 'Unknown',
         missionName: playMissionNameInput?.value,
         gameLength: playGameLengthInput?.value,
         startingSupply: playStartingSupplyInput?.value,
@@ -6397,7 +6922,7 @@ function refreshAndSave() { refreshOutput(); savePrefs(); }
 [cardUpgrades, cardStats, cardSize, cardCost, cardTactical, cardTactResource, cardTactGas, cardTactSupply, cardSlots]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 // Player Aid options
-[aidShowHeader, aidShowUnits, aidShowTactical, aidStats, aidUnitWeapons, aidUnitAbilities, aidAllUpgrades, aidUnitPaidUpgrades, aidUnitTags, aidActivation, aidModeMerged, aidTactArt, aidTactMeta, aidTactGas, aidTactTags, aidTactAbilities, aidTactPhase, aidTactActivation, aidTactDescriptions]
+[aidShowHeader, aidShowUnits, aidShowTactical, aidStats, aidUnitWeapons, aidUnitAbilities, aidUnitPaidUpgrades, aidUnitTags, aidActivation, aidBuffModeSeparated, aidBuffModeMerged, aidTactArt, aidTactMeta, aidTactGas, aidTactTags, aidTactAbilities, aidTactPhase, aidTactActivation, aidTactDescriptions]
   .forEach(el => el.addEventListener('change', refreshAndSave));
 
 window.addEventListener('resize', () => scheduleAidCollapsedStatlineAlignment());
@@ -6421,9 +6946,11 @@ try {
 }
 applyRecentCollapsed(false);
 renderPlayHistoryLists();
+setRosterPanelMode('image', { save: false });
+if (optLimit && !optLimit.value) optLimit.value = String(DISCORD_FREE_MESSAGE_LIMIT);
 
 // ── URL param auto-load ───────────────────────────────────────────────────────
-// Supports: /?s=SEED  /?s=SEED&tab=card|aid|play|preview
+// Supports: /?s=SEED  /?s=SEED&tab=roster|aid|play|builder
 // The server redirects /SEED → /?s=SEED so clean URLs work too.
 // When _img=1 is present (headless render), card checkboxes are overridden from
 // URL params before rendering: upgrades, stats, size, cost, tactical,
@@ -6455,7 +6982,8 @@ renderPlayHistoryLists();
   }
 
   if (urlTab) {
-    const tabEl = document.querySelector(`.tab[data-tab="${urlTab}"]`);
+    const normalizedTab = urlTab === 'preview' || urlTab === 'json' ? 'roster' : urlTab;
+    const tabEl = document.querySelector(`.tab[data-tab="${normalizedTab}"]`);
     if (tabEl) activateTab(tabEl);
   }
 
@@ -6475,11 +7003,7 @@ renderPlayHistoryLists();
   }
 })();
 
-// If there is no URL seed override, restore the most recent active play session.
-try {
-  const hasSeedInUrl = new URLSearchParams(window.location.search).has('s');
-  if (!hasSeedInUrl) restoreActivePlayGame();
-} catch (_) { /* ignore URL parsing failures */ }
+syncLoadedRosterLayout();
 
 if (hasCloudSyncConfig()) {
   initCloudAuth((user) => {
