@@ -6586,120 +6586,114 @@ function renderNewAidDeckTacticalCardBack(card, { faction, factionClass } = {}) 
   </article>`;
 }
 
-aidPrintBtn.addEventListener('click', () => openAidPrintWindow());
-aidPrintCardDeckBtn.addEventListener('click', () => openAidCardDeckPrintWindow());
-aidCollapseAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(true));
-aidExpandAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(false));
-aidCardEl.addEventListener('click', e => {
-  const header = e.target.closest('.aid-unit-header');
-  if (!header || !aidCardEl.contains(header)) return;
-  toggleAidUnitCollapsed(header.closest('.aid-unit'));
-});
-aidCardEl.addEventListener('keydown', e => {
-  const header = e.target.closest('.aid-unit-header');
-  if (!header || !aidCardEl.contains(header)) return;
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  e.preventDefault();
-  toggleAidUnitCollapsed(header.closest('.aid-unit'));
-});
 
-if (playCardEl) {
-  playCardEl.addEventListener('click', e => {
-    const actionEl = e.target.closest('[data-play-action]');
-    if (actionEl && playCardEl.contains(actionEl)) {
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof aidPrintBtn !== 'undefined' && aidPrintBtn) aidPrintBtn.addEventListener('click', () => openAidPrintWindow());
+  if (typeof aidPrintCardDeckBtn !== 'undefined' && aidPrintCardDeckBtn) aidPrintCardDeckBtn.addEventListener('click', () => openAidCardDeckPrintWindow());
+  if (typeof aidCollapseAllBtn !== 'undefined' && aidCollapseAllBtn) aidCollapseAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(true));
+  if (typeof aidExpandAllBtn !== 'undefined' && aidExpandAllBtn) aidExpandAllBtn.addEventListener('click', () => setAllAidUnitsCollapsed(false));
+  if (typeof aidCardEl !== 'undefined' && aidCardEl) {
+    aidCardEl.addEventListener('click', e => {
+      const header = e.target.closest('.aid-unit-header');
+      if (!header || !aidCardEl.contains(header)) return;
+      toggleAidUnitCollapsed(header.closest('.aid-unit'));
+    });
+    aidCardEl.addEventListener('keydown', e => {
+      const header = e.target.closest('.aid-unit-header');
+      if (!header || !aidCardEl.contains(header)) return;
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      toggleAidUnitCollapsed(header.closest('.aid-unit'));
+    });
+  }
+  if (typeof playCardEl !== 'undefined' && playCardEl) {
+    playCardEl.addEventListener('click', e => {
+      const actionEl = e.target.closest('[data-play-action]');
+      if (actionEl && playCardEl.contains(actionEl)) {
+        e.preventDefault();
+        handlePlayAction(actionEl);
+        return;
+      }
+      const header = e.target.closest('.aid-unit-header');
+      if (!header || !playCardEl.contains(header)) return;
+      toggleAidUnitCollapsed(header.closest('.aid-unit'));
+    });
+    playCardEl.addEventListener('keydown', e => {
+      const header = e.target.closest('.aid-unit-header');
+      if (!header || !playCardEl.contains(header)) return;
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      toggleAidUnitCollapsed(header.closest('.aid-unit'));
+    });
+  }
+  if (typeof playDashboardEl !== 'undefined' && playDashboardEl) {
+    playDashboardEl.addEventListener('click', e => {
+      const actionEl = e.target.closest('[data-play-action]');
+      if (!actionEl || !playDashboardEl.contains(actionEl)) return;
       e.preventDefault();
       handlePlayAction(actionEl);
-      return;
-    }
-    const header = e.target.closest('.aid-unit-header');
-    if (!header || !playCardEl.contains(header)) return;
-    toggleAidUnitCollapsed(header.closest('.aid-unit'));
-  });
-  playCardEl.addEventListener('keydown', e => {
-    const header = e.target.closest('.aid-unit-header');
-    if (!header || !playCardEl.contains(header)) return;
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    toggleAidUnitCollapsed(header.closest('.aid-unit'));
-  });
-}
-
-if (playDashboardEl) {
-  playDashboardEl.addEventListener('click', e => {
-    const actionEl = e.target.closest('[data-play-action]');
-    if (!actionEl || !playDashboardEl.contains(actionEl)) return;
-    e.preventDefault();
-    handlePlayAction(actionEl);
-  });
-}
-
-if (seedHistorySectionEl) {
-  seedHistorySectionEl.addEventListener('click', e => {
-    const actionEl = e.target.closest('[data-play-action]');
-    if (!actionEl || !seedHistorySectionEl.contains(actionEl)) return;
-    e.preventDefault();
-    handlePlayAction(actionEl);
-  });
-}
-
-if (playNewGameBtn) {
-  playNewGameBtn.addEventListener('click', () => {
-    if (!currentSeed) return;
-    requestPlayDialog('standard');
-  });
-}
-
-if (playNewLinkedGameBtn) {
-  playNewLinkedGameBtn.addEventListener('click', () => {
-    if (!currentSeed) return;
-    requestPlayDialog('linked');
-  });
-}
-
-if (playJoinGameBtn) {
-  playJoinGameBtn.addEventListener('click', () => {
-    requestPlayDialog('join');
-  });
-}
-
-if (playCancelBtn) {
-  playCancelBtn.addEventListener('click', () => {
-    playNewGameDialog?.close();
-  });
-}
-
-if (playLinkedCancelBtn) {
-  playLinkedCancelBtn.addEventListener('click', () => {
-    playNewLinkedGameDialog?.close();
-  });
-}
-
-if (playJoinCancelBtn) {
-  playJoinCancelBtn.addEventListener('click', () => {
-    playJoinGameDialog?.close();
-  });
-}
-
-if (playResetGameCancelBtn) {
-  playResetGameCancelBtn.addEventListener('click', () => {
-    playResetGameDialog?.close();
-  });
-}
-
-if (playResetGameConfirmBtn) {
-  playResetGameConfirmBtn.addEventListener('click', () => {
-    playResetGameDialog?.close();
-    if (pendingNewGameDialogMode === 'linked') {
-      openPlayNewLinkedGameDialog();
-      return;
-    }
-    if (pendingNewGameDialogMode === 'join') {
-      openPlayJoinGameDialog();
-      return;
-    }
-    openPlayNewGameDialog();
-  });
-}
+    });
+  }
+  if (typeof seedHistorySectionEl !== 'undefined' && seedHistorySectionEl) {
+    seedHistorySectionEl.addEventListener('click', e => {
+      const actionEl = e.target.closest('[data-play-action]');
+      if (!actionEl || !seedHistorySectionEl.contains(actionEl)) return;
+      e.preventDefault();
+      handlePlayAction(actionEl);
+    });
+  }
+  if (typeof playNewGameBtn !== 'undefined' && playNewGameBtn) {
+    playNewGameBtn.addEventListener('click', () => {
+      if (!currentSeed) return;
+      requestPlayDialog('standard');
+    });
+  }
+  if (typeof playNewLinkedGameBtn !== 'undefined' && playNewLinkedGameBtn) {
+    playNewLinkedGameBtn.addEventListener('click', () => {
+      if (!currentSeed) return;
+      requestPlayDialog('linked');
+    });
+  }
+  if (typeof playJoinGameBtn !== 'undefined' && playJoinGameBtn) {
+    playJoinGameBtn.addEventListener('click', () => {
+      requestPlayDialog('join');
+    });
+  }
+  if (typeof playCancelBtn !== 'undefined' && playCancelBtn) {
+    playCancelBtn.addEventListener('click', () => {
+      playNewGameDialog?.close();
+    });
+  }
+  if (typeof playLinkedCancelBtn !== 'undefined' && playLinkedCancelBtn) {
+    playLinkedCancelBtn.addEventListener('click', () => {
+      playNewLinkedGameDialog?.close();
+    });
+  }
+  if (typeof playJoinCancelBtn !== 'undefined' && playJoinCancelBtn) {
+    playJoinCancelBtn.addEventListener('click', () => {
+      playJoinGameDialog?.close();
+    });
+  }
+  if (typeof playResetGameCancelBtn !== 'undefined' && playResetGameCancelBtn) {
+    playResetGameCancelBtn.addEventListener('click', () => {
+      playResetGameDialog?.close();
+    });
+  }
+  if (typeof playResetGameConfirmBtn !== 'undefined' && playResetGameConfirmBtn) {
+    playResetGameConfirmBtn.addEventListener('click', () => {
+      playResetGameDialog?.close();
+      if (pendingNewGameDialogMode === 'linked') {
+        openPlayNewLinkedGameDialog();
+        return;
+      }
+      if (pendingNewGameDialogMode === 'join') {
+        openPlayJoinGameDialog();
+        return;
+      }
+      openPlayNewGameDialog();
+    });
+  }
+});
 
 if (cloudSignInBtn) {
   cloudSignInBtn.addEventListener('click', async () => {
