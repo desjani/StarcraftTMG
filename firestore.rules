@@ -70,6 +70,26 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Public roster library.
+    // Official 6-character seeds remain read-only from this project.
+    // Generated 7-character uploaded seeds may be created/updated/deleted by
+    // the authenticated owner stamped into the document.
+    match /shared_rosters/{seedId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && seedId.matches('^[A-Z0-9]{7}$')
+        && request.resource.data.id == seedId
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isSignedIn()
+        && seedId.matches('^[A-Z0-9]{7}$')
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.id == seedId;
+      allow delete: if isSignedIn()
+        && seedId.matches('^[A-Z0-9]{7}$')
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
     // Linked live matches for head-to-head synchronized play.
     match /linkedMatches/{matchId} {
       // Match code is required client-side; signed-in users may read to join by code.

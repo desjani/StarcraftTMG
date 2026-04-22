@@ -117,10 +117,21 @@ jsonImportInput.addEventListener('change', (e) => {
 // In-memory cache for imported seeds
 const importedSeeds = {};
 
+function isOfficialSharedSeed(seed) {
+  return /^[A-Z0-9]{6}$/.test(String(seed || '').trim().toUpperCase());
+}
+
+function isUserUploadedSeed(seed) {
+  return /^[A-Z0-9]{7}$/.test(String(seed || '').trim().toUpperCase());
+}
+
 // Patch: wrap fetchRoster to check importedSeeds first (browser only)
 import { fetchRoster as originalFetchRoster } from '../lib/firestoreClient.js';
 export async function fetchRoster(seed) {
   const key = seed.trim().toUpperCase();
+  if (isUserUploadedSeed(key) && importedSeeds[key]) {
+    return importedSeeds[key];
+  }
   try {
     return await originalFetchRoster(key);
   } catch (err) {
@@ -214,8 +225,7 @@ const saveFavoriteBtn = document.getElementById('save-favorite-btn');
 // Save seed to Firestore REST API (shared_rosters collection)
 // Helper to select correct Firestore base URL for seed type
 function getBaseUrlForSeed(seed) {
-  const sixDigit = /^[A-Z0-9]{6}$/.test(seed);
-  return sixDigit
+  return isOfficialSharedSeed(seed)
     ? 'https://firestore.googleapis.com/v1/projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents'
     : 'https://firestore.googleapis.com/v1/projects/starcrafttmg-dc616/databases/(default)/documents';
 }
@@ -224,8 +234,18 @@ async function saveSeedToCloud(seedObj) {
   const seed = (seedObj.id || '').trim().toUpperCase();
   if (!seed) throw new Error('Seed missing');
   const authUser = await requireCloudAuthentication('save to cloud');
+  if (!isUserUploadedSeed(seed)) {
+    throw new Error('Only generated 7-character uploaded seeds can be saved to your cloud.');
+  }
   // Ensure id matches
-  const cleaned = { ...seedObj, id: seed };
+  const cleaned = {
+    ...seedObj,
+    id: seed,
+    ownerUid: authUser.uid,
+    ownerEmail: String(authUser.email || ''),
+    createdAt: seedObj.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
   // Firestore REST API expects fields in typed format
   function toFirestoreValue(v) {
     if (typeof v === 'string') return { stringValue: v };
@@ -1881,9 +1901,11 @@ async function removeFavoriteSeed(seed) {
   scheduleCloudSync();
   renderSeedHistory();
   // If this is a generated (imported) seed, delete from Firestore
-  if (/^[A-Z][A-Z0-9]{6}$/.test(normalized) && /^[N]/.test(normalized)) {
+  if (isUserUploadedSeed(normalized) && /^[N]/.test(normalized)) {
     try {
-      await deleteRoster(normalized);
+      const authUser = getFirebaseCurrentUser();
+      const idToken = authUser ? await authUser.getIdToken() : null;
+      await deleteRoster(normalized, { idToken });
       showToast('Deleted roster from Firestore', 'success');
     } catch (err) {
       showToast('Failed to delete roster from Firestore: ' + (err.message || err), 'error');
@@ -1893,7 +1915,7 @@ async function removeFavoriteSeed(seed) {
 // ─── Guest/Anonymous Session Cleanup ─────────────────────────────────────
 window.addEventListener('beforeunload', async () => {
   // If user is not signed in and has imported a seed, delete it
-  if (!cloudUser && currentSeed?.id && /^[A-Z][A-Z0-9]{6}$/.test(currentSeed.id) && /^[N]/.test(currentSeed.id)) {
+  if (!cloudUser && currentSeed?.id && isUserUploadedSeed(currentSeed.id) && /^[N]/.test(currentSeed.id)) {
     try {
       await deleteRoster(currentSeed.id);
     } catch {}
