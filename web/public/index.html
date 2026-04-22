@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ScAdjutant · StarCraft TMG Adjutant</title>
   <link rel="canonical" href="https://scadjutant.com/">
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
     (function redirectToCanonicalHost() {
       const canonicalOrigin = 'https://scadjutant.com';
@@ -331,7 +334,7 @@
 
     .search-bar {
       display: grid;
-      grid-template-columns: 1fr auto auto;
+      grid-template-columns: 1fr auto auto auto;
       gap: 12px;
       margin-bottom: 20px;
       padding: 14px;
@@ -344,7 +347,7 @@
     body.has-loaded-roster .search-bar {
       width: auto;
       min-width: min(100%, 420px);
-      grid-template-columns: 128px auto auto;
+      grid-template-columns: auto auto auto auto;
       align-items: center;
       gap: 6px;
       margin-bottom: 0;
@@ -480,6 +483,8 @@
       transition: border-color .18s, box-shadow .18s, transform .18s;
     }
     body.has-loaded-roster .search-bar input {
+      width: 11ch;
+      min-width: 11ch;
       min-height: 40px;
       padding: 8px 12px;
       font-size: .86rem;
@@ -558,6 +563,21 @@
       line-height: 1;
       letter-spacing: .06em;
       box-shadow: none;
+    }
+    .search-bar .btn.icon-btn {
+      min-width: 40px;
+      padding: 9px 11px;
+      font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Noto Sans Symbols', 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      line-height: 1;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    body.has-loaded-roster .search-bar .btn.icon-btn {
+      min-width: 40px;
+      padding: 7px 10px;
+      font-size: .98rem;
+      letter-spacing: 0;
     }
 
     .tabs {
@@ -894,13 +914,17 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 6px;
+      line-height: 1;
     }
     .slot-breakdown-label {
+      display: inline-flex;
+      align-items: center;
       color: var(--muted);
       font-size: .66rem;
       font-family: 'Orbitron', sans-serif;
       letter-spacing: .1em;
       text-transform: uppercase;
+      line-height: 1;
     }
     .slot-chip {
       display: inline-flex;
@@ -919,10 +943,13 @@
       vertical-align: middle;
     }
     .slot-chip-type {
+      display: inline-flex;
+      align-items: center;
       color: inherit;
       font-family: 'Orbitron', sans-serif;
       font-size: .62rem;
       letter-spacing: .08em;
+      line-height: 1;
     }
     .slot-chip.slot-hero {
       color: var(--yellow);
@@ -1170,12 +1197,12 @@
     }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked {
       min-height: 38px;
-      padding: 3px 7px 2px;
+      padding: 4px 7px 3px;
       display: inline-flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1px;
+      gap: 2px;
       line-height: 1;
       white-space: normal;
       flex: 0 0 auto;
@@ -1187,11 +1214,18 @@
     .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-shield { width: 48px; }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-supply { width: 54px; }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked .stat-chip-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: .52rem;
       letter-spacing: .08em;
       color: var(--muted);
+      line-height: 1;
     }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked strong {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: .78rem;
       line-height: 1;
     }
@@ -1210,6 +1244,218 @@
     }
     .aid-collapsed-grid.is-play-mode .play-collapsed-trackers {
       display: inline-grid;
+    }
+    .aid-stats-row {
+      margin-bottom: 10px;
+    }
+    .aid-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: stretch;
+    }
+    .aid-stats .stat-chip {
+      white-space: nowrap;
+    }
+    .aid-stats .stat-chip.stat-chip-stacked {
+      min-height: 42px;
+      padding: 4px 8px 3px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      line-height: 1;
+      white-space: normal;
+      flex: 0 0 auto;
+      border-radius: 10px;
+      background: rgba(21, 35, 56, .78);
+      box-shadow: inset 0 0 0 1px rgba(102, 182, 255, .06);
+    }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-hp { width: 54px; }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-armor { width: 62px; }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-evade { width: 62px; }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-speed { width: 66px; }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-shield { width: 54px; }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-supply { width: 62px; }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-cost { width: 70px; }
+    .aid-stats .stat-chip.stat-chip-stacked .stat-chip-label {
+      font-size: .54rem;
+      letter-spacing: .09em;
+      color: var(--muted);
+    }
+    .aid-stats .stat-chip.stat-chip-stacked strong {
+      font-size: .88rem;
+      line-height: 1;
+    }
+    .aid-stats .stat-chip.stat-chip-stacked.stat-chip-hp strong {
+      font-size: 1.02rem;
+    }
+    .aid-stats .stat-chip.stat-chip-stacked.is-diminished {
+      border-color: rgba(255, 98, 107, .58);
+      background: rgba(93, 24, 31, .34);
+    }
+    .play-expanded-stats-row {
+      margin-bottom: 10px;
+    }
+    .play-expanded-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(58px, max-content));
+      gap: 6px;
+      align-items: stretch;
+      justify-content: start;
+    }
+    .play-stat-box {
+      min-height: 50px;
+      padding: 0;
+      border: 1px solid rgba(66, 94, 132, .92);
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(17, 28, 45, .92), rgba(12, 21, 36, .96));
+      box-shadow: inset 0 0 0 1px rgba(102, 182, 255, .04);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 18px minmax(31px, auto);
+    }
+    .play-stat-box-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      border-bottom: 1px solid rgba(66, 94, 132, .78);
+      color: var(--muted);
+      background: rgba(26, 40, 63, .92);
+      font-family: 'Orbitron', sans-serif;
+      font-size: .52rem;
+      letter-spacing: .1em;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .play-stat-box-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 31px;
+      padding: 6px 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .98rem;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .play-stat-box-value strong {
+      color: var(--accent);
+      font-weight: 700;
+      line-height: 1;
+    }
+    .play-stat-box-value strong.aid-buff-highlight {
+      color: var(--green);
+    }
+    .play-stat-split {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .play-stat-split-part,
+    .play-stat-split-sep {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .play-stat-split-part {
+      font-weight: 700;
+      color: #7d8796;
+    }
+    .play-stat-split-part.is-active-base {
+      color: var(--green);
+    }
+    .play-stat-split-part.is-active-altered {
+      color: var(--red);
+    }
+    .play-stat-split-sep {
+      color: var(--muted);
+      opacity: .8;
+    }
+    .play-stat-box-hp .play-stat-box-value strong {
+      font-size: 1.08rem;
+    }
+    .play-stat-box-minerals .play-stat-box-value strong {
+      color: var(--yellow);
+    }
+    .play-stat-box-supply {
+      grid-template-rows: 18px auto;
+      min-width: 168px;
+    }
+    .play-stat-box-detail {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+      gap: 4px;
+      padding: 6px;
+      align-content: center;
+    }
+    .play-supply-tier-mini {
+      display: grid;
+      grid-template-rows: 11px 16px;
+      align-items: center;
+      justify-items: center;
+      min-height: 28px;
+      padding: 2px 4px 3px;
+      border: 1px solid rgba(49, 69, 99, .72);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(16, 27, 42, .78);
+      font-family: var(--mono);
+      font-size: .59rem;
+      line-height: 1;
+    }
+    .play-supply-tier-mini.is-active {
+      border-color: rgba(70, 212, 138, .72);
+      color: #d6ffe8;
+      background: rgba(70, 212, 138, .14);
+    }
+    .play-supply-tier-mini.is-diminished {
+      border-color: rgba(255, 98, 107, .68);
+      color: #ffd1d5;
+      background: rgba(255, 98, 107, .14);
+    }
+    .play-supply-tier-count,
+    .play-supply-tier-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .play-supply-tier-count {
+      font-size: .53rem;
+      letter-spacing: .04em;
+      gap: 3px;
+    }
+    .play-supply-tier-model-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 9px;
+      height: 9px;
+      color: inherit;
+      opacity: .78;
+      flex: 0 0 auto;
+    }
+    .play-supply-tier-model-icon svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+    .play-supply-tier-value {
+      color: inherit;
+      font-weight: 700;
+      font-size: .72rem;
     }
     .aid-header-statline .stat-chip {
       padding: 1px 7px;
@@ -2274,7 +2520,7 @@
       body.has-loaded-roster .search-bar {
         width: 100%;
         min-width: 0;
-        grid-template-columns: 1fr auto auto;
+        grid-template-columns: 1fr auto auto auto;
         margin-left: 0;
       }
       body.has-loaded-roster .seed-history {
@@ -2650,10 +2896,11 @@
       <!-- Search -->
         <div class="search-bar">
           <input type="text" id="seed-input"
-                 placeholder="Enter roster seed (e.g. TRN9X2)"
-                 maxlength="10" autocomplete="off" spellcheck="false">
-          <button class="btn" id="load-btn">Load Roster</button>
-          <button class="btn ghost" id="recent-toggle-btn">Hide History</button>
+                   placeholder="Enter roster seed (e.g. TRN9X2)"
+                   maxlength="10" autocomplete="off" spellcheck="false">
+                 <button class="btn icon-btn" id="load-btn" type="button" title="Load roster" aria-label="Load roster">⤓</button>
+                 <button class="btn ghost icon-btn" id="import-json-btn" type="button" title="Import roster JSON" aria-label="Import roster JSON">⤒</button>
+                 <button class="btn ghost icon-btn" id="recent-toggle-btn" type="button" title="Hide history" aria-label="Hide history">🕮</button>
         </div>
 
         <div class="seed-history" id="seed-history-section">

@@ -92,6 +92,41 @@ export async function run({ test }) {
     rosters[seed] = parseRoster(cleanSeed(fixtures[seed]), { gameData });
   }
 
+  const importedCleanedSeed = cleanSeed({
+    id: 'NL1GW9B',
+    createdAt: '2026-04-22T19:56:37.916Z',
+    faction: 'Protoss',
+    factionCardId: 'khalai',
+    mineralsLimit: 2000,
+    gasLimit: 200,
+    slotsAvailable: { Core: 6, Elite: 3, Support: 2, Hero: 1, Air: 2 },
+    gasUsed: 200,
+    mineralsUsed: 2000,
+    slotsUsed: { Core: 6, Elite: 3, Support: 2, Hero: 1, Air: 2 },
+    resourceTotal: 7,
+    units: [
+      {
+        id: 'artanis',
+        name: 'Artanis',
+        uid: 'nr-artanis',
+        count: 1,
+        size: 'small',
+        purchasedUpgrades: [],
+      },
+      {
+        id: 'stalker',
+        name: 'Stalker',
+        uid: 'nr-stalker',
+        count: 2,
+        size: 'small',
+        purchasedUpgrades: [],
+      },
+    ],
+    tacticalCards: ['orbital_strike'],
+    missions: [],
+  });
+  const importedRoster = parseRoster(importedCleanedSeed, { gameData });
+
   // ── Identity ──────────────────────────────────────────────────────────────
 
   for (const seed of seeds) {
@@ -134,6 +169,14 @@ export async function run({ test }) {
       assert.equal(r.resources, k.resources);
     });
   }
+
+  test('[imported cleaned seed] preserves faction and units without legacy state wrapper', () => {
+    assert.equal(importedRoster.seed, 'NL1GW9B');
+    assert.equal(importedRoster.faction, 'Protoss');
+    assert.equal(importedRoster.units.length, 2);
+    assert.ok(importedRoster.units.some((unit) => unit.id === 'artanis'));
+    assert.ok(importedRoster.units.some((unit) => unit.id === 'stalker'));
+  });
 
   // ── Unit presence ─────────────────────────────────────────────────────────
 

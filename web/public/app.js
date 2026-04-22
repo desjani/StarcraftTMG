@@ -1,24 +1,152 @@
+import firebase from './firebase-init.js'; // Uses window.firebase from CDN
+
+// ─── Unique Seed Generator ────────────────────────────────────────────────
+/**
+ * Generate a unique 7-character seed with a given prefix letter.
+ * Checks Firestore for uniqueness before returning.
+ * @param {string} prefix - Single uppercase letter (e.g. 'N' for NewRecruit)
+ * @returns {Promise<string>} Unique seed string
+ */
+async function generateUniqueSeed(prefix = 'N') {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let seed = '';
+  let tries = 0;
+  while (true) {
+    let randomPart = '';
+    for (let i = 0; i < 6; ++i) {
+      randomPart += charset[Math.floor(Math.random() * charset.length)];
+    }
+    seed = prefix + randomPart;
+    // Check Firestore for existence
+    try {
+      await fetchRoster(seed);
+      // If fetchRoster does not throw, seed exists, try again
+      tries++;
+      if (tries > 10) throw new Error('Failed to generate unique seed after 10 tries');
+    } catch (err) {
+      // If fetchRoster throws 404, seed is unique
+      if (err.status === 404 || (err.message && err.message.match(/not found|404/i))) {
+        return seed;
+      }
+      // Other errors: rethrow
+      throw err;
+    }
+  }
+}
+
+// ─── JSON Intake (Import) ────────────────────────────────────────────────
+/**
+ * Accept a JSON file upload, parse, assign a unique seed, and load as roster.
+ * @param {File} file - The uploaded JSON file
+ * @param {string} prefix - Prefix for seed (e.g. 'N' for NewRecruit)
+ */
+async function importRosterJsonFile(file, prefix = 'N') {
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    // Use the same cleaning logic as generate_seed_from_roster.js
+    let cleaned = null;
+    if (parsed.fields && parsed.fields.state) {
+      cleaned = parsed; // Already Firestore export
+    } else if (parsed.state) {
+      cleaned = parsed; // Already cleaned
+    } else if (parsed.roster && parsed.roster.forces) {
+      // NewRecruit JSON: clean it to app format (async)
+      cleaned = await cleanSeedUniversal(parsed);
+    } else {
+      throw new Error('Unrecognized roster JSON format');
+    }
+    // Assign a unique seed
+    const seed = await generateUniqueSeed(prefix);
+    cleaned.id = seed;
+    // Load as current seed
+    currentSeed = cleaned;
+    // Add to in-memory importedSeeds cache for recall
+    importedSeeds[seed.toUpperCase()] = cleaned;
+    if (seedInput) seedInput.value = seed;
+    refreshOutput();
+    resultsEl.style.display = 'block';
+    syncLoadedRosterLayout();
+    showToast('Imported roster as seed ' + seed, 'success');
+    // Discard file reference
+    // (parsed and cleaned are in-memory only)
+  } catch (err) {
+    showToast('Failed to import JSON: ' + (err.message || err), 'error');
+  }
+}
+
+// ─── File Input Handler (UI) ──────────────────────────────────────────────
+// Add a hidden file input for JSON import if not present
+let jsonImportInput = document.getElementById('json-import-input');
+if (!jsonImportInput) {
+  jsonImportInput = document.createElement('input');
+  jsonImportInput.type = 'file';
+  jsonImportInput.accept = '.json,application/json';
+  jsonImportInput.style.display = 'none';
+  jsonImportInput.id = 'json-import-input';
+  document.body.appendChild(jsonImportInput);
+}
+// Add a button to trigger import (optional, or wire to menu)
+let importBtn = document.getElementById('import-json-btn');
+if (!importBtn) {
+  importBtn = document.createElement('button');
+  importBtn.textContent = '⤒';
+  importBtn.id = 'import-json-btn';
+  importBtn.type = 'button';
+  importBtn.className = 'btn ghost icon-btn';
+  importBtn.title = 'Import roster JSON';
+  importBtn.setAttribute('aria-label', 'Import roster JSON');
+  importBtn.style.position = 'fixed';
+  importBtn.style.top = '10px';
+  importBtn.style.right = '10px';
+  importBtn.style.zIndex = 1000;
+  document.body.appendChild(importBtn);
+}
+importBtn.addEventListener('click', () => jsonImportInput.click());
+jsonImportInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importRosterJsonFile(file, 'N');
+  jsonImportInput.value = '';
+});
 /**
  * StarCraft TMG Adjutant — browser app.
  * Imported as a module by index.html.
  * Reuses the same lib/ modules as the server and Discord bot.
  */
-import { fetchRoster } from './lib/firestoreClient.js';
+// In-memory cache for imported seeds
+const importedSeeds = {};
+
+// Patch: wrap fetchRoster to check importedSeeds first (browser only)
+import { fetchRoster as originalFetchRoster } from '../lib/firestoreClient.js';
+export async function fetchRoster(seed) {
+  const key = seed.trim().toUpperCase();
+  try {
+    return await originalFetchRoster(key);
+  } catch (err) {
+    // If 7-digit and in importedSeeds, fallback for uploader
+    if (err.status === 404 && /^[A-Z0-9]{7}$/.test(key) && importedSeeds[key]) {
+      return importedSeeds[key];
+    }
+    throw err;
+  }
+}
+
+import { cleanSeedUniversal } from './lib/seedCleaner.js';
+import { mapNewRecruitToCleaned } from '../../lib/newrecruit_mapper.js';
+// Expose robust NewRecruit mapping for browser universal cleaning
+if (typeof window !== 'undefined') {
+  window.mapNewRecruitToCleaned = mapNewRecruitToCleaned;
+}
+import { deleteRoster } from './lib/firestoreClient.js';
 import { loadGameData } from './lib/gameData.js';
 import {
   createLinkedMatch,
-  createEmailPasswordAccount,
   fetchCloudState,
   hasCloudSyncConfig,
-  initCloudAuth,
   joinLinkedMatch,
   mergeLibraries,
   mergeSeedHistories,
-  sendPasswordReset,
-  signInAnonymouslyCloud,
-  signInWithEmailPassword,
-  signInWithProvider,
-  signOutCloud,
   subscribeToLinkedMatch,
   syncCloudState,
   updateLinkedMatchSharedState,
@@ -82,6 +210,59 @@ const seedInput      = document.getElementById('seed-input');
 const loadBtn        = document.getElementById('load-btn');
 const recentToggleBtn = document.getElementById('recent-toggle-btn');
 const saveFavoriteBtn = document.getElementById('save-favorite-btn');
+
+// Save seed to Firestore REST API (shared_rosters collection)
+// Helper to select correct Firestore base URL for seed type
+function getBaseUrlForSeed(seed) {
+  const sixDigit = /^[A-Z0-9]{6}$/.test(seed);
+  return sixDigit
+    ? 'https://firestore.googleapis.com/v1/projects/starcrafttmgbeta/databases/starcrafttmgbeta/documents'
+    : 'https://firestore.googleapis.com/v1/projects/starcrafttmg-dc616/databases/(default)/documents';
+}
+
+async function saveSeedToCloud(seedObj) {
+  const seed = (seedObj.id || '').trim().toUpperCase();
+  if (!seed) throw new Error('Seed missing');
+  const authUser = await requireCloudAuthentication('save to cloud');
+  // Ensure id matches
+  const cleaned = { ...seedObj, id: seed };
+  // Firestore REST API expects fields in typed format
+  function toFirestoreValue(v) {
+    if (typeof v === 'string') return { stringValue: v };
+    if (typeof v === 'number') return { integerValue: v };
+    if (typeof v === 'boolean') return { booleanValue: v };
+    if (v instanceof Date) return { timestampValue: v.toISOString() };
+    if (Array.isArray(v)) return { arrayValue: { values: v.map(toFirestoreValue) } };
+    if (v && typeof v === 'object') return { mapValue: { fields: toFirestoreFields(v) } };
+    if (v == null) return { nullValue: null };
+  }
+  function toFirestoreFields(obj) {
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+      out[k] = toFirestoreValue(v);
+    }
+    return out;
+  }
+  const doc = { fields: toFirestoreFields(cleaned) };
+  const baseUrl = getBaseUrlForSeed(seed);
+  const url = `${baseUrl}/shared_rosters/${encodeURIComponent(seed)}?key=AIzaSyDHRhS4FIO_1s_2Tn2C77noJRgbs-y_mks`;
+
+  const idToken = await authUser.getIdToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${idToken}`,
+  };
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(doc),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error?.message || `HTTP ${res.status}`);
+  }
+  return true;
+}
 const historySavedList = document.getElementById('history-saved-list');
 const historyPastList = document.getElementById('history-past-list');
 const seedHistorySectionEl = document.getElementById('seed-history-section');
@@ -236,6 +417,79 @@ let linkedSession = {
 const processedLinkedConsensusRequestIds = new Set();
 let pendingNewGameDialogMode = 'standard';
 
+function getFirebaseAuth() {
+  return typeof firebase?.auth === 'function' ? firebase.auth() : null;
+}
+
+function getFirebaseCurrentUser() {
+  return getFirebaseAuth()?.currentUser || null;
+}
+
+function isCloudAuthenticated() {
+  return Boolean(getFirebaseCurrentUser());
+}
+
+async function requireCloudAuthentication(action = 'use cloud features') {
+  const user = getFirebaseCurrentUser();
+  if (user) return user;
+  throw new Error(`Sign in with Firebase Auth to ${action}.`);
+}
+
+function createCompatAuthProvider(providerKey = 'google') {
+  const authNs = firebase?.auth;
+  if (!authNs) throw new Error('Firebase Auth is unavailable.');
+  const key = String(providerKey || '').toLowerCase();
+  if (key === 'google') return new authNs.GoogleAuthProvider();
+  if (key === 'facebook') return new authNs.FacebookAuthProvider();
+  if (key === 'microsoft') return new authNs.OAuthProvider('microsoft.com');
+  if (key === 'apple') return new authNs.OAuthProvider('apple.com');
+  throw new Error(`Unsupported auth provider: ${providerKey}`);
+}
+
+async function signInWithCompatProvider(providerKey = 'google') {
+  const auth = getFirebaseAuth();
+  if (!auth) throw new Error('Firebase Auth is unavailable.');
+  const provider = createCompatAuthProvider(providerKey);
+  provider.setCustomParameters({ prompt: 'select_account' });
+  return auth.signInWithPopup(provider);
+}
+
+async function signInWithCompatEmailPassword(email, password) {
+  const auth = getFirebaseAuth();
+  if (!auth) throw new Error('Firebase Auth is unavailable.');
+  return auth.signInWithEmailAndPassword(String(email || '').trim(), String(password || ''));
+}
+
+async function createCompatEmailPasswordAccount(email, password) {
+  const auth = getFirebaseAuth();
+  if (!auth) throw new Error('Firebase Auth is unavailable.');
+  return auth.createUserWithEmailAndPassword(String(email || '').trim(), String(password || ''));
+}
+
+async function sendCompatPasswordReset(email) {
+  const auth = getFirebaseAuth();
+  if (!auth) throw new Error('Firebase Auth is unavailable.');
+  return auth.sendPasswordResetEmail(String(email || '').trim());
+}
+
+async function signOutCompat() {
+  const auth = getFirebaseAuth();
+  if (!auth) throw new Error('Firebase Auth is unavailable.');
+  return auth.signOut();
+}
+
+function updateCloudActionAvailability() {
+  const authenticated = isCloudAuthenticated();
+  if (playNewLinkedGameBtn) {
+    playNewLinkedGameBtn.disabled = !authenticated;
+    playNewLinkedGameBtn.title = authenticated ? '' : 'Sign in to start linked cloud games.';
+  }
+  if (playJoinGameBtn) {
+    playJoinGameBtn.disabled = !authenticated;
+    playJoinGameBtn.title = authenticated ? '' : 'Sign in to join linked cloud games.';
+  }
+}
+
 const PLAY_PHASES = ['Pregame', 'Movement', 'Assault', 'Combat', 'Scoring'];
 
 function createEmptyLinkedConsensus() {
@@ -359,14 +613,16 @@ function setCloudSyncStatus(text) {
 }
 
 function updateCloudAuthUi() {
-  const signedIn = Boolean(cloudUser);
+  const firebaseUser = getFirebaseCurrentUser();
+  const signedIn = Boolean(firebaseUser);
   if (cloudSignInBtn) cloudSignInBtn.style.display = signedIn ? 'none' : '';
   if (cloudSignOutBtn) cloudSignOutBtn.style.display = signedIn ? '' : 'none';
   if (cloudUserLabel) {
-    const displayName = cloudUser?.displayName || cloudUser?.email || 'Guest';
+    const displayName = firebaseUser?.displayName || firebaseUser?.email || 'Guest';
     cloudUserLabel.textContent = signedIn ? displayName : 'Guest';
   }
   if (!signedIn) setCloudSyncStatus('Local only');
+  updateCloudActionAvailability();
   updateLinkedUi();
 }
 
@@ -410,7 +666,6 @@ function updateLinkedReadyState(state, { match = null, playerSide = null, oppone
     && (opponentSide?.roster || state?.opponentRoster)
   );
   const ready = bothUsersJoined && bothSeedsLoaded && bothRostersLoaded;
-  state.isLinkedGame = isLinkedGameState(state);
   state.linkedReady = ready;
   linkedSession.ready = ready;
   return ready;
@@ -427,9 +682,10 @@ function setLinkedStatusMarkup(markup) {
 }
 
 function getPreferredPlayerName() {
-  const cloudName = String(cloudUser?.displayName || '').trim();
+  const firebaseUser = getFirebaseCurrentUser();
+  const cloudName = String(firebaseUser?.displayName || '').trim();
   if (cloudName) return cloudName;
-  const cloudEmail = String(cloudUser?.email || '').trim();
+  const cloudEmail = String(firebaseUser?.email || '').trim();
   if (cloudEmail) return cloudEmail.split('@')[0] || 'Player 1';
   const stateName = String(playModeState?.playerName || '').trim();
   if (stateName) return stateName;
@@ -480,14 +736,7 @@ function getLinkedErrorMessage(context, err) {
 }
 
 async function ensureLinkedJoinIdentity() {
-  if (cloudUser) return cloudUser;
-  const result = await signInAnonymouslyCloud();
-  if (result?.user) {
-    cloudUser = result.user;
-    updateCloudAuthUi();
-    return result.user;
-  }
-  return cloudUser;
+  return getFirebaseCurrentUser();
 }
 
 function requestPlayDialog(mode = 'standard') {
@@ -1053,7 +1302,9 @@ function setRosterPanelMode(mode, { save = true } = {}) {
 function applyRecentCollapsed(save = true) {
   seedHistorySectionEl.style.display = recentCollapsed ? 'none' : '';
   document.body.classList.toggle('history-open', !recentCollapsed);
-  recentToggleBtn.textContent = recentCollapsed ? 'Show History' : 'Hide History';
+  recentToggleBtn.textContent = '🕮';
+  recentToggleBtn.title = recentCollapsed ? 'Show history' : 'Hide history';
+  recentToggleBtn.setAttribute('aria-label', recentCollapsed ? 'Show history' : 'Hide history');
   if (save) savePrefs();
 }
 
@@ -1062,9 +1313,10 @@ function sanitizeSeed(seed) {
 }
 
 function saveSeedHistory() {
+  // Only save recentSeeds locally; favorites are cloud-only
   let serialized = '';
   try {
-    serialized = JSON.stringify(seedHistory);
+    serialized = JSON.stringify({ recentSeeds: seedHistory.recentSeeds });
   } catch (_) {
     return;
   }
@@ -1073,6 +1325,7 @@ function saveSeedHistory() {
     localStorage.setItem(SEED_HISTORY_KEY, serialized);
   } catch (_) { /* storage unavailable */ }
   lastSavedSeedHistoryJson = serialized;
+  // Always sync cloud for favorites
   scheduleCloudSync();
 }
 
@@ -1082,18 +1335,12 @@ function loadSeedHistory() {
     if (!raw) return;
     const parsed = JSON.parse(raw);
     const recentSeeds = Array.isArray(parsed.recentSeeds) ? parsed.recentSeeds : [];
-    const favorites = Array.isArray(parsed.favorites) ? parsed.favorites : [];
+    // Favorites will be loaded from cloud, not localStorage
     seedHistory = {
       recentSeeds: recentSeeds.map(sanitizeSeed).filter(Boolean),
-      favorites: favorites
-        .filter(f => f && typeof f === 'object')
-        .map(f => ({
-          name: String(f.name || '').trim(),
-          seed: sanitizeSeed(f.seed),
-        }))
-        .filter(f => f.name && f.seed),
+      favorites: [],
     };
-    lastSavedSeedHistoryJson = JSON.stringify(seedHistory);
+    lastSavedSeedHistoryJson = JSON.stringify({ recentSeeds: seedHistory.recentSeeds });
   } catch (_) { /* corrupt storage — ignore */ }
 }
 
@@ -1101,6 +1348,7 @@ function applySeedHistory(nextSeedHistory, { save = true } = {}) {
   const recentSeeds = Array.isArray(nextSeedHistory?.recentSeeds)
     ? nextSeedHistory.recentSeeds.map(sanitizeSeed).filter(Boolean)
     : [];
+  // Only update favorites if present (from cloud)
   const favorites = Array.isArray(nextSeedHistory?.favorites)
     ? nextSeedHistory.favorites
       .filter(item => item && typeof item === 'object')
@@ -1109,7 +1357,7 @@ function applySeedHistory(nextSeedHistory, { save = true } = {}) {
         seed: sanitizeSeed(item.seed),
       }))
       .filter(item => item.name && item.seed)
-    : [];
+    : seedHistory.favorites;
 
   seedHistory = { recentSeeds, favorites };
   if (save) saveSeedHistory();
@@ -1611,23 +1859,46 @@ function saveFavoriteSeed(seed, name) {
   const normalizedSeed = sanitizeSeed(seed);
   const normalizedName = String(name || '').trim();
   if (!normalizedSeed || !normalizedName) return false;
+  // Only store reference for 6-digit seeds (official API)
+  const isSixDigit = /^[A-Z0-9]{6}$/.test(normalizedSeed);
+  const favoriteEntry = { name: normalizedName, seed: normalizedSeed };
   const existingIdx = seedHistory.favorites.findIndex(f => f.seed === normalizedSeed);
   if (existingIdx >= 0) {
-    seedHistory.favorites[existingIdx].name = normalizedName;
+    seedHistory.favorites[existingIdx] = favoriteEntry;
   } else {
-    seedHistory.favorites.unshift({ name: normalizedName, seed: normalizedSeed });
+    seedHistory.favorites.unshift(favoriteEntry);
   }
-  saveSeedHistory();
+  // Always sync to cloud
+  scheduleCloudSync();
   renderSeedHistory();
   return true;
 }
 
-function removeFavoriteSeed(seed) {
+async function removeFavoriteSeed(seed) {
   const normalized = sanitizeSeed(seed);
   seedHistory.favorites = seedHistory.favorites.filter(f => f.seed !== normalized);
-  saveSeedHistory();
+  // Always sync to cloud
+  scheduleCloudSync();
   renderSeedHistory();
+  // If this is a generated (imported) seed, delete from Firestore
+  if (/^[A-Z][A-Z0-9]{6}$/.test(normalized) && /^[N]/.test(normalized)) {
+    try {
+      await deleteRoster(normalized);
+      showToast('Deleted roster from Firestore', 'success');
+    } catch (err) {
+      showToast('Failed to delete roster from Firestore: ' + (err.message || err), 'error');
+    }
+  }
 }
+// ─── Guest/Anonymous Session Cleanup ─────────────────────────────────────
+window.addEventListener('beforeunload', async () => {
+  // If user is not signed in and has imported a seed, delete it
+  if (!cloudUser && currentSeed?.id && /^[A-Z][A-Z0-9]{6}$/.test(currentSeed.id) && /^[N]/.test(currentSeed.id)) {
+    try {
+      await deleteRoster(currentSeed.id);
+    } catch {}
+  }
+});
 
 // ─── ANSI → HTML renderer ─────────────────────────────────────────────────────
 // Approximates how Discord renders ```ansi blocks in its dark theme.
@@ -2315,6 +2586,65 @@ function detectUnconditionalPassiveBuff(upgrade, weaponProfiles = []) {
   };
 }
 
+function getUnitPassiveStatDeltas(unit) {
+  const upgradeList = sortUpgradesForDisplay(unit?.allUpgrades ?? []);
+  const weaponProfiles = resolveLinkedWeaponReplacements(
+    upgradeList
+      .filter(isWeaponProfile)
+      .filter((upgrade) => isNaturalAbility(upgrade) || upgrade.active)
+      .map(parseWeaponProfile),
+    unit?.models
+  ).sort(compareAidWeaponProfiles);
+  const visibleUpgrades = upgradeList
+    .filter((upgrade) => !isWeaponProfile(upgrade))
+    .filter((upgrade) => isNaturalAbility(upgrade) || upgrade.active);
+
+  const unitStatDeltas = {};
+  for (const ability of visibleUpgrades) {
+    const detected = detectUnconditionalPassiveBuff(ability, weaponProfiles);
+    for (const entry of detected?.unitStatApplications ?? []) {
+      const field = String(entry?.field || '').trim();
+      if (!field) continue;
+      unitStatDeltas[field] = Number(unitStatDeltas[field] ?? 0) + Number(entry?.delta ?? 0);
+    }
+  }
+  return unitStatDeltas;
+}
+
+function getPlayBuffedUnitSeedData(unit) {
+  const unitStatDeltas = getUnitPassiveStatDeltas(unit);
+  const buffedStats = {
+    hp: unit?.stats?.hp,
+    shield: unit?.stats?.shield,
+  };
+  for (const [field, deltaRaw] of Object.entries(unitStatDeltas)) {
+    const delta = Number(deltaRaw ?? 0);
+    if (!delta || !['hp', 'shield'].includes(field)) continue;
+    const applied = applyNumericDelta(buffedStats[field], delta);
+    buffedStats[field] = applied.value;
+  }
+
+  let buffedSupply = Number(unit?.supply ?? 0) || 0;
+  const supplyDelta = Number(unitStatDeltas.supply ?? 0);
+  if (supplyDelta) {
+    const applied = applyNumericDelta(buffedSupply, supplyDelta);
+    buffedSupply = Number.parseInt(String(applied.value ?? buffedSupply), 10);
+    if (!Number.isFinite(buffedSupply)) buffedSupply = Number(unit?.supply ?? 0) || 0;
+  }
+
+  const buffedSquadProfile = Array.isArray(unit?.squadProfile)
+    ? JSON.parse(JSON.stringify(unit.squadProfile)).map((tier) => {
+      const nextTier = { ...tier };
+      if (supplyDelta) {
+        nextTier.supply = Number(nextTier?.supply ?? 0) + supplyDelta;
+      }
+      return nextTier;
+    })
+    : [];
+
+  return { buffedStats, buffedSupply, buffedSquadProfile };
+}
+
 function isNaturalAbility(upgrade) {
   const cost = upgrade?.cost;
   if (typeof cost === 'number') return cost <= 0;
@@ -2857,22 +3187,6 @@ function renderPlayerAid(roster, opts = {}) {
     }
     const diminishedSupply = !!trackerSupplyState && trackerSupplyState.currentSupply < Number(u.supply ?? 0);
 
-    const statChips = [
-      ['HP', buffedUnitStats.hp, 'hp'],
-      ['ARM', buffedUnitStats.armor, 'armor'],
-      ['EVD', buffedUnitStats.evade, 'evade'],
-      ['SPD', buffedUnitStats.speed, 'speed'],
-      ['SH', buffedUnitStats.shield, 'shield'],
-    ]
-      .filter(([, value]) => hasStatValue(value))
-      .map(([label, value, field]) => {
-        const highlighted = mergedBuffs && !!unitStatHighlights[field];
-        const valueHtml = highlighted
-          ? `<strong class="aid-buff-highlight">${escapeHtml(String(value))}</strong>`
-          : `<strong>${escapeHtml(String(value))}</strong>`;
-        return `<span class="stat-chip">${label} ${valueHtml}</span>`;
-      })
-      .join('');
     const collapsedStatChips = [
       ['HP', buffedUnitStats.hp, 'hp'],
       ['ARM', buffedUnitStats.armor, 'armor'],
@@ -2896,17 +3210,65 @@ function renderPlayerAid(roster, opts = {}) {
         return `<span class="${chipClasses}"><span class="stat-chip-label">${label}</span>${valueHtml}</span>`;
       })
       .join('');
-    const supplyHtml = mergedBuffs && supplyHighlighted
-      ? `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
-      : `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+    const expandedStatChips = [
+      ['HP', buffedUnitStats.hp, 'hp'],
+      ['ARM', buffedUnitStats.armor, 'armor'],
+      ['EVD', buffedUnitStats.evade, 'evade'],
+      ['SPD', buffedUnitStats.speed, 'speed'],
+      ['SH', buffedUnitStats.shield, 'shield'],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value, field]) => {
+        const highlighted = mergedBuffs && !!unitStatHighlights[field];
+        const valueHtml = highlighted
+          ? `<strong class="aid-buff-highlight">${escapeHtml(String(value))}</strong>`
+          : `<strong>${escapeHtml(String(value))}</strong>`;
+        return `<span class="stat-chip stat-chip-stacked stat-chip-${escapeHtml(field)}"><span class="stat-chip-label">${label}</span>${valueHtml}</span>`;
+      })
+      .join('');
+    const expandedSupplyHtml = mergedBuffs && supplyHighlighted
+      ? `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong>${escapeHtml(String(displaySupply))}</strong></span>`;
     const collapsedSupplyHtml = mergedBuffs && supplyHighlighted
       ? `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
       : `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong>${escapeHtml(String(displaySupply))}</strong></span>`;
-    const mineralsHtml = `<span class="stat-chip stat-chip-minerals"><strong>${u.totalCost}m</strong></span>`;
-    const supplyProfileHtml = renderPlaySupplyProfile(
+    const expandedMineralsHtml = `<span class="stat-chip stat-chip-minerals stat-chip-stacked stat-chip-cost"><span class="stat-chip-label">MIN</span><strong>${u.totalCost}m</strong></span>`;
+    const expandedPlayStatBoxes = [
+      ['HP', buffedUnitStats.hp, 'hp'],
+      ['ARM', buffedUnitStats.armor, 'armor'],
+      ['EVD', buffedUnitStats.evade, 'evade'],
+      ['SPD', buffedUnitStats.speed, 'speed'],
+      ['SH', buffedUnitStats.shield, 'shield'],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value, field]) => {
+        const highlighted = mergedBuffs && !!unitStatHighlights[field];
+        const valueHtml = renderExpandedStatValue(value, tracker, u.models, highlighted);
+        return `<div class="play-stat-box play-stat-box-${escapeHtml(field)}">
+          <div class="play-stat-box-label">${label}</div>
+          <div class="play-stat-box-value">${valueHtml}</div>
+        </div>`;
+      })
+      .join('');
+    const expandedPlaySupplyBox = renderPlaySupplyBox(
       tracker ?? { squadProfile: u.squadProfile, startingModels: u.models, baseSupply: u.supply },
-      u.supply,
+      {
+        fallbackSupply: u.supply,
+        displaySupply,
+        highlighted: mergedBuffs && supplyHighlighted,
+        diminished: diminishedSupply,
+      },
     );
+    const expandedPlayMineralsBox = `<div class="play-stat-box play-stat-box-minerals">
+      <div class="play-stat-box-label">MIN</div>
+      <div class="play-stat-box-value"><strong>${u.totalCost}m</strong></div>
+    </div>`;
+    const supplyProfileHtml = tracker
+      ? ''
+      : renderPlaySupplyProfile(
+        tracker ?? { squadProfile: u.squadProfile, startingModels: u.models, baseSupply: u.supply },
+        u.supply,
+      );
     const trackerDisabledAttrs = tracker ? getLinkedTrackerDisabledAttrs(tracker.side) : '';
     const collapsedTrackerHtml = tracker ? `<div class="play-collapsed-trackers">
       <button class="btn ghost sm" type="button" data-play-action="hp-dec" data-unit-key="${escapeHtml(unitKey)}"${trackerDisabledAttrs}>-</button>
@@ -2931,14 +3293,23 @@ function renderPlayerAid(roster, opts = {}) {
     const headerStatlineHtml = showStats
       ? `<div class="aid-header-statline aid-collapsed-grid${tracker ? ' is-play-mode' : ''}">${collapsedStatChips}${collapsedSupplyHtml}${collapsedTrackerHtml}</div>`
       : '';
-    const statsHtml = showStats ? `
+    const statsHtml = showStats ? (tracker
+      ? `
+      <div class="play-expanded-stats-row">
+        <div class="play-expanded-stats-grid">
+          ${expandedPlayStatBoxes}
+          ${expandedPlaySupplyBox}
+          ${expandedPlayMineralsBox}
+        </div>
+      </div>`
+      : `
       <div class="aid-stats-row">
         <div class="aid-stats">
-          ${statChips}
-          ${supplyHtml}
-          ${mineralsHtml}
+          ${expandedStatChips}
+          ${expandedSupplyHtml}
+          ${expandedMineralsHtml}
         </div>
-      </div>` : '';
+      </div>`) : '';
     const metadataRowHtml = showStats && (tagsInlineHtml || aidUpgradePills) ? `
       <div class="aid-meta-row">
         <div class="aid-meta-left">${tagsInlineHtml}</div>
@@ -3055,8 +3426,9 @@ function createPlayUnitsByKey(roster, side) {
   const unitsByKey = {};
   (roster.units ?? []).forEach((u, idx) => {
     const key = `${side}:${String(u?.id || 'unit')}-${idx}`;
-    const hpPerModel = Number.parseInt(String(u?.stats?.hp ?? '0'), 10);
-    const shieldValue = Number.parseInt(String(u?.stats?.shield ?? '0'), 10);
+    const { buffedStats, buffedSupply, buffedSquadProfile } = getPlayBuffedUnitSeedData(u);
+    const hpPerModel = Number.parseInt(String(buffedStats.hp ?? '0'), 10);
+    const shieldValue = Number.parseInt(String(buffedStats.shield ?? '0'), 10);
     const models = Number(u?.models ?? 1);
     const maxHealthPools = [];
     if (Number.isFinite(hpPerModel) && hpPerModel > 0) {
@@ -3074,9 +3446,9 @@ function createPlayUnitsByKey(roster, side) {
       startingModels: models,
       maxHealthPools,
       currentHealthPools: maxHealthPools.map(pool => ({ ...pool })),
-      supply: Number(u?.supply ?? 0) || 0,
-      baseSupply: Number(u?.supply ?? 0) || 0,
-      squadProfile: Array.isArray(u?.squadProfile) ? JSON.parse(JSON.stringify(u.squadProfile)) : [],
+      supply: buffedSupply,
+      baseSupply: buffedSupply,
+      squadProfile: buffedSquadProfile,
       deployed: false,
       activation: {
         movement: false,
@@ -3147,6 +3519,60 @@ function renderPlaySupplyProfile(tracker, fallbackSupply = 0) {
     </div>`;
 }
 
+function renderPlaySupplyBox(tracker, {
+  fallbackSupply = 0,
+  displaySupply = 0,
+  highlighted = false,
+  diminished = false,
+} = {}) {
+  const startingModels = Math.max(0, Number(tracker?.startingModels ?? 0) || 0);
+  const rawProfile = Array.isArray(tracker?.squadProfile) ? tracker.squadProfile : [];
+  const profile = rawProfile.filter((tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (Number.isFinite(max)) return max <= startingModels;
+    if (Number.isFinite(min)) return min <= startingModels;
+    return true;
+  });
+  if (profile.length <= 1) {
+    const valueHtml = highlighted
+      ? `<strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong>`
+      : `<strong>${escapeHtml(String(displaySupply))}</strong>`;
+    return `<div class="play-stat-box play-stat-box-supply${diminished ? ' is-diminished' : ''}">
+      <div class="play-stat-box-label">SUP</div>
+      <div class="play-stat-box-value">${valueHtml}</div>
+    </div>`;
+  }
+
+  const { activeTier, currentSupply } = getPlayTrackerSupplyTier(tracker);
+  const baseSupply = Number(tracker?.baseSupply ?? fallbackSupply ?? 0) || 0;
+  const formatModelCountLabel = (tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      if (min === max) return String(min);
+      return `${max}-${min}`;
+    }
+    return String(tier?.modelCount ?? '-');
+  };
+  const valueHtml = highlighted
+    ? `<strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong>`
+    : `<strong>${escapeHtml(String(displaySupply))}</strong>`;
+  const tierHtml = profile.map((tier) => {
+    const isActive = !!activeTier && Number(activeTier.tier) === Number(tier?.tier);
+    const isTierDiminished = isActive && currentSupply < baseSupply;
+    return `<span class="play-supply-tier-mini${isActive ? ' is-active' : ''}${isTierDiminished ? ' is-diminished' : ''}">
+      <span class="play-supply-tier-count"><span class="play-supply-tier-model-icon" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><path d="M8 2.2a2.55 2.55 0 1 1 0 5.1 2.55 2.55 0 0 1 0-5.1Zm0 6.3c-2.5 0-4.7 1.3-5.5 3.25-.14.34.1.72.47.72h10.16c.37 0 .61-.38.47-.72C12.7 9.8 10.5 8.5 8 8.5Z"/></svg></span>${escapeHtml(formatModelCountLabel(tier))}</span>
+      <span class="play-supply-tier-value">${escapeHtml(String(tier?.supply ?? 0))}</span>
+    </span>`;
+  }).join('');
+
+  return `<div class="play-stat-box play-stat-box-supply${diminished ? ' is-diminished' : ''}">
+    <div class="play-stat-box-label">SUP</div>
+    <div class="play-stat-box-detail" aria-label="Supply thresholds">${tierHtml}</div>
+  </div>`;
+}
+
 function resolveCollapsedSlashStat(value, tracker, fallbackModels = 1) {
   const raw = String(value ?? '').trim();
   if (!raw.includes('/')) return { value: raw, isDiminished: false };
@@ -3160,6 +3586,35 @@ function resolveCollapsedSlashStat(value, tracker, fallbackModels = 1) {
     value: useSingleModelValue ? parts[1] : parts[0],
     isDiminished: useSingleModelValue && parts[0] !== parts[1],
   };
+}
+
+function renderExpandedStatValue(value, tracker, fallbackModels = 1, highlighted = false) {
+  const raw = String(value ?? '').trim();
+  if (!raw.includes('/')) {
+    return highlighted
+      ? `<strong class="aid-buff-highlight">${escapeHtml(raw)}</strong>`
+      : `<strong>${escapeHtml(raw)}</strong>`;
+  }
+
+  const parts = raw.split('/').map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) {
+    return highlighted
+      ? `<strong class="aid-buff-highlight">${escapeHtml(raw)}</strong>`
+      : `<strong>${escapeHtml(raw)}</strong>`;
+  }
+
+  const remainingModels = tracker
+    ? getPlayTrackerRemainingModels(tracker)
+    : Math.max(0, Number(fallbackModels ?? 1) || 0);
+  const useAlteredValue = remainingModels <= 1;
+  const leftClass = useAlteredValue ? 'is-inactive' : 'is-active-base';
+  const rightClass = useAlteredValue ? 'is-active-altered' : 'is-inactive';
+
+  return `<span class="play-stat-split">
+    <span class="play-stat-split-part ${leftClass}">${escapeHtml(parts[0])}</span>
+    <span class="play-stat-split-sep">/</span>
+    <span class="play-stat-split-part ${rightClass}">${escapeHtml(parts[1])}</span>
+  </span>`;
 }
 
 function getPlayTrackerCurrentHealth(tracker) {
@@ -4840,8 +5295,32 @@ saveFavoriteBtn.addEventListener('click', () => {
     showToast('Favorite name cannot be empty.', 'error', 1800);
     return;
   }
-  saveFavoriteSeed(seed, name);
-  showToast(`Saved favorite: ${name.trim()}`);
+  // If uploaded/imported seed (7-digit, in importedSeeds, not in cloud), upload to Firestore first
+  const isSevenDigit = /^[A-Z0-9]{7}$/.test(seed);
+  const isImported = isSevenDigit && importedSeeds[seed];
+  const originalBtnState = saveFavoriteBtn.disabled;
+  saveFavoriteBtn.disabled = true;
+  (async () => {
+    try {
+      console.log('[Favorite Debug]', { seed, isSevenDigit, isImported, cloudUser });
+      if (isImported && !isCloudAuthenticated()) {
+        showToast('You must be signed in to save imported seeds to favorites.', 'error');
+        return;
+      }
+      if (isImported && isCloudAuthenticated()) {
+        showToast('Uploading imported seed to cloud...', 'info');
+        await saveSeedToCloud(importedSeeds[seed]);
+        showToast('Seed uploaded to cloud for sharing!', 'success');
+      }
+      saveFavoriteSeed(seed, name);
+      showToast(`Saved favorite: ${name.trim()}`);
+    } catch (err) {
+      showToast('Failed to upload seed to cloud: ' + (err.message || err), 'error');
+      console.error('[Favorite Debug] Upload error:', err);
+    } finally {
+      saveFavoriteBtn.disabled = originalBtnState;
+    }
+  })();
 });
 
 recentToggleBtn.addEventListener('click', () => {
@@ -6716,7 +7195,7 @@ if (cloudAuthDialog) {
 
     clearCloudAuthError();
     try {
-      await signInWithProvider(provider);
+      await signInWithCompatProvider(provider);
       showToast(`Signed in with ${provider}. Cloud sync enabled.`);
       closeCloudAuthDialog();
     } catch (err) {
@@ -6731,7 +7210,7 @@ if (cloudAuthEmailSigninBtn) {
   cloudAuthEmailSigninBtn.addEventListener('click', async () => {
     clearCloudAuthError();
     try {
-      await signInWithEmailPassword(cloudAuthEmailInput?.value, cloudAuthPasswordInput?.value);
+      await signInWithCompatEmailPassword(cloudAuthEmailInput?.value, cloudAuthPasswordInput?.value);
       showToast('Signed in with email/password. Cloud sync enabled.');
       closeCloudAuthDialog();
     } catch (err) {
@@ -6746,7 +7225,7 @@ if (cloudAuthEmailCreateBtn) {
   cloudAuthEmailCreateBtn.addEventListener('click', async () => {
     clearCloudAuthError();
     try {
-      await createEmailPasswordAccount(cloudAuthEmailInput?.value, cloudAuthPasswordInput?.value);
+      await createCompatEmailPasswordAccount(cloudAuthEmailInput?.value, cloudAuthPasswordInput?.value);
       showToast('Account created and signed in. Cloud sync enabled.');
       closeCloudAuthDialog();
     } catch (err) {
@@ -6761,7 +7240,7 @@ if (cloudAuthEmailResetBtn) {
   cloudAuthEmailResetBtn.addEventListener('click', async () => {
     clearCloudAuthError();
     try {
-      await sendPasswordReset(cloudAuthEmailInput?.value);
+      await sendCompatPasswordReset(cloudAuthEmailInput?.value);
       showToast('Password reset email sent.');
     } catch (err) {
       const message = getUserFacingError('Password reset', err);
@@ -6774,7 +7253,7 @@ if (cloudAuthEmailResetBtn) {
 if (cloudSignOutBtn) {
   cloudSignOutBtn.addEventListener('click', async () => {
     try {
-      await signOutCloud();
+      await signOutCompat();
       showToast('Signed out. Using local saves only.');
     } catch (err) {
       showToast(getUserFacingError('Sign out', err), 'error');
@@ -6820,7 +7299,7 @@ if (playNewGameForm) {
 if (playNewLinkedGameForm) {
   playNewLinkedGameForm.addEventListener('submit', async e => {
     e.preventDefault();
-    if (!cloudUser) {
+    if (!isCloudAuthenticated()) {
       showToast('Sign in is required to start a linked live game.', 'error');
       return;
     }
@@ -6884,9 +7363,12 @@ if (playJoinGameForm) {
       showToast('Join code, name, and seed are required.', 'error');
       return;
     }
+    if (!isCloudAuthenticated()) {
+      showToast('Sign in is required to join a linked live game.', 'error');
+      return;
+    }
 
     try {
-      await ensureLinkedJoinIdentity();
       const joined = await joinLinkedMatch(code);
       const joinedRoster = await loadRosterForPlay(playerSeed);
       await startLinkedSubscription(joined.matchId, joined.side);
@@ -7000,15 +7482,21 @@ if (optLimit && !optLimit.value) optLimit.value = String(DISCORD_FREE_MESSAGE_LI
 syncLoadedRosterLayout();
 
 if (hasCloudSyncConfig()) {
-  initCloudAuth((user) => {
-    handleCloudAuthChange(user).catch((err) => {
-      console.error('Auth state handling failed:', err);
-      setCloudSyncStatus('Sync failed');
+  const compatAuth = getFirebaseAuth();
+  if (compatAuth) {
+    compatAuth.onAuthStateChanged((user) => {
+      handleCloudAuthChange(user).catch((err) => {
+        console.error('Auth state handling failed:', err);
+        setCloudSyncStatus('Sync failed');
+      });
+    }, (err) => {
+      console.error('Firebase auth init failed:', err);
+      setCloudSyncStatus('Cloud unavailable');
     });
-  }).catch((err) => {
-    console.error('Firebase auth init failed:', err);
+  } else {
+    console.error('Firebase auth init failed: compat auth unavailable');
     setCloudSyncStatus('Cloud unavailable');
-  });
+  }
 } else {
   setCloudSyncStatus('Cloud unavailable');
 }
