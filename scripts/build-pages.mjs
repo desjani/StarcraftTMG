@@ -17,6 +17,13 @@ async function main() {
   await ensureCleanDir(outDir);
   await fs.cp(publicDir, outDir, { recursive: true });
   await fs.cp(libDir, path.join(outDir, 'lib'), { recursive: true });
+  // Ensure data directory is present for browser fetches
+  const dataDir = path.join(rootDir, 'data');
+  const outDataDir = path.join(outDir, 'data');
+  await fs.cp(dataDir, outDataDir, { recursive: true });
+  // Ensure critical JS files are present at the top level for hosting
+  await fs.copyFile(path.join(publicDir, 'firebase-init.js'), path.join(outDir, 'firebase-init.js'));
+  await fs.copyFile(path.join(libDir, 'newrecruit_mapper.js'), path.join(outDir, 'newrecruit_mapper.js'));
 
   // Build a mobile preview shell under /mobile/ from the current main UI.
   // This keeps the canonical / experience unchanged while enabling PWA install testing.
