@@ -589,7 +589,7 @@ export function formatSlotBreakdown(slots = {}) {
       const used = Number(slots[type]?.used ?? 0);
       const avail = Number(slots[type]?.avail ?? 0);
       const typeClass = `slot-${String(type).toLowerCase()}`;
-      return `<span class="slot-chip ${typeClass}"><span class="slot-chip-type">${short}</span> ${used}/${avail}</span>`;
+      return `<span class="slot-chip ${typeClass}"><span class="slot-chip-type">${short}</span><span class="slot-chip-value">${used}/${avail}</span></span>`;
     })
     .join('');
 }

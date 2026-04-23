@@ -6,7 +6,7 @@
 // ─── Unit / faction display ───────────────────────────────────────────────────
 export const TYPE_ABBR      = { Hero: 'H', Core: 'C', Elite: 'E', Support: 'S', Air: 'A', Other: 'O' };
 export const RESOURCE_SHORT = { Terran: 'cp', Zerg: 'bm', Protoss: 'pe' };
-export const RESOURCE_ICON  = { Terran: '▣', Zerg: '◉', Protoss: '✦' };
+export const RESOURCE_ICON  = { Terran: '⌬', Zerg: '◉', Protoss: '✦' };
 
 // ─── Phase ordering ───────────────────────────────────────────────────────────
 export const PLAY_PHASES = ['Movement', 'Assault', 'Combat', 'Scoring'];

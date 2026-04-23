@@ -1986,7 +1986,7 @@ function ansiToHtml(raw) {
 // ─── Roster card renderer ─────────────────────────────────────────────────────
 const TYPE_ABBR = { Hero: 'H', Core: 'C', Elite: 'E', Support: 'S', Air: 'A', Other: 'O' };
 const RESOURCE_SHORT = { Terran: 'cp', Zerg: 'bm', Protoss: 'pe' };
-const RESOURCE_ICON = { Terran: '▣', Zerg: '◉', Protoss: '✦' };
+const RESOURCE_ICON = { Terran: '⌬', Zerg: '◉', Protoss: '✦' };
 
 function hasStatValue(value) {
   if (value === null || value === undefined) return false;
@@ -2708,7 +2708,7 @@ function formatSlotBreakdown(slots = {}) {
       const used = Number(slots[type]?.used ?? 0);
       const avail = Number(slots[type]?.avail ?? 0);
       const typeClass = `slot-${String(type).toLowerCase()}`;
-      return `<span class="slot-chip ${typeClass}"><span class="slot-chip-type">${short}</span> ${used}/${avail}</span>`;
+      return `<span class="slot-chip ${typeClass}"><span class="slot-chip-type">${short}</span><span class="slot-chip-value">${used}/${avail}</span></span>`;
     })
     .join('');
 }
@@ -2947,8 +2947,8 @@ function renderRosterCard(roster, opts = {}) {
       <div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
-          <span>💎 ${m.used}/${m.limit}m</span>
-          <span>⛽ ${g.used}/${g.limit}g</span>
+          <span class="meta-minerals">▣ ${m.used}/${m.limit}m</span>
+          <span class="meta-gas">⬡ ${g.used}/${g.limit}g</span>
           <span class="meta-supply">◆ ${supply} sup</span>
           <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
@@ -3431,8 +3431,8 @@ function renderPlayerAid(roster, opts = {}) {
       ${showHeader ? `<div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${rosterLabel ? `${escapeHtml(rosterLabel)} · ` : ''}${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
-          <span>💎 ${m.used}/${m.limit}m</span>
-          <span>⛽ ${g.used}/${g.limit}g</span>
+          <span class="meta-minerals">▣ ${m.used}/${m.limit}m</span>
+          <span class="meta-gas">⬡ ${g.used}/${g.limit}g</span>
           <span class="meta-supply">◆ ${supply} sup</span>
           <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
@@ -3535,7 +3535,7 @@ function renderPlaySupplyProfile(tracker, fallbackSupply = 0) {
         ${profile.map((tier) => {
           const isActive = !!activeTier && Number(activeTier.tier) === Number(tier?.tier);
           const isDiminished = isActive && currentSupply < baseSupply;
-          return `<span class="aid-supply-tier-pill${isActive ? ' is-active' : ''}${isDiminished ? ' is-diminished' : ''}">${escapeHtml(formatModelCountLabel(tier))} = ◆${escapeHtml(String(tier?.supply ?? 0))}</span>`;
+          return `<span class="aid-supply-tier-pill${isActive ? ' is-active' : ''}${isDiminished ? ' is-diminished' : ''}"><span class="aid-supply-tier-models">${escapeHtml(formatModelCountLabel(tier))}</span><span class="aid-supply-tier-sep">=</span><span class="aid-supply-tier-supply"><span class="aid-supply-tier-icon">◆</span><span class="aid-supply-tier-value">${escapeHtml(String(tier?.supply ?? 0))}</span></span></span>`;
         }).join('')}
       </div>
     </div>`;
@@ -5442,21 +5442,41 @@ function openAidPrintWindow() {
       font-weight: 700;
     }
     .slot-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+      display: inline-grid;
+      grid-template-columns: 1.72em 4ch;
+      align-items: stretch;
+      gap: 0;
       border: 1px solid #c4cfdb;
       border-radius: 999px;
-      padding: 1px 7px;
+      padding: 0;
+      overflow: hidden;
       background: #f3f7fb;
       color: #445468;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       font-size: .69rem;
+      line-height: 1;
     }
     .slot-chip-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: 0 4px 0 5px;
       font-size: .6rem;
-      letter-spacing: .08em;
+      letter-spacing: .06em;
       font-weight: 700;
+      border-right: 1px solid rgba(68, 84, 104, .22);
+    }
+    .slot-chip-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: 0 7px 0 5px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      line-height: 1;
+      transform: translateY(0.03em);
     }
     .slot-chip.slot-hero { color: #8a6400; border-color: #d5be84; background: #fff8ea; }
     .slot-chip.slot-core { color: #0f6f87; border-color: #8ac9d5; background: #eaf7fa; }
@@ -5665,16 +5685,35 @@ function openAidPrintWindow() {
     .aid-upg-desc { margin-top: 3px; font-size: .73rem; color: #333;
                     line-height: 1.45; }
     .aid-upg-desc strong { font-weight: 700; color: #111; }
-    .aid-inline-chip { display: inline-flex; align-items: center;
-               border: 1px solid #c4cfdb; border-radius: 999px;
-               padding: 1px 7px; background: #f3f7fb;
-               font-size: .66rem; color: #445468; }
+    .aid-inline-chip { display: inline-flex; align-items: center; justify-content: center;
+               gap: 0.16em; border: 1px solid #c4cfdb; border-radius: 999px;
+               padding: 1px 5px; background: #f3f7fb;
+               font-size: .64rem; color: #445468; line-height: 1; text-align: center;
+               vertical-align: middle; box-sizing: border-box; }
     .aid-inline-activation { color: #6a4aa8; border-color: #beafd6; background: #f5f1ff; }
     .aid-inline-resource { color: #1f5f9e; border-color: #9bc1e3; background: #eef6ff; }
     .aid-inline-resource .resource-icon.resource-faction-terran { color: var(--print-terran); }
     .aid-inline-resource .resource-icon.resource-faction-zerg { color: var(--print-zerg); }
     .aid-inline-resource .resource-icon.resource-faction-protoss { color: var(--print-protoss); }
     .resource-icon { font-style: normal; }
+    .aid-inline-chip .resource-icon,
+    .unit-ability-chip .resource-icon,
+    .tac-ability-pill .resource-icon,
+    .deck-chip-resource .resource-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0.94em;
+      line-height: 1;
+      vertical-align: middle;
+    }
+    .aid-inline-chip .resource-icon.resource-faction-zerg,
+    .unit-ability-chip .resource-icon.resource-faction-zerg,
+    .tac-ability-pill .resource-icon.resource-faction-zerg,
+    .deck-chip-resource .resource-icon.resource-faction-zerg {
+      font-size: 1.14em;
+      transform: translateY(-0.02em);
+    }
     .aid-merged-buffs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
     .aid-merged-pill {
       border-color: #9dcfb4;
@@ -5991,7 +6030,7 @@ function renderAidDeckTacticalFrontCard(card, { faction, factionClass } = {}) {
   const metaParts = [];
   if (card.count > 1) metaParts.push(`<span class="deck-chip">x${card.count}</span>`);
   if (card.isUnique) metaParts.push('<span class="deck-chip">Unique</span>');
-  if (typeof card.resource === 'number') metaParts.push(`<span class="deck-chip deck-chip-resource">${card.resource} ${escapeHtml(resourceConfig.icon)}</span>`);
+  if (typeof card.resource === 'number') metaParts.push(`<span class="deck-chip deck-chip-resource">${card.resource} <span class="resource-icon ${escapeHtml(resourceConfig.className)}">${escapeHtml(resourceConfig.icon)}</span></span>`);
   if (typeof card.gasCost === 'number') metaParts.push(`<span class="deck-chip deck-chip-gas">⛽ ${card.gasCost}g</span>`);
   if (supplyLetters.length) metaParts.push(`<span class="deck-chip">${supplyLetters.map(({ letter }) => `<span class="deck-slot">${escapeHtml(letter)}</span>`).join('')}</span>`);
 
@@ -6383,7 +6422,7 @@ function openAidCardDeckPrintWindow() {
     .unit-ability.is-active .unit-ability-title { color: #46d48a; }
     .unit-ability-text { color: #d4deed; line-height: 1.17; font-size: 6.6pt; }
     .unit-ability-chip-row { display: flex; flex-wrap: nowrap; gap: 0.45mm; margin-bottom: 0; flex-shrink: 0; }
-    .unit-ability-chip { display: inline-flex; align-items: center; padding: 0.5mm 1.1mm; border-radius: 999px; border: 0.8px solid rgba(49, 69, 99, .65); background: rgba(19, 31, 50, .75); color: #93a8c4; font-size: 6.1pt; font-family: Orbitron, sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+    .unit-ability-chip { display: inline-flex; align-items: center; justify-content: center; gap: 0.2em; padding: 0.45mm 0.95mm; border-radius: 999px; border: 0.8px solid rgba(49, 69, 99, .65); background: rgba(19, 31, 50, .75); color: #93a8c4; font-size: 6.1pt; font-family: Orbitron, sans-serif; letter-spacing: .05em; text-transform: uppercase; box-sizing: border-box; }
     .unit-ability-chip.active { border-color: rgba(70, 212, 138, .55); color: #46d48a; }
     .unit-ability-chip.passive { border-color: rgba(147, 168, 196, .55); color: #93a8c4; }
     .unit-ability-chip.phase-any { color: #93a8c4; border-color: rgba(147, 168, 196, .48); }
@@ -6536,7 +6575,9 @@ function openAidCardDeckPrintWindow() {
     .tac-ability-pill {
       display: inline-flex;
       align-items: center;
-      padding: 0.75mm 1.5mm;
+      justify-content: center;
+      gap: 0.2em;
+      padding: 0.62mm 1.2mm;
       border-radius: 999px;
       border: 0.8px solid rgba(49, 69, 99, .65);
       background: rgba(19, 31, 50, .75);
@@ -6546,6 +6587,7 @@ function openAidCardDeckPrintWindow() {
       letter-spacing: .05em;
       text-transform: uppercase;
       white-space: nowrap;
+      box-sizing: border-box;
     }
     .tac-ability-pill.resource {
       border-color: rgba(241, 191, 89, .58);
@@ -6974,7 +7016,7 @@ function renderNewAidDeckUnitBack(unit, { faction, factionClass } = {}) {
       const chips = [
         `<span class="unit-ability-chip phase-${escapeHtml(phaseMeta.className)}">${escapeHtml(phaseMeta.label)}</span>`,
         `<span class="unit-ability-chip ${active ? 'active' : 'passive'}">${active ? 'Active' : 'Passive'}</span>`,
-        resourceCost ? `<span class="unit-ability-chip resource">${resourceCost.amount} ${escapeHtml(resourceCost.icon)}</span>` : ''
+        resourceCost ? `<span class="unit-ability-chip resource">${resourceCost.amount} <span class="resource-icon ${escapeHtml(resourceCost.className)}">${escapeHtml(resourceCost.icon)}</span></span>` : ''
       ].join('');
       const abilityHtml = `<div class="unit-ability ${cls}"><div class="unit-ability-header"><div class="unit-ability-title">${escapeHtml(ability.name)}</div><div class="unit-ability-chip-row">${chips}</div></div><div class="unit-ability-text">${formatAidRichText(desc, { faction, factionClass, allowLineBreaks: false })}</div></div>`;
       const weight = desc.length + String(ability?.name || '').length * 2 + 60;
@@ -7060,7 +7102,7 @@ function renderNewAidDeckTacticalCardFront(card, { faction, factionClass } = {})
     const desc = String(a.description || '').trim();
     const abilityResourceCost = extractAidFactionResourceCost(a.activation, faction, factionClass);
     const pills = [
-      abilityResourceCost ? `<span class="tac-ability-pill resource">${abilityResourceCost.amount} ${escapeHtml(abilityResourceCost.icon)}</span>` : ''
+      abilityResourceCost ? `<span class="tac-ability-pill resource">${abilityResourceCost.amount} <span class="resource-icon ${escapeHtml(abilityResourceCost.className)}">${escapeHtml(abilityResourceCost.icon)}</span></span>` : ''
     ].join('');
     return `<div class="tac-ability"><div class="tac-ability-top"><div class="tac-ability-title">${escapeHtml(a.name)}</div>${pills ? `<div class="tac-ability-pills">${pills}</div>` : ''}</div><div class="tac-ability-text">${formatAidRichText(desc, { faction, factionClass, allowLineBreaks: false })}</div></div>`;
   }).join('');

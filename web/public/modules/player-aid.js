@@ -46,7 +46,7 @@ function renderPlaySupplyProfile(tracker, fallbackSupply = 0) {
         ${profile.map((tier) => {
           const isActive = !!activeTier && Number(activeTier.tier) === Number(tier?.tier);
           const isDiminished = isActive && currentSupply < baseSupply;
-          return `<span class="aid-supply-tier-pill${isActive ? ' is-active' : ''}${isDiminished ? ' is-diminished' : ''}">${escapeHtml(formatModelCountLabel(tier))} = ◆${escapeHtml(String(tier?.supply ?? 0))}</span>`;
+          return `<span class="aid-supply-tier-pill${isActive ? ' is-active' : ''}${isDiminished ? ' is-diminished' : ''}"><span class="aid-supply-tier-models">${escapeHtml(formatModelCountLabel(tier))}</span><span class="aid-supply-tier-sep">=</span><span class="aid-supply-tier-supply"><span class="aid-supply-tier-icon">◆</span><span class="aid-supply-tier-value">${escapeHtml(String(tier?.supply ?? 0))}</span></span></span>`;
         }).join('')}
       </div>
     </div>`;
@@ -478,8 +478,8 @@ export function renderPlayerAid(roster, opts = {}) {
       ${showHeader ? `<div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${rosterLabel ? `${escapeHtml(rosterLabel)} · ` : ''}${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
-          <span>💎 ${m.used}/${m.limit}m</span>
-          <span>⛽ ${g.used}/${g.limit}g</span>
+          <span class="meta-minerals">▣ ${m.used}/${m.limit}m</span>
+          <span class="meta-gas">⬡ ${g.used}/${g.limit}g</span>
           <span class="meta-supply">◆ ${supply} sup</span>
           <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>

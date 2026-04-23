@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pill Lab · StarCraft TMG</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap');
+
+    :root {
+      --bg-0: #07090f;
+      --bg-1: #0a1220;
+      --bg-2: #121a2b;
+      --panel: rgba(18, 28, 46, 0.9);
+      --panel-2: rgba(27, 41, 64, 0.82);
+      --line: #314563;
+      --line-soft: #233650;
+      --text: #d4deed;
+      --muted: #8ea4c2;
+      --cyan: #45f2ff;
+      --cyan-soft: rgba(69, 242, 255, 0.16);
+      --green: #46d48a;
+      --green-soft: rgba(70, 212, 138, 0.16);
+      --red: #ff626b;
+      --pink: #f76db2;
+      --terran: #7db4ff;
+      --zerg: #f76db2;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --mono: Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Rajdhani", sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(69, 242, 255, 0.12), transparent 32%),
+        radial-gradient(circle at 84% 18%, rgba(247, 109, 178, 0.12), transparent 30%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1) 54%, var(--bg-2));
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      margin-bottom: 18px;
+      padding: 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(16, 25, 43, 0.96), rgba(15, 23, 39, 0.88));
+      box-shadow: 0 24px 54px var(--shadow);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: var(--cyan);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border: 1px solid rgba(69, 242, 255, 0.7);
+      border-radius: 999px;
+      box-shadow: 0 0 12px rgba(69, 242, 255, 0.25);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+      line-height: 1.08;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.45;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      padding: 18px;
+      border: 1px solid var(--line-soft);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(20, 31, 49, 0.96), rgba(18, 27, 43, 0.9));
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.88rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .stage {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-height: 56px;
+      padding: 14px;
+      border: 1px solid rgba(49, 69, 99, 0.7);
+      border-radius: 16px;
+      background: rgba(10, 18, 31, 0.72);
+    }
+
+    .stage-title {
+      margin: 16px 0 8px;
+      color: var(--muted);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(141, 162, 194, 0.34);
+      background: rgba(44, 57, 81, 0.72);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.94rem;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .pill.any { background: rgba(81, 95, 121, 0.82); }
+    .pill.ass { background: rgba(139, 51, 63, 0.78); border-color: rgba(255, 98, 107, 0.42); }
+    .pill.active { background: rgba(113, 94, 47, 0.78); border-color: rgba(241, 191, 89, 0.5); }
+    .pill.resource { color: var(--pink); border-color: rgba(247, 109, 178, 0.42); }
+
+    .pill-content {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.28em;
+      line-height: 1;
+    }
+
+    .pill-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1em;
+      line-height: 1;
+    }
+
+    .zerg-icon {
+      color: var(--pink);
+    }
+
+    .variant-baseline .pill-content {
+      gap: 0.18em;
+    }
+
+    .variant-box .pill-icon {
+      min-width: 1.08em;
+      font-size: 1.08em;
+    }
+
+    .variant-box .pill-icon.zerg-icon {
+      font-size: 1.16em;
+      transform: translateY(-0.02em);
+    }
+
+    .variant-mono .pill-content {
+      font-family: var(--mono);
+      letter-spacing: 0.01em;
+      gap: 0.24em;
+    }
+
+    .variant-mono .pill-icon {
+      min-width: 1.04em;
+      font-size: 1.06em;
+    }
+
+    .variant-optical .pill {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .variant-optical .pill-content {
+      gap: 0.25em;
+      transform: translateY(-0.02em);
+    }
+
+    .variant-optical .pill-icon.zerg-icon {
+      font-size: 1.18em;
+      transform: translateY(-0.03em);
+    }
+
+    .variant-tight .pill {
+      min-height: 26px;
+      padding: 4px 11px;
+      font-size: 0.9rem;
+    }
+
+    .variant-tight .pill-content {
+      gap: 0.2em;
+    }
+
+    .variant-tight .pill-icon {
+      min-width: 0.94em;
+    }
+
+    .variant-tight .pill-icon.zerg-icon {
+      font-size: 1.14em;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(18, 28, 45, 0.88);
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .legend-chip strong {
+      color: var(--text);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .legend-chip .sample {
+      color: var(--pink);
+      font-size: 1.05em;
+      line-height: 1;
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(100vw - 20px, 1180px); }
+      .hero { padding: 18px; border-radius: 18px; }
+      .card { padding: 16px; border-radius: 18px; }
+      .stage { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">Pill Comparison</div>
+      <h1>Zerg Biomass Pill Lab</h1>
+      <p>
+        Side-by-side samples for single-object pills like <code>ANY</code>, <code>ASS</code>, and
+        <code>1 ◉</code>. Each treatment keeps the pill size essentially stable while changing the
+        icon handling and optical centering inside the capsule.
+      </p>
+      <div class="legend">
+        <div class="legend-chip"><strong>Header Reference</strong> <span class="sample">◉</span> Big, readable biomass icon</div>
+        <div class="legend-chip"><strong>Target</strong> Same punch inside pills without inflating the capsule</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card variant-baseline">
+        <h2>Current Baseline</h2>
+        <p>Closest to the existing behavior. Good control sample, but the biomass icon reads a little small and low.</p>
+        <div class="stage">
+          <span class="pill any"><span class="pill-content">ANY</span></span>
+          <span class="pill ass"><span class="pill-content">ASS</span></span>
+          <span class="pill active"><span class="pill-content">ACTIVE</span></span>
+          <span class="pill resource"><span class="pill-content">1 <span class="pill-icon zerg-icon">◉</span></span></span>
+        </div>
+      </article>
+
+      <article class="card variant-box">
+        <h2>Normalized Icon Box</h2>
+        <p>My recommended direction. Every symbol gets a fixed icon box, and biomass gets a small Zerg-only lift.</p>
+        <div class="stage">
+          <span class="pill any"><span class="pill-content">ANY</span></span>
+          <span class="pill ass"><span class="pill-content">ASS</span></span>
+          <span class="pill active"><span class="pill-content">ACTIVE</span></span>
+          <span class="pill resource"><span class="pill-content">1 <span class="pill-icon zerg-icon">◉</span></span></span>
+        </div>
+      </article>
+
+      <article class="card variant-mono">
+        <h2>Mono Metric</h2>
+        <p>Short symbolic pills read more like a tactical HUD. Tighter and more technical, but less organic than the current style.</p>
+        <div class="stage">
+          <span class="pill any"><span class="pill-content">ANY</span></span>
+          <span class="pill ass"><span class="pill-content">ASS</span></span>
+          <span class="pill active"><span class="pill-content">ACTIVE</span></span>
+          <span class="pill resource"><span class="pill-content">1 <span class="pill-icon zerg-icon">◉</span></span></span>
+        </div>
+      </article>
+
+      <article class="card variant-optical">
+        <h2>Optical Centering</h2>
+        <p>Uses a tiny whole-content nudge plus a stronger biomass icon lift. Good if you want the most polished visual center.</p>
+        <div class="stage">
+          <span class="pill any"><span class="pill-content">ANY</span></span>
+          <span class="pill ass"><span class="pill-content">ASS</span></span>
+          <span class="pill active"><span class="pill-content">ACTIVE</span></span>
+          <span class="pill resource"><span class="pill-content">1 <span class="pill-icon zerg-icon">◉</span></span></span>
+        </div>
+      </article>
+
+      <article class="card variant-tight">
+        <h2>Tight Capsule</h2>
+        <p>Same one-object model, just packed a little tighter. Reads sharp, but it is easiest to overdo and make the pills feel cramped.</p>
+        <div class="stage">
+          <span class="pill any"><span class="pill-content">ANY</span></span>
+          <span class="pill ass"><span class="pill-content">ASS</span></span>
+          <span class="pill active"><span class="pill-content">ACTIVE</span></span>
+          <span class="pill resource"><span class="pill-content">1 <span class="pill-icon zerg-icon">◉</span></span></span>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

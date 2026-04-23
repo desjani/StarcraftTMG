@@ -892,6 +892,8 @@
       color: var(--muted);
       font-size: .82rem;
     }
+    .meta-minerals { color: var(--accent-2); }
+    .meta-gas { color: var(--green); }
     .meta-supply { color: var(--red); }
     .resource-icon {
       display: inline-block;
@@ -927,14 +929,16 @@
       line-height: 1;
     }
     .slot-chip {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      min-height: 22px;
+      display: inline-grid;
+      grid-template-columns: 1.72em 4ch;
+      align-items: stretch;
+      justify-content: start;
+      gap: 0;
+      min-height: 24px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 2px 8px;
+      padding: 0;
+      overflow: hidden;
       background: rgba(15, 27, 43, .58);
       color: var(--text);
       font-family: var(--mono);
@@ -943,13 +947,28 @@
       vertical-align: middle;
     }
     .slot-chip-type {
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: 0 4px 0 5px;
       color: inherit;
       font-family: 'Orbitron', sans-serif;
-      font-size: .62rem;
-      letter-spacing: .08em;
+      font-size: .6rem;
+      letter-spacing: .06em;
       line-height: 1;
+      border-right: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    }
+    .slot-chip-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: 0 7px 0 5px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      line-height: 1;
+      transform: translateY(0.03em);
     }
     .slot-chip.slot-hero {
       color: var(--yellow);
@@ -1604,6 +1623,31 @@
       color: #ffb8bd;
       background: rgba(93, 24, 31, .4);
     }
+    .aid-supply-tier-models,
+    .aid-supply-tier-sep,
+    .aid-supply-tier-supply,
+    .aid-supply-tier-icon,
+    .aid-supply-tier-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .aid-supply-tier-pill {
+      gap: 0.26em;
+      font-variant-numeric: tabular-nums;
+    }
+    .aid-supply-tier-sep {
+      opacity: .72;
+      letter-spacing: 0;
+    }
+    .aid-supply-tier-supply {
+      gap: 0.14em;
+    }
+    .aid-supply-tier-icon {
+      font-size: .9em;
+      transform: translateY(-0.01em);
+    }
     .aid-section-title {
       margin: 10px 0 6px;
       color: var(--muted);
@@ -1737,15 +1781,15 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 0.16em;
       border: 1px solid rgba(49, 69, 99, .38);
       border-radius: 999px;
-      padding: 2px 8px 1px;
+      padding: 1px 5px;
       background: rgba(19, 31, 50, .6);
-      font-size: .67rem;
+      font-size: .64rem;
       font-family: var(--mono);
       color: var(--muted);
-      line-height: 1.1;
+      line-height: 1;
       text-align: center;
       vertical-align: middle;
       box-sizing: border-box;
@@ -1754,9 +1798,26 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 1.05em;
+      min-width: 0.94em;
       line-height: 1;
       vertical-align: middle;
+    }
+    .unit-ability-chip .resource-icon,
+    .tac-ability-pill .resource-icon,
+    .deck-chip-resource .resource-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0.94em;
+      line-height: 1;
+      vertical-align: middle;
+    }
+    .aid-inline-chip .resource-icon.resource-faction-zerg,
+    .unit-ability-chip .resource-icon.resource-faction-zerg,
+    .tac-ability-pill .resource-icon.resource-faction-zerg,
+    .deck-chip-resource .resource-icon.resource-faction-zerg {
+      font-size: 1.16em;
+      transform: translateY(-0.02em);
     }
     .aid-inline-activation.activation-active { color: #fffbea; background: rgba(166, 139, 67, .82); border-color: rgba(214, 191, 120, .5); }
     .aid-inline-activation.activation-passive { color: #edf1f6; background: rgba(93, 103, 118, .78); border-color: rgba(146, 156, 170, .48); }
@@ -1880,6 +1941,66 @@
     .aid-tact-slot-elite { color: var(--red); }
     .aid-tact-slot-support { color: var(--green); }
     .aid-tact-slot-air { color: var(--yellow); }
+
+    /* Shared on-screen pill baseline */
+    .seed-pill,
+    .slot-chip,
+    .upg-pill,
+    .aid-tag-pill,
+    .aid-supply-tier-pill,
+    .aid-inline-chip,
+    .aid-merged-pill,
+    .aid-phase-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.22em;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      box-sizing: border-box;
+      font-family: var(--mono);
+      font-size: .68rem;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .aid-phase-tag {
+      min-width: 38px;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .aid-inline-chip,
+    .aid-tag-pill,
+    .aid-supply-tier-pill,
+    .aid-merged-pill,
+    .seed-pill,
+    .upg-pill {
+      letter-spacing: .01em;
+    }
+    .slot-chip {
+      font-weight: 600;
+      letter-spacing: 0;
+      padding: 0;
+    }
+    .slot-chip-type {
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+    .stat-chip-label {
+      font-weight: 700;
+    }
+    .aid-inline-chip .resource-icon,
+    .unit-ability-chip .resource-icon,
+    .tac-ability-pill .resource-icon,
+    .deck-chip-resource .resource-icon {
+      min-width: 0.94em;
+    }
+    .aid-tact-slot-chip {
+      gap: 0;
+    }
 
     .play-mode-shell {
       display: flex;

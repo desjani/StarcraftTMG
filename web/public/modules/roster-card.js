@@ -83,8 +83,8 @@ export function renderRosterCard(roster, opts = {}) {
       <div class="roster-header">
         <div class="roster-faction ${escapeHtml(faction)}">${escapeHtml(faction.toUpperCase())} · ${escapeHtml(factionCard)}</div>
         <div class="roster-meta">
-          <span>💎 ${m.used}/${m.limit}m</span>
-          <span>⛽ ${g.used}/${g.limit}g</span>
+          <span class="meta-minerals">▣ ${m.used}/${m.limit}m</span>
+          <span class="meta-gas">⬡ ${g.used}/${g.limit}g</span>
           <span class="meta-supply">◆ ${supply} sup</span>
           <span><span class="resource-icon resource-${factionClass}">${resourceIcon}</span> ${resources} ${resourceShort}</span>
           <span class="tag seed-tag">${escapeHtml(seed)}</span>
