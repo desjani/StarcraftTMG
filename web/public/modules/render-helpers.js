@@ -496,7 +496,7 @@ export function applyNumericDelta(value, delta) {
 // ─── Buff detection ───────────────────────────────────────────────────────────
 export function detectWeaponBuffTargets(chunk, weaponProfiles = []) {
   const results = [];
-  const quoted = chunk.replace(/[']/g, "'");
+  const quoted = chunk.replace(/[’]/g, "'");
 
   for (const weapon of weaponProfiles) {
     const weaponName = String(weapon?.name || '').trim();
@@ -548,6 +548,63 @@ export function detectUnconditionalPassiveBuff(upgrade, weaponProfiles = []) {
     weaponApplications: weaponApplications.filter(e => e?.weaponName && e?.effect),
     unitStatApplications: unitStatApplications.filter(e => e?.field && Number.isFinite(e?.delta)),
   };
+}
+
+export function getUnitPassiveStatDeltas(unit) {
+  const upgradeList = sortUpgradesForDisplay(unit?.allUpgrades ?? []);
+  const weaponProfiles = resolveLinkedWeaponReplacements(
+    upgradeList
+      .filter(isWeaponProfile)
+      .filter((upgrade) => isNaturalAbility(upgrade) || upgrade.active)
+      .map(parseWeaponProfile),
+    unit?.models
+  ).sort(compareAidWeaponProfiles);
+  const visibleUpgrades = upgradeList
+    .filter((upgrade) => !isWeaponProfile(upgrade))
+    .filter((upgrade) => isNaturalAbility(upgrade) || upgrade.active);
+
+  const unitStatDeltas = {};
+  for (const ability of visibleUpgrades) {
+    const detected = detectUnconditionalPassiveBuff(ability, weaponProfiles);
+    for (const entry of detected?.unitStatApplications ?? []) {
+      const field = String(entry?.field || '').trim();
+      if (!field) continue;
+      unitStatDeltas[field] = Number(unitStatDeltas[field] ?? 0) + Number(entry?.delta ?? 0);
+    }
+  }
+  return unitStatDeltas;
+}
+
+export function getPlayBuffedUnitSeedData(unit) {
+  const unitStatDeltas = getUnitPassiveStatDeltas(unit);
+  const buffedStats = {
+    hp: unit?.stats?.hp,
+    shield: unit?.stats?.shield,
+  };
+  for (const [field, deltaRaw] of Object.entries(unitStatDeltas)) {
+    const delta = Number(deltaRaw ?? 0);
+    if (!delta || !['hp', 'shield'].includes(field)) continue;
+    const applied = applyNumericDelta(buffedStats[field], delta);
+    buffedStats[field] = applied.value;
+  }
+
+  let buffedSupply = Number(unit?.supply ?? 0) || 0;
+  const supplyDelta = Number(unitStatDeltas.supply ?? 0);
+  if (supplyDelta) {
+    const applied = applyNumericDelta(buffedSupply, supplyDelta);
+    buffedSupply = Number.parseInt(String(applied.value ?? buffedSupply), 10);
+    if (!Number.isFinite(buffedSupply)) buffedSupply = Number(unit?.supply ?? 0) || 0;
+  }
+
+  const buffedSquadProfile = Array.isArray(unit?.squadProfile)
+    ? JSON.parse(JSON.stringify(unit.squadProfile)).map((tier) => {
+      const nextTier = { ...tier };
+      if (supplyDelta) nextTier.supply = Number(nextTier?.supply ?? 0) + supplyDelta;
+      return nextTier;
+    })
+    : [];
+
+  return { buffedStats, buffedSupply, buffedSquadProfile };
 }
 
 export function isNaturalAbility(upgrade) {

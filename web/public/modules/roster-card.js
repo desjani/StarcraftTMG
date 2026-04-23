@@ -3,18 +3,16 @@
  * Accepts a parsed roster object and display options; returns an HTML string.
  * No DOM access, no global state.
  */
-import { buildRosterCardViewModel } from '../../../lib/rosterViewModels.js';
 import { escapeHtml } from './utils.js';
 import { RESOURCE_SHORT, RESOURCE_ICON } from './constants.js';
 import {
   formatUnitStatsInline, formatSlotBreakdown, sortUpgradesForDisplay,
   sortTacticalNames, sortTacticalDetailsByName,
-  renderRosterTacticalTag, renderAidTacticalCards,
+  renderRosterTacticalTag,
 } from './render-helpers.js';
 
 export function renderRosterCard(roster, opts = {}) {
   const {
-    gameData             = null,
     showUpgrades         = true,
     showStats            = false,
     showSize             = true,
@@ -26,9 +24,8 @@ export function renderRosterCard(roster, opts = {}) {
     showSlots            = false,
   } = opts;
 
-  const resolvedRoster = gameData ? buildRosterCardViewModel(roster, gameData) : roster;
   const { minerals: m, gas: g, supply, resources, tacticalCards, tacticalCardDetails,
-          units, faction, factionCard, seed, slots } = resolvedRoster;
+          units, faction, factionCard, seed, slots } = roster;
   const resourceShort = RESOURCE_SHORT[faction] ?? 'res';
   const resourceIcon  = RESOURCE_ICON[faction]  ?? '◈';
   const factionClass  = `faction-${String(faction).toLowerCase()}`;

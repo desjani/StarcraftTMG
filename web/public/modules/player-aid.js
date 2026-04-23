@@ -10,7 +10,7 @@
  *   unitKeyPrefix         string         — prefix for tracker lookup ('player:', 'opponent:')
  */
 import { escapeHtml } from './utils.js';
-import { RESOURCE_SHORT, RESOURCE_ICON } from './constants.js';
+import { RESOURCE_SHORT, RESOURCE_ICON, TYPE_ABBR } from './constants.js';
 import {
   sortUpgradesForDisplay, getAidUnitKey, compareAidWeaponProfiles,
   resolveLinkedWeaponReplacements, isWeaponProfile, parseWeaponProfile,
@@ -52,6 +52,57 @@ function renderPlaySupplyProfile(tracker, fallbackSupply = 0) {
     </div>`;
 }
 
+function renderPlaySupplyBox(tracker, {
+  fallbackSupply = 0,
+  displaySupply = 0,
+  highlighted = false,
+  diminished = false,
+} = {}) {
+  const startingModels = Math.max(0, Number(tracker?.startingModels ?? 0) || 0);
+  const rawProfile = Array.isArray(tracker?.squadProfile) ? tracker.squadProfile : [];
+  const profile = rawProfile.filter((tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (Number.isFinite(max)) return max <= startingModels;
+    if (Number.isFinite(min)) return min <= startingModels;
+    return true;
+  });
+  if (profile.length <= 1) {
+    const valueHtml = highlighted
+      ? `<strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong>`
+      : `<strong>${escapeHtml(String(displaySupply))}</strong>`;
+    return `<div class="play-stat-box play-stat-box-supply${diminished ? ' is-diminished' : ''}">
+      <div class="play-stat-box-label">SUP</div>
+      <div class="play-stat-box-value">${valueHtml}</div>
+    </div>`;
+  }
+
+  const { activeTier, currentSupply } = getPlayTrackerSupplyTier(tracker);
+  const baseSupply = Number(tracker?.baseSupply ?? fallbackSupply ?? 0) || 0;
+  const formatModelCountLabel = (tier) => {
+    const min = Number(tier?.minModels);
+    const max = Number(tier?.maxModels);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      if (min === max) return String(min);
+      return `${max}-${min}`;
+    }
+    return String(tier?.modelCount ?? '-');
+  };
+  const tierHtml = profile.map((tier) => {
+    const isActive = !!activeTier && Number(activeTier.tier) === Number(tier?.tier);
+    const isTierDiminished = isActive && currentSupply < baseSupply;
+    return `<span class="play-supply-tier-mini${isActive ? ' is-active' : ''}${isTierDiminished ? ' is-diminished' : ''}">
+      <span class="play-supply-tier-count"><span class="play-supply-tier-model-icon" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><path d="M8 2.2a2.55 2.55 0 1 1 0 5.1 2.55 2.55 0 0 1 0-5.1Zm0 6.3c-2.5 0-4.7 1.3-5.5 3.25-.14.34.1.72.47.72h10.16c.37 0 .61-.38.47-.72C12.7 9.8 10.5 8.5 8 8.5Z"/></svg></span>${escapeHtml(formatModelCountLabel(tier))}</span>
+      <span class="play-supply-tier-value">${escapeHtml(String(tier?.supply ?? 0))}</span>
+    </span>`;
+  }).join('');
+
+  return `<div class="play-stat-box play-stat-box-supply${profile.length >= 3 ? ' play-stat-box-supply-profile' : ''}${profile.length === 2 ? ' play-stat-box-supply-pair' : ''}${diminished ? ' is-diminished' : ''}">
+    <div class="play-stat-box-label">SUP</div>
+    <div class="play-stat-box-detail" aria-label="Supply thresholds">${tierHtml}</div>
+  </div>`;
+}
+
 function resolveCollapsedSlashStat(value, tracker, fallbackModels = 1) {
   const raw = String(value ?? '').trim();
   if (!raw.includes('/')) return { value: raw, isDiminished: false };
@@ -65,6 +116,35 @@ function resolveCollapsedSlashStat(value, tracker, fallbackModels = 1) {
     value: useSingleModelValue ? parts[1] : parts[0],
     isDiminished: useSingleModelValue && parts[0] !== parts[1],
   };
+}
+
+function renderExpandedStatValue(value, tracker, fallbackModels = 1, highlighted = false) {
+  const raw = String(value ?? '').trim();
+  if (!raw.includes('/')) {
+    return highlighted
+      ? `<strong class="aid-buff-highlight">${escapeHtml(raw)}</strong>`
+      : `<strong>${escapeHtml(raw)}</strong>`;
+  }
+
+  const parts = raw.split('/').map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) {
+    return highlighted
+      ? `<strong class="aid-buff-highlight">${escapeHtml(raw)}</strong>`
+      : `<strong>${escapeHtml(raw)}</strong>`;
+  }
+
+  const remainingModels = tracker
+    ? getPlayTrackerRemainingModels(tracker)
+    : Math.max(0, Number(fallbackModels ?? 1) || 0);
+  const useAlteredValue = remainingModels <= 1;
+  const leftClass = useAlteredValue ? 'is-inactive' : 'is-active-base';
+  const rightClass = useAlteredValue ? 'is-active-altered' : 'is-inactive';
+
+  return `<span class="play-stat-split">
+    <span class="play-stat-split-part ${leftClass}">${escapeHtml(parts[0])}</span>
+    <span class="play-stat-split-sep">/</span>
+    <span class="play-stat-split-part ${rightClass}">${escapeHtml(parts[1])}</span>
+  </span>`;
 }
 
 export function renderPlayerAid(roster, opts = {}) {
@@ -121,7 +201,7 @@ export function renderPlayerAid(roster, opts = {}) {
     const tracker    = playTrackers?.unitsByKey?.[unitKey] ?? null;
     const isDead     = !!tracker && (tracker.maxHealthPools?.length ?? 0) > 0 && getPlayTrackerCurrentHealth(tracker) <= 0;
     const isCollapsed = collapsedUnits.has(unitKey);
-    const abbr   = { Hero: 'H', Core: 'C', Elite: 'E', Support: 'S', Air: 'A', Other: 'O' }[u.type] ?? '?';
+    const abbr   = TYPE_ABBR[u.type] ?? '?';
     const models = u.models > 1 ? ` ×${u.models}` : '';
 
     const aidUpgradePills = showUnitPaidUpgrades
@@ -295,25 +375,9 @@ export function renderPlayerAid(roster, opts = {}) {
     const diminishedSupply = !!trackerSupplyState && trackerSupplyState.currentSupply < Number(u.supply ?? 0);
 
     // ── Stat chips HTML ───────────────────────────────────────────────────────
-    const statChips = [
+    const collapsedStatChips = [
       ['HP', buffedUnitStats.hp, 'hp'], ['ARM', buffedUnitStats.armor, 'armor'],
       ['EVD', buffedUnitStats.evade, 'evade'], ['SPD', buffedUnitStats.speed, 'speed'],
-      ['SH', buffedUnitStats.shield, 'shield'],
-    ]
-      .filter(([, value]) => hasStatValue(value))
-      .map(([label, value, field]) => {
-        const highlighted = mergedBuffs && !!unitStatHighlights[field];
-        const valueHtml = highlighted
-          ? `<strong class="aid-buff-highlight">${escapeHtml(String(value))}</strong>`
-          : `<strong>${escapeHtml(String(value))}</strong>`;
-        return `<span class="stat-chip">${label} ${valueHtml}</span>`;
-      })
-      .join('');
-    const collapsedStatChips = [
-      ['HP', buffedUnitStats.hp, 'hp'],
-      ['ARM', buffedUnitStats.armor, 'armor'],
-      ['EVD', buffedUnitStats.evade, 'evade'],
-      ['SPD', buffedUnitStats.speed, 'speed'],
       ['SH', buffedUnitStats.shield, 'shield'],
     ]
       .filter(([, value]) => hasStatValue(value))
@@ -332,18 +396,65 @@ export function renderPlayerAid(roster, opts = {}) {
         return `<span class="${chipClasses}"><span class="stat-chip-label">${label}</span>${valueHtml}</span>`;
       })
       .join('');
-
-    const supplyHtml = mergedBuffs && supplyHighlighted
-      ? `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
-      : `<span class="stat-chip stat-chip-supply${diminishedSupply ? ' is-diminished' : ''}">◆ <strong>${escapeHtml(String(displaySupply))}</strong></span>`;
+    const expandedStatChips = [
+      ['HP', buffedUnitStats.hp, 'hp'],
+      ['ARM', buffedUnitStats.armor, 'armor'],
+      ['EVD', buffedUnitStats.evade, 'evade'],
+      ['SPD', buffedUnitStats.speed, 'speed'],
+      ['SH', buffedUnitStats.shield, 'shield'],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value, field]) => {
+        const highlighted = mergedBuffs && !!unitStatHighlights[field];
+        const valueHtml = highlighted
+          ? `<strong class="aid-buff-highlight">${escapeHtml(String(value))}</strong>`
+          : `<strong>${escapeHtml(String(value))}</strong>`;
+        return `<span class="stat-chip stat-chip-stacked stat-chip-${escapeHtml(field)}"><span class="stat-chip-label">${label}</span>${valueHtml}</span>`;
+      })
+      .join('');
+    const expandedSupplyHtml = mergedBuffs && supplyHighlighted
+      ? `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
+      : `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong>${escapeHtml(String(displaySupply))}</strong></span>`;
     const collapsedSupplyHtml = mergedBuffs && supplyHighlighted
       ? `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong class="aid-buff-highlight">${escapeHtml(String(displaySupply))}</strong></span>`
       : `<span class="stat-chip stat-chip-supply stat-chip-stacked${diminishedSupply ? ' is-diminished' : ''}"><span class="stat-chip-label">SUP</span><strong>${escapeHtml(String(displaySupply))}</strong></span>`;
-    const mineralsHtml = `<span class="stat-chip stat-chip-minerals"><strong>${u.totalCost}m</strong></span>`;
-    const supplyProfileHtml = renderPlaySupplyProfile(
+    const expandedMineralsHtml = `<span class="stat-chip stat-chip-minerals stat-chip-stacked stat-chip-cost"><span class="stat-chip-label">MIN</span><strong>${u.totalCost}m</strong></span>`;
+    const expandedPlayStatBoxes = [
+      ['HP', buffedUnitStats.hp, 'hp'],
+      ['ARM', buffedUnitStats.armor, 'armor'],
+      ['EVD', buffedUnitStats.evade, 'evade'],
+      ['SPD', buffedUnitStats.speed, 'speed'],
+      ['SH', buffedUnitStats.shield, 'shield'],
+    ]
+      .filter(([, value]) => hasStatValue(value))
+      .map(([label, value, field]) => {
+        const highlighted = mergedBuffs && !!unitStatHighlights[field];
+        const valueHtml = renderExpandedStatValue(value, tracker, u.models, highlighted);
+        return `<div class="play-stat-box play-stat-box-${escapeHtml(field)}">
+          <div class="play-stat-box-label">${label}</div>
+          <div class="play-stat-box-value">${valueHtml}</div>
+        </div>`;
+      })
+      .join('');
+    const expandedPlaySupplyBox = renderPlaySupplyBox(
       tracker ?? { squadProfile: u.squadProfile, startingModels: u.models, baseSupply: u.supply },
-      u.supply,
+      {
+        fallbackSupply: u.supply,
+        displaySupply,
+        highlighted: mergedBuffs && supplyHighlighted,
+        diminished: diminishedSupply,
+      },
     );
+    const expandedPlayMineralsBox = `<div class="play-stat-box play-stat-box-minerals">
+      <div class="play-stat-box-label">MIN</div>
+      <div class="play-stat-box-value"><strong>${u.totalCost}m</strong></div>
+    </div>`;
+    const supplyProfileHtml = tracker
+      ? ''
+      : renderPlaySupplyProfile(
+        tracker ?? { squadProfile: u.squadProfile, startingModels: u.models, baseSupply: u.supply },
+        u.supply,
+      );
 
     // ── Tracker HTML ──────────────────────────────────────────────────────────
     const trackerDisabledAttrs = tracker ? getTrackerDisabledAttrs(tracker.side) : '';
@@ -371,10 +482,19 @@ export function renderPlayerAid(roster, opts = {}) {
     const headerStatlineHtml = showStats
       ? `<div class="aid-header-statline aid-collapsed-grid${tracker ? ' is-play-mode' : ''}">${collapsedStatChips}${collapsedSupplyHtml}${collapsedTrackerHtml}</div>`
       : '';
-    const statsHtml = showStats ? `
+    const statsHtml = showStats ? (tracker
+      ? `
+      <div class="play-expanded-stats-row">
+        <div class="play-expanded-stats-grid">
+          ${expandedPlayStatBoxes}
+          ${expandedPlaySupplyBox}
+          ${expandedPlayMineralsBox}
+        </div>
+      </div>`
+      : `
       <div class="aid-stats-row">
-        <div class="aid-stats">${statChips}${supplyHtml}${mineralsHtml}</div>
-      </div>` : '';
+        <div class="aid-stats">${expandedStatChips}${expandedSupplyHtml}${expandedMineralsHtml}</div>
+      </div>`) : '';
 
     const metadataRowHtml = showStats && (tagsInlineHtml || aidUpgradePills) ? `
       <div class="aid-meta-row">

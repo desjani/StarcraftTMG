@@ -86,10 +86,6 @@ export function getPlayTrackerSupplyTier(tracker) {
   };
 }
 
-export function getPlayTrackerCurrentSupply(tracker) {
-  return getPlayTrackerSupplyTier(tracker).currentSupply;
-}
-
 export function renderPlayHealthReadout(tracker) {
   const pools    = tracker?.currentHealthPools ?? [];
   const maxPools = tracker?.maxHealthPools ?? [];

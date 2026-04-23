@@ -421,8 +421,10 @@
       border-radius: 999px;
       background: rgba(18, 31, 50, .75);
       color: var(--text);
-      font-family: var(--mono);
+      font-family: 'Orbitron', sans-serif;
       font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .04em;
       padding: 3px 10px;
       cursor: pointer;
     }
@@ -929,46 +931,47 @@
       line-height: 1;
     }
     .slot-chip {
-      display: inline-grid;
-      grid-template-columns: 1.72em 4ch;
-      align-items: stretch;
-      justify-content: start;
-      gap: 0;
-      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.38em;
+      min-height: 22px;
       border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 0;
-      overflow: hidden;
+      border-radius: 14px;
+      padding: 4px 10px;
       background: rgba(15, 27, 43, .58);
       color: var(--text);
-      font-family: var(--mono);
-      font-size: .72rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .03em;
       line-height: 1;
       vertical-align: middle;
+      white-space: nowrap;
     }
     .slot-chip-type {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 0;
-      padding: 0 4px 0 5px;
+      min-width: 1ch;
       color: inherit;
       font-family: 'Orbitron', sans-serif;
-      font-size: .6rem;
-      letter-spacing: .06em;
+      font-size: 1em;
+      font-weight: inherit;
+      letter-spacing: inherit;
       line-height: 1;
-      border-right: 1px solid color-mix(in srgb, currentColor 30%, transparent);
     }
     .slot-chip-value {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 0;
-      padding: 0 7px 0 5px;
+      min-width: 3.2ch;
+      font-family: inherit;
+      font-size: 1em;
+      font-weight: inherit;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0;
+      letter-spacing: inherit;
       line-height: 1;
-      transform: translateY(0.03em);
     }
     .slot-chip.slot-hero {
       color: var(--yellow);
@@ -1216,7 +1219,7 @@
     }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked {
       min-height: 38px;
-      padding: 4px 7px 3px;
+      padding: 4px 6px 3px;
       display: inline-flex;
       flex-direction: column;
       align-items: center;
@@ -1225,19 +1228,28 @@
       line-height: 1;
       white-space: normal;
       flex: 0 0 auto;
+      font-family: 'Orbitron', sans-serif;
     }
-    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-hp { width: 48px; }
-    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-armor { width: 54px; }
-    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-evade { width: 54px; }
-    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-speed { width: 58px; }
-    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-shield { width: 48px; }
-    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-supply { width: 54px; }
+    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-hp,
+    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-shield {
+      width: 44px;
+    }
+    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-armor,
+    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-evade,
+    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-supply {
+      width: 50px;
+    }
+    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-speed {
+      width: 56px;
+    }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked .stat-chip-label {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: .52rem;
-      letter-spacing: .08em;
+      font-family: 'Orbitron', sans-serif;
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: .06em;
       color: var(--muted);
       line-height: 1;
     }
@@ -1245,11 +1257,20 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: .78rem;
+      min-width: 2ch;
+      font-family: 'Orbitron', sans-serif;
+      font-size: .82rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .02em;
       line-height: 1;
     }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-hp strong {
-      font-size: .96rem;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: .03em;
+    }
+    .aid-collapsed-grid .stat-chip.stat-chip-stacked.stat-chip-speed strong {
+      min-width: 3ch;
     }
     .aid-collapsed-grid .stat-chip.stat-chip-stacked.is-diminished {
       border-color: rgba(255, 98, 107, .58);
@@ -1299,16 +1320,23 @@
     .aid-stats .stat-chip.stat-chip-stacked.stat-chip-supply { width: 62px; }
     .aid-stats .stat-chip.stat-chip-stacked.stat-chip-cost { width: 70px; }
     .aid-stats .stat-chip.stat-chip-stacked .stat-chip-label {
+      font-family: 'Orbitron', sans-serif;
       font-size: .54rem;
+      font-weight: 700;
       letter-spacing: .09em;
       color: var(--muted);
     }
     .aid-stats .stat-chip.stat-chip-stacked strong {
+      font-family: 'Orbitron', sans-serif;
       font-size: .88rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .02em;
       line-height: 1;
     }
     .aid-stats .stat-chip.stat-chip-stacked.stat-chip-hp strong {
       font-size: 1.02rem;
+      letter-spacing: .03em;
     }
     .aid-stats .stat-chip.stat-chip-stacked.is-diminished {
       border-color: rgba(255, 98, 107, .58);
@@ -1357,8 +1385,11 @@
       min-height: 31px;
       padding: 6px 8px;
       color: var(--text);
-      font-family: var(--mono);
+      font-family: 'Orbitron', sans-serif;
       font-size: .98rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .02em;
       line-height: 1;
       text-align: center;
       white-space: nowrap;
@@ -1407,6 +1438,9 @@
       color: var(--yellow);
     }
     .play-stat-box-supply {
+      min-width: 0;
+    }
+    .play-stat-box-supply.play-stat-box-supply-profile {
       grid-template-rows: 18px auto;
       min-width: 168px;
     }
@@ -1416,6 +1450,10 @@
       gap: 4px;
       padding: 6px;
       align-content: center;
+    }
+    .play-stat-box-supply.play-stat-box-supply-pair .play-stat-box-detail {
+      grid-template-columns: repeat(2, minmax(44px, max-content));
+      justify-content: center;
     }
     .play-supply-tier-mini {
       display: grid;
@@ -1944,7 +1982,6 @@
 
     /* Shared on-screen pill baseline */
     .seed-pill,
-    .slot-chip,
     .upg-pill,
     .aid-tag-pill,
     .aid-supply-tier-pill,
@@ -1979,15 +2016,6 @@
     .seed-pill,
     .upg-pill {
       letter-spacing: .01em;
-    }
-    .slot-chip {
-      font-weight: 600;
-      letter-spacing: 0;
-      padding: 0;
-    }
-    .slot-chip-type {
-      font-weight: 700;
-      letter-spacing: .06em;
     }
     .stat-chip-label {
       font-weight: 700;
@@ -2273,17 +2301,26 @@
     .play-health-value {
       min-width: 120px;
       text-align: center;
-      padding: 2px 8px;
+      min-height: 32px;
+      padding: 0 8px;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: rgba(19, 31, 50, .72);
-      font-family: var(--mono);
+      font-family: 'Orbitron', sans-serif;
       font-size: .74rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 2px;
       flex-wrap: wrap;
+      box-sizing: border-box;
+    }
+    .play-health-segment,
+    .play-health-sep,
+    .play-health-empty {
+      font-family: 'Orbitron', sans-serif;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
     }
     .play-health-segment.is-hp { color: #ff7b7b; }
     .play-health-segment.is-hp.is-full { color: var(--green); }
@@ -2376,6 +2413,7 @@
       min-height: 38px;
       padding: 0 6px;
       font-size: .8rem;
+      font-family: 'Orbitron', sans-serif;
       text-align: center;
       justify-content: center;
       align-items: center;
@@ -2384,6 +2422,13 @@
       white-space: nowrap;
       flex-wrap: nowrap;
       border-radius: 10px;
+    }
+    .play-health-wrap .play-health-value {
+      min-height: 38px;
+      height: 38px;
+      padding: 0 10px;
+      border-radius: 10px;
+      flex-wrap: nowrap;
     }
     .aid-collapsed-grid .play-collapsed-trackers .btn.sm,
     .aid-collapsed-grid .play-collapsed-trackers .play-health-value {
