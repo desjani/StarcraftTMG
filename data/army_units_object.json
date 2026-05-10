@@ -1,91 +1,105 @@
 {
   "Protoss": {
     "Adept": {
-      "unitType": "Core",
-      "large": {
-        "supply": 0,
-        "models": 0,
-        "cost": 0
+      "stats": {
+        "speed": "5/8",
+        "hp": "3",
+        "shield": "2",
+        "size": "2",
+        "armor": "5+",
+        "evade": "5+"
       },
-      "name": "Adept",
+      "tags": "Biological, Light, Ground",
       "faction": "Protoss",
+      "id": "adept",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "small": {
+        "models": 4,
+        "cost": 150,
+        "supply": 1
+      },
+      "unitType": "Core",
       "upgrades": {
         "Psionic Presence": {
           "costS": 0,
-          "name": "Psionic Presence",
+          "activation": "<Passive>",
+          "phase": "Any Phase",
           "costL": 0,
           "description": "All Weapons of Friendly Units targeting an Enemy Unit Within 4\" of this Unit’s Shade token gain PRECISION (1).",
           "linkedTo": "",
-          "phase": "Any Phase",
-          "activation": "<Passive>"
+          "name": "Psionic Presence"
         },
         "Psionic Transfer": {
+          "linkedTo": "",
           "description": "Set a Shade token Wholly Within 12\" of any model in this Unit. At the End of the Round, the controlling player may set all models of this Unit in Coherency, treating the Shade token as the Leading Model. The Shade token has DISPLACEMENT.",
-          "costS": 0,
           "name": "Psionic Transfer",
-          "costL": 0,
-          "phase": "Movement Phase",
+          "costS": 0,
           "activation": "<Active>\n(1 Psionic Energy)",
-          "linkedTo": ""
+          "costL": 0,
+          "phase": "Movement Phase"
         },
         "Glaive Cannon": {
+          "costS": 0,
           "phase": "Assault Phase",
+          "costL": 0,
           "activation": "",
           "linkedTo": "-",
           "description": "RANGE: 8 | TARGET: All | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light (D3+1)\n\nANTI-EVADE (1)",
-          "costS": 0,
-          "name": "Glaive Cannon",
-          "costL": 0
+          "name": "Glaive Cannon"
         },
         "Resonating Glaives": {
-          "phase": "Assault Phase",
-          "activation": "<Active>\n(1 Psionic Energy)",
+          "name": "Resonating Glaives",
           "linkedTo": "",
           "description": "This Unit's Glaive Cannon gains BUFF RoA (1).",
-          "name": "Resonating Glaives",
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "phase": "Assault Phase",
           "costL": 20,
           "costS": 20
         },
         "Guidance": {
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": "",
-          "description": "This Unit's Glaive Cannon Ranged weapon gains ANTI-EVADE (2).",
-          "costS": 10,
           "costL": 10,
-          "name": "Guidance"
+          "phase": "Assault Phase",
+          "activation": "<Passive>",
+          "costS": 10,
+          "name": "Guidance",
+          "linkedTo": "",
+          "description": "This Unit's Glaive Cannon Ranged weapon gains ANTI-EVADE (2)."
         },
         "Glaive Strike": {
-          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)\n\nPIERCE Light (2)",
           "costS": 20,
-          "costL": 20,
-          "name": "Glaive Strike",
-          "activation": "",
           "phase": "Combat Phase",
-          "linkedTo": "Strike"
+          "costL": 20,
+          "activation": "",
+          "linkedTo": "Strike",
+          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)\n\nPIERCE Light (2)",
+          "name": "Glaive Strike"
         },
         "Strike": {
-          "costL": 0,
-          "name": "Strike",
-          "costS": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: -",
-          "linkedTo": "-",
           "activation": "",
-          "phase": "Combat Phase"
+          "phase": "Combat Phase",
+          "costL": 0,
+          "costS": 0,
+          "name": "Strike",
+          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 4+ | DMG: 1\nSURGE: -",
+          "linkedTo": "-"
         }
       },
-      "tags": "Biological, Light, Ground",
-      "keywords": "",
       "combatRange": "3",
+      "keywords": "",
+      "name": "Adept",
       "squadProfile": [
         {
+          "supply": 0,
           "modelCount": "1 - 2",
-          "tier": 1,
-          "supply": 0
+          "tier": 1
         },
         {
-          "supply": 1,
           "tier": 2,
+          "supply": 1,
           "modelCount": "3 - 4"
         },
         {
@@ -93,540 +107,239 @@
           "supply": 0,
           "modelCount": "-"
         }
-      ],
-      "id": "adept",
-      "stats": {
-        "shield": "2",
-        "evade": "5+",
-        "armor": "5+",
-        "speed": "5/8",
-        "size": "2",
-        "hp": "3"
-      },
-      "small": {
-        "cost": 150,
-        "supply": 1,
-        "models": 4
-      }
+      ]
     },
     "Artanis": {
       "faction": "Protoss",
+      "stats": {
+        "shield": "4",
+        "size": "2",
+        "armor": "4+",
+        "evade": "5+",
+        "hp": "8",
+        "speed": "7"
+      },
+      "tags": "Biological, Psionic, Ground, Unique",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "artanis",
       "upgrades": {
         "Commander": {
           "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase",
+          "description": "Treat this Unit’s Supply characteristic as increased by 1 for Controlling and Contesting Mission Markers, completing objectives, and resolving Disengage checks.",
           "name": "Commander",
-          "costL": 0,
           "costS": 0,
-          "description": "Treat this Unit’s Supply characteristic as increased by 1 for Controlling and Contesting Mission Markers, completing objectives, and resolving Disengage checks."
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Passive>"
         },
         "Phase Prism": {
-          "description": "When Artanis is nominated to deploy from Reserves, it may resolve the PLACE (0) effect from another Friendly Unit. That Friendly Unit is removed from the battlefield and returned to Reserves. Artanis' Activation ends.",
-          "costS": 0,
-          "costL": 0,
-          "name": "Phase Prism",
           "activation": "<Passive>",
           "phase": "Movement Phase",
-          "linkedTo": ""
+          "costL": 0,
+          "costS": 0,
+          "name": "Phase Prism",
+          "linkedTo": "",
+          "description": "When Artanis is nominated to deploy from Reserves, it may resolve the PLACE (0) effect from another Friendly Unit. That Friendly Unit is removed from the battlefield and returned to Reserves. Artanis' Activation ends."
         },
         "Hierarch’s Stand": {
-          "costL": 0,
           "name": "Hierarch’s Stand",
-          "costS": 0,
-          "description": "When another Friendly Unit Within 8\" is declared as the target of a Ranged Attack and this Unit is a valid target, redirect the attack to this Unit. This Unit is eligible to make an Evade Roll against the redirected attack. This Special Ability remains active until the End of the current Activation.",
           "linkedTo": "",
+          "description": "When another Friendly Unit Within 8\" is declared as the target of a Ranged Attack and this Unit is a valid target, redirect the attack to this Unit. This Unit is eligible to make an Evade Roll against the redirected attack. This Special Ability remains active until the End of the current Activation.",
           "activation": "<Reaction>\n(1 Psionic Energy)",
-          "phase": "Assault Phase"
+          "phase": "Assault Phase",
+          "costL": 0,
+          "costS": 0
         },
         "Lightning Dash": {
-          "costL": 0,
-          "name": "Lightning Dash",
-          "costS": 0,
           "description": "After this Unit resolves a successful Charge action, it may declare a second Charge action against a different Enemy Unit, ignoring the restriction on Charging while Engaged. The Devastating Charge ability does not trigger a second time.",
           "linkedTo": "",
-          "activation": "<Reaction>\n(1 Psionic Energy)",
-          "phase": "Assault Phase"
+          "name": "Lightning Dash",
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Reaction>\n(1 Psionic Energy)"
         },
         "Devastating Charge": {
-          "costS": 0,
-          "costL": 0,
-          "name": "Devastating Charge",
           "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (6) 4+ effect.",
           "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase"
+          "name": "Devastating Charge",
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>"
         },
         "Twilight Blades Strike": {
-          "linkedTo": "-",
-          "phase": "Combat Phase",
-          "activation": "",
-          "costS": 0,
           "name": "Twilight Blades Strike",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 2+ | DMG: 3\nSURGE: Armoured (D3)",
+          "activation": "",
+          "phase": "Combat Phase",
           "costL": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 2+ | DMG: 3\nSURGE: Armoured (D3)"
+          "costS": 0
         },
         "Twilight Blades Sweep": {
-          "description": "RANGE: E | TARGET: Ground | RoA: 6 | HIT: 2+ | DMG: 1\nSURGE: Light (D3+1)",
-          "costS": 0,
-          "costL": 0,
-          "name": "Twilight Blades Sweep",
           "activation": "",
           "phase": "Combat Phase",
+          "costL": 0,
+          "costS": 0,
+          "name": "Twilight Blades Sweep",
+          "description": "RANGE: E | TARGET: Ground | RoA: 6 | HIT: 2+ | DMG: 1\nSURGE: Light (D3+1)",
           "linkedTo": "-"
         }
       },
-      "name": "Artanis",
-      "tags": "Biological, Psionic, Ground, Unique",
       "unitType": "Hero",
-      "large": {
-        "cost": 0,
-        "models": 0,
-        "supply": 0
+      "small": {
+        "models": 1,
+        "cost": 250,
+        "supply": 1
       },
-      "stats": {
-        "size": "2",
-        "speed": "7",
-        "hp": "8",
-        "evade": "5+",
-        "armor": "4+",
-        "shield": "4"
-      },
+      "name": "Artanis",
       "squadProfile": [
         {
           "tier": 1,
-          "supply": 0,
-          "modelCount": "-"
+          "modelCount": "-",
+          "supply": 0
         },
         {
-          "modelCount": "1 - 1",
           "tier": 2,
+          "modelCount": "1 - 1",
           "supply": 1
         },
         {
-          "modelCount": "-",
           "tier": 3,
+          "modelCount": "-",
           "supply": 0
         }
       ],
-      "id": "artanis",
-      "small": {
-        "cost": 250,
-        "models": 1,
-        "supply": 1
-      },
       "combatRange": "1",
       "keywords": ""
     },
     "Praetor Guard (Zealot)": {
-      "name": "Praetor Guard (Zealot)",
-      "upgrades": {
-        "Shield Overcharge": {
-          "costS": 0,
-          "name": "Shield Overcharge",
-          "costL": 0,
-          "description": "This Unit gains TOUGH (2) on the first Armour Roll each Round.",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase"
-        },
-        "Leg Enhancements": {
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Psionic Energy)",
-          "phase": "Movement Phase",
-          "name": "Leg Enhancements",
-          "costL": 0,
-          "costS": 0,
-          "description": "This Unit performs a 2\" Move action. This does not count towards its action limit."
-        },
-        "Charge": {
-          "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
-          "costL": 0,
-          "name": "Charge",
-          "costS": 0,
-          "activation": "<Active>\n(1 Psionic Energy)",
-          "phase": "Assault Phase",
-          "linkedTo": ""
-        },
-        "Devastating Charge": {
-          "costS": 0,
-          "name": "Devastating Charge",
-          "costL": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (3) 4+ effect.",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase"
-        },
-        "Psi Blades": {
-          "activation": "",
-          "phase": "Combat Phase",
-          "linkedTo": "-",
-          "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
-          "costL": 0,
-          "name": "Psi Blades",
-          "costS": 0
-        },
-        "Titan Killers": {
-          "linkedTo": "",
-          "phase": "Combat Phase",
-          "activation": "<Passive>",
-          "name": "Titan Killers",
-          "costL": 0,
-          "costS": 0,
-          "description": "When this Unit makes a Close Combat Attack, and the target is Size 3 or larger, the weapon’s Damage characteristic is treated as 2."
-        },
-        "Precognition": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Combat Phase",
-          "costS": 0,
-          "name": "Precognition",
-          "costL": 0,
-          "description": "This Unit is eligible to make an Evade roll against all attacks targeting it."
-        }
-      },
-      "faction": "Protoss",
-      "tags": "Biological, Light, Ground, Unique",
-      "unitType": "Elite",
-      "large": {
-        "models": 0,
-        "supply": 0,
-        "cost": 0
-      },
-      "id": "praetor_guard__zealot_",
-      "squadProfile": [
-        {
-          "supply": 1,
-          "tier": 1,
-          "modelCount": "1 - 1"
-        },
-        {
-          "modelCount": "2 - 3",
-          "tier": 2,
-          "supply": 2
-        },
-        {
-          "tier": 3,
-          "supply": 0,
-          "modelCount": "-"
-        }
-      ],
-      "stats": {
-        "shield": "3",
-        "armor": "5+",
-        "evade": "5+",
-        "hp": "4",
-        "speed": "4/7",
-        "size": "2"
-      },
-      "small": {
-        "cost": 280,
-        "supply": 2,
-        "models": 3
-      },
       "combatRange": "1",
-      "keywords": "Khalai"
-    },
-    "Pylon": {
-      "small": {
-        "models": 1,
-        "supply": 0,
-        "cost": 0
-      },
-      "id": "pylon",
+      "keywords": "Khalai",
+      "name": "Praetor Guard (Zealot)",
       "squadProfile": [
         {
           "tier": 1,
-          "supply": 0,
-          "modelCount": "-"
-        },
-        {
-          "supply": 0,
-          "tier": 2,
+          "supply": 1,
           "modelCount": "1 - 1"
         },
         {
-          "modelCount": "-",
-          "tier": 3,
-          "supply": 0
-        }
-      ],
-      "stats": {
-        "armor": "5+",
-        "evade": "-",
-        "hp": "8",
-        "size": "3",
-        "speed": "-",
-        "shield": "2"
-      },
-      "keywords": "Khalai",
-      "combatRange": "-",
-      "tags": "Armored, Ground",
-      "name": "Pylon",
-      "upgrades": {
-        "Structure": {
-          "costS": 0,
-          "name": "Structure",
-          "costL": 0,
-          "description": "This Unit cannot be Activated in any Phase and cannot perform actions. Additionally, its Current Supply Value is treated as 0, and it can never Control or Contest Mission Markers, ignoring the standard Zero Supply Exception. This Unit cannot be a target of an ability, unless stated otherwise.",
-          "linkedTo": "",
-          "phase": "Any Phase",
-          "activation": "<Passive>"
-        },
-        "Khalai Ingenuity": {
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": "",
-          "description": "Once per Round, when a Friendly Unit Within 4\" of this Pylon uses a Special Ability that costs Psionic Energy, that ability’s PE cost is reduced by 1.",
-          "costS": 0,
-          "name": "Khalai Ingenuity",
-          "costL": 0
-        },
-        "Warp Conduit": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Movement Phase",
-          "name": "Warp Conduit",
-          "costL": 0,
-          "costS": 0,
-          "description": "Once per Round, the controlling player may deploy a Ground Unit from Reserves using this Pylon base as the Entry Edge. This Unit's Activation ends."
-        }
-      },
-      "faction": "Protoss",
-      "large": {
-        "models": 0,
-        "supply": 0,
-        "cost": 0
-      },
-      "unitType": "Other"
-    },
-    "Sentry": {
-      "keywords": "",
-      "combatRange": "4",
-      "id": "sentry",
-      "squadProfile": [
-        {
-          "modelCount": "1 - 1",
-          "tier": 1,
-          "supply": 0
+          "supply": 2,
+          "modelCount": "2 - 3",
+          "tier": 2
         },
         {
-          "supply": 1,
-          "tier": 2,
-          "modelCount": "2 - 2"
-        },
-        {
-          "modelCount": "-",
           "supply": 0,
+          "modelCount": "-",
           "tier": 3
         }
       ],
-      "stats": {
-        "hp": "4",
-        "speed": "4/7",
-        "size": "1",
-        "armor": "5+",
-        "evade": "6+",
-        "shield": "2"
-      },
-      "small": {
-        "cost": 130,
-        "supply": 1,
-        "models": 2
-      },
-      "unitType": "Support",
-      "large": {
-        "cost": 0,
-        "supply": 0,
-        "models": 0
-      },
-      "name": "Sentry",
-      "faction": "Protoss",
-      "upgrades": {
-        "Restoration": {
-          "phase": "Any Phase",
-          "activation": "<Reaction>\n(1 Psionic Energy)",
-          "linkedTo": "",
-          "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it.",
-          "costS": 0,
-          "name": "Restoration",
-          "costL": 0
-        },
-        "Force Field": {
-          "costS": 0,
-          "costL": 0,
-          "name": "Force Field",
-          "description": "Set a Force Field token Within 8\" in an unoccupied space. Units of Size 2 or lower cannot move across Force Fields. Models of Size 3 or more can move over it, and it's then removed.",
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Psionic Energy)",
-          "phase": "Movement Phase"
-        },
-        "Guardian Shield": {
-          "description": "All Ranged Attacks targeting a Friendly Unit Within 4\" (Line of Sight is not required) are made with 1 fewer die in the Attack Pool.",
-          "name": "Guardian Shield",
-          "costL": 0,
-          "costS": 0,
-          "phase": "Movement Phase",
-          "activation": "<Active>\n(1 Psionic Energy)",
-          "linkedTo": ""
-        },
-        "Solid-Field Projectors": {
-          "activation": "<Active>\n(1 Psionic Energy)",
-          "phase": "Movement Phase",
-          "linkedTo": "",
-          "description": "Set a Force Field token Within 8\" in an unoccupied space. Units of Size 2 or lower cannot move across Force Fields. Models of Size 3 or more can move over it, and it's then removed.",
-          "costL": 20,
-          "name": "Solid-Field Projectors",
-          "costS": 20
-        },
-        "Disruption Beam": {
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Assault Phase",
-          "name": "Disruption Beam",
-          "costL": 0,
-          "costS": 0,
-          "description": "RANGE: 8 | TARGET: All | RoA: 2 | HIT: 2+ | DMG: 1\nSURGE: -\n\nINSTANT"
-        },
-        "Hallucination": {
-          "linkedTo": "",
-          "activation": "<Reaction>\n(0 Psionic Energy)",
-          "phase": "Assault Phase",
-          "costS": 30,
-          "costL": 30,
-          "name": "Hallucination",
-          "description": "When an Enemy Unit declares a Ranged Attack against a Friendly Unit Within 4\", the targeted Friendly Unit is eligible to make an Evade Roll against that attack."
-        },
-        "Beam": {
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: -",
-          "costL": 0,
-          "name": "Beam",
-          "costS": 0,
-          "activation": "",
-          "phase": "Combat Phase",
-          "linkedTo": "-"
-        }
-      },
-      "tags": "Light, Mechanical, Psionic, Ground"
-    },
-    "Stalker": {
-      "large": {
-        "supply": 2,
-        "models": 2,
-        "cost": 260
-      },
       "unitType": "Elite",
-      "tags": "Armoured, Mechanical, Ground",
-      "name": "Stalker",
-      "upgrades": {
-        "Squadron": {
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": "",
-          "description": "This Unit’s Horizontal Coherency is 4\".",
-          "name": "Squadron",
-          "costL": 0,
-          "costS": 0
-        },
-        "Path of Shadows": {
-          "description": "This Unit gains HIDDEN Status until it performs another action.",
-          "costS": 20,
-          "costL": 40,
-          "name": "Path of Shadows",
-          "activation": "<Active>\n(1 Psionic Energy)",
-          "phase": "Any Phase",
-          "linkedTo": ""
-        },
-        "Blink": {
-          "costS": 0,
-          "name": "Blink",
-          "costL": 0,
-          "description": "Resolve the PLACE (6) effect. Models set by this effect cannot be set up Within the Engagement Range of any Enemy Unit.",
-          "linkedTo": "",
-          "phase": "Movement Phase",
-          "activation": "<Active>\n(1 Psionic Energy)"
-        },
-        "Fury of the Nerazim": {
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": "",
-          "description": "When this Unit attacks an Enemy Unit that has already been Activated during this Phase, its Particle Disruptors gain INSTANT for that attack.",
-          "costS": 20,
-          "name": "Fury of the Nerazim",
-          "costL": 30
-        },
-        "Particle Disruptors": {
-          "description": "RANGE: 12 | TARGET: All | RoA: 4 | HIT: 3+ | DMG: 2\nSURGE: Armoured (D3)",
-          "name": "Particle Disruptors",
-          "costL": 0,
-          "costS": 0,
-          "phase": "Assault Phase",
-          "activation": "",
-          "linkedTo": "-"
-        },
-        "Stomp": {
-          "costS": 0,
-          "costL": 0,
-          "name": "Stomp",
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Combat Phase"
-        }
-      },
-      "faction": "Protoss",
-      "combatRange": "5",
-      "keywords": "",
       "small": {
-        "supply": 1,
-        "models": 1,
-        "cost": 160
-      },
-      "id": "stalker",
-      "squadProfile": [
-        {
-          "modelCount": "-",
-          "supply": 0,
-          "tier": 1
-        },
-        {
-          "tier": 2,
-          "supply": 1,
-          "modelCount": "1 - 1"
-        },
-        {
-          "supply": 2,
-          "tier": 3,
-          "modelCount": "2 - 2"
-        }
-      ],
-      "stats": {
-        "shield": "3",
-        "speed": "4/8",
-        "size": "3",
-        "hp": "6",
-        "evade": "6+",
-        "armor": "4+"
-      }
-    },
-    "Zealot": {
-      "combatRange": "1",
-      "keywords": "",
-      "small": {
-        "supply": 2,
         "models": 3,
-        "cost": 160
+        "cost": 280,
+        "supply": 2
       },
-      "id": "zealot",
+      "upgrades": {
+        "Shield Overcharge": {
+          "costS": 0,
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Passive>",
+          "linkedTo": "",
+          "description": "This Unit gains TOUGH (2) on the first Armour Roll each Round.",
+          "name": "Shield Overcharge"
+        },
+        "Leg Enhancements": {
+          "costL": 0,
+          "phase": "Movement Phase",
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "costS": 0,
+          "name": "Leg Enhancements",
+          "linkedTo": "",
+          "description": "This Unit performs a 2\" Move action. This does not count towards its action limit."
+        },
+        "Charge": {
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
+          "linkedTo": "",
+          "name": "Charge"
+        },
+        "Devastating Charge": {
+          "linkedTo": "",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (3) 4+ effect.",
+          "name": "Devastating Charge",
+          "costS": 0,
+          "activation": "<Passive>",
+          "costL": 0,
+          "phase": "Assault Phase"
+        },
+        "Psi Blades": {
+          "costS": 0,
+          "activation": "",
+          "costL": 0,
+          "phase": "Combat Phase",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
+          "name": "Psi Blades"
+        },
+        "Titan Killers": {
+          "phase": "Combat Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "costS": 0,
+          "name": "Titan Killers",
+          "linkedTo": "",
+          "description": "When this Unit makes a Close Combat Attack, and the target is Size 3 or larger, the weapon’s Damage characteristic is treated as 2."
+        },
+        "Precognition": {
+          "costL": 0,
+          "phase": "Combat Phase",
+          "activation": "<Passive>",
+          "costS": 0,
+          "name": "Precognition",
+          "linkedTo": "",
+          "description": "This Unit is eligible to make an Evade roll against all attacks targeting it."
+        }
+      },
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "praetor_guard__zealot_",
+      "stats": {
+        "speed": "4/7",
+        "hp": "4",
+        "shield": "3",
+        "size": "2",
+        "armor": "5+",
+        "evade": "5+"
+      },
+      "tags": "Biological, Light, Ground, Unique",
+      "faction": "Protoss"
+    },
+    "Pylon": {
+      "combatRange": "-",
+      "keywords": "Khalai",
+      "name": "Pylon",
       "squadProfile": [
         {
           "tier": 1,
-          "supply": 1,
-          "modelCount": "1 - 1"
+          "modelCount": "-",
+          "supply": 0
         },
         {
-          "modelCount": "2 - 3",
-          "supply": 2,
+          "modelCount": "1 - 1",
+          "supply": 0,
           "tier": 2
         },
         {
@@ -635,990 +348,1186 @@
           "modelCount": "-"
         }
       ],
-      "stats": {
-        "speed": "4/7",
-        "size": "2",
-        "hp": "4",
-        "evade": "5+",
-        "armor": "5+",
-        "shield": "3"
-      },
-      "large": {
+      "small": {
+        "models": 1,
         "cost": 0,
-        "models": 0,
         "supply": 0
       },
-      "unitType": "Core",
-      "tags": "Biological, Light, Ground",
-      "name": "Zealot",
+      "unitType": "Other",
       "upgrades": {
-        "My Life for Aiur": {
+        "Structure": {
+          "name": "Structure",
           "linkedTo": "",
+          "description": "This Unit cannot be Activated in any Phase and cannot perform actions. Additionally, its Current Supply Value is treated as 0, and it can never Control or Contest Mission Markers, ignoring the standard Zero Supply Exception. This Unit cannot be a target of an ability, unless stated otherwise.",
           "activation": "<Passive>",
+          "costL": 0,
           "phase": "Any Phase",
-          "costS": 10,
-          "name": "My Life for Aiur",
-          "costL": 10,
-          "description": "When this Unit resolves IMPACT, each eligible model generates 1 additional IMPACT die."
-        },
-        "Leg Enhancements": {
-          "description": "This Unit performs a 2\" Move action. This does not count towards its action limit.",
-          "costS": 20,
-          "costL": 20,
-          "name": "Leg Enhancements",
-          "activation": "<Active>\n(1 Psionic Energy)",
-          "phase": "Movement Phase",
-          "linkedTo": ""
-        },
-        "Charge": {
-          "name": "Charge",
-          "costL": 0,
-          "costS": 0,
-          "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
-          "linkedTo": "",
-          "phase": "Assault Phase",
-          "activation": "<Active>\n(1 Psionic Energy)"
-        },
-        "Devastating Charge": {
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": "",
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (3) 4+ effect.",
-          "name": "Devastating Charge",
-          "costL": 0,
           "costS": 0
         },
-        "Zealous Round": {
-          "description": "When this Unit is not Activated and receives Damage, the controlling player may count this Unit as Activated in this Phase (flip its Activation Marker) to reduce the Total Damage by 2.",
-          "name": "Zealous Round",
-          "costL": 10,
-          "costS": 10,
-          "activation": "<Reaction>\n(0 Psionic Energy)",
-          "phase": "Assault Phase",
-          "linkedTo": ""
-        },
-        "Psi Blades": {
-          "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
-          "costL": 0,
-          "name": "Psi Blades",
-          "costS": 0,
-          "activation": "",
-          "phase": "Combat Phase",
-          "linkedTo": "-"
-        },
-        "We Stand as One": {
+        "Khalai Ingenuity": {
           "linkedTo": "",
+          "description": "Once per Round, when a Friendly Unit Within 4\" of this Pylon uses a Special Ability that costs Psionic Energy, that ability’s PE cost is reduced by 1.",
+          "name": "Khalai Ingenuity",
+          "costS": 0,
           "activation": "<Passive>",
-          "phase": "Combat Phase",
-          "costS": 20,
-          "name": "We Stand as One",
-          "costL": 20,
-          "description": "When this Unit makes a Close Combat Attack, if the target is Engaged with at least 1 other Friendly Unit, this Unit's Close Combat Weapon gains PRECISION (2)."
+          "costL": 0,
+          "phase": "Any Phase"
+        },
+        "Warp Conduit": {
+          "phase": "Movement Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "costS": 0,
+          "name": "Warp Conduit",
+          "linkedTo": "",
+          "description": "Once per Round, the controlling player may deploy a Ground Unit from Reserves using this Pylon base as the Entry Edge. This Unit's Activation ends."
         }
       },
-      "faction": "Protoss"
-    }
-  },
-  "Zerg": {
-    "Corpser (Roach)": {
-      "tags": "Armoured, Biological, Ground",
-      "faction": "Zerg",
-      "upgrades": {
-        "Burrow": {
-          "description": "If this Unit is Unengaged, it gains or loses the Burrowed Status.",
-          "costL": 0,
-          "name": "Burrow",
-          "costS": 0,
-          "activation": "<Active>\n(2 Biomass)",
-          "phase": "Any Phase",
-          "linkedTo": ""
-        },
-        "Tunneling Claws": {
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": "",
-          "description": "While this Unit has the Burrowed Status, it may perform the Move and Run actions without losing that Status. It may also move through other Units’ bases.",
-          "costL": 10,
-          "name": "Tunneling Claws",
-          "costS": 10
-        },
-        "Roachling Infestation": {
-          "costS": 0,
-          "name": "Roachling Infestation",
-          "costL": 0,
-          "description": "Once per Game. Resolve the SUMMON (Roachling) effect.",
-          "linkedTo": "",
-          "activation": "<Active>\n(2 Biomass)",
-          "phase": "Movement Phase"
-        },
-        "Burrow Ambush": {
-          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
-          "name": "Burrow Ambush",
-          "costL": 20,
-          "costS": 20,
-          "phase": "Movement Phase",
-          "activation": "<Passive>",
-          "linkedTo": ""
-        },
-        "Glial Reconstitution": {
-          "costS": 20,
-          "costL": 20,
-          "name": "Glial Reconstitution",
-          "description": "This Unit gains BUFF SPEED (1), or BUFF SPEED (2) if the Unit is ON CREEP.",
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Movement Phase"
-        },
-        "Acid Saliva": {
-          "costS": 0,
-          "name": "Acid Saliva",
-          "costL": 0,
-          "description": "RANGE: 8 | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: -",
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Assault Phase"
-        },
-        "Regeneration": {
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": "",
-          "description": "When this Unit becomes Activated, if it has the Burrowed Status, resolve the HEAL (2) effect.",
-          "name": "Regeneration",
-          "costL": 0,
-          "costS": 0
-        },
-        "Hydriodic Bile": {
-          "description": "This Unit's Acid Saliva weapon gains Surge Type: Light, and S Dice: D3+1.",
-          "name": "Hydriodic Bile",
-          "costL": 10,
-          "costS": 10,
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": ""
-        },
-        "Devastating Charge": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "name": "Devastating Charge",
-          "costL": 0,
-          "costS": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (3) 4+ effect."
-        },
-        "Claws": {
-          "phase": "Combat Phase",
-          "activation": "",
-          "linkedTo": "-",
-          "description": "RANGE: E | TARGET: Ground | RoA: 3 | HIT: 4+ | DMG: 1\nSURGE: Light (D3+1)",
-          "name": "Claws",
-          "costL": 0,
-          "costS": 0
-        }
-      },
-      "name": "Corpser (Roach)",
       "large": {
         "models": 0,
-        "supply": 0,
-        "cost": 0
+        "cost": 0,
+        "supply": 0
       },
-      "unitType": "Core",
-      "small": {
-        "models": 3,
-        "supply": 1,
-        "cost": 250
-      },
+      "id": "pylon",
       "stats": {
-        "hp": "4",
-        "speed": "4/7",
-        "size": "2",
-        "armor": "3+",
-        "evade": "5+",
-        "shield": "-"
+        "shield": "2",
+        "size": "3",
+        "armor": "5+",
+        "evade": "-",
+        "hp": "8",
+        "speed": "-"
       },
-      "id": "corpser__roach_",
-      "squadProfile": [
-        {
-          "modelCount": "1 - 1",
-          "tier": 1,
-          "supply": 0
-        },
-        {
-          "tier": 2,
-          "supply": 1,
-          "modelCount": "2 - 3"
-        },
-        {
-          "supply": 0,
-          "tier": 3,
-          "modelCount": "-"
-        }
-      ],
-      "combatRange": "1",
-      "keywords": ""
+      "tags": "Armored, Ground",
+      "faction": "Protoss"
     },
-    "Hydralisk": {
-      "unitType": "Elite",
-      "large": {
-        "models": 4,
-        "supply": 3,
-        "cost": 260
+    "Sentry": {
+      "small": {
+        "models": 2,
+        "cost": 130,
+        "supply": 1
       },
-      "faction": "Zerg",
+      "unitType": "Support",
       "upgrades": {
-        "Squadron": {
-          "description": "This Unit’s Horizontal Coherency is 4\".",
+        "Restoration": {
           "costS": 0,
-          "name": "Squadron",
+          "phase": "Any Phase",
           "costL": 0,
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": ""
-        },
-        "Ancillary Carapace": {
-          "activation": "<Passive>",
-          "phase": "Any Phase",
+          "activation": "<Reaction>\n(1 Psionic Energy)",
+          "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it.",
           "linkedTo": "",
-          "description": "This Unit gains TOUGH (1) on the first Armour Roll of each Activation.",
-          "costS": 20,
-          "name": "Ancillary Carapace",
-          "costL": 40
+          "name": "Restoration"
         },
-        "Lurking": {
-          "description": "If this Unit has Stationary Status, it is eligible to make an Evade Roll against the first Ranged Attack targeting it this Round. If this Unit is ON CREEP, it gains +1 Modifier to this Evade Roll.",
-          "costS": 10,
-          "name": "Lurking",
-          "costL": 20,
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": ""
-        },
-        "Burrow Ambush": {
-          "linkedTo": "",
-          "activation": "<Passive>",
+        "Force Field": {
           "phase": "Movement Phase",
-          "costL": 40,
-          "name": "Burrow Ambush",
-          "costS": 20,
-          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends."
-        },
-        "Needle Spines": {
-          "description": "RANGE: 12 | TARGET: All | RoA: 3 | HIT: 3+ | DMG: 2\nSURGE: Light, Armoured (D3+1)",
-          "costS": 0,
-          "name": "Needle Spines",
           "costL": 0,
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "costS": 0,
+          "name": "Force Field",
+          "description": "Set a Force Field token Within 8\" in an unoccupied space. Units of Size 2 or lower cannot move across Force Fields. Models of Size 3 or more can move over it, and it's then removed.",
+          "linkedTo": ""
+        },
+        "Guardian Shield": {
+          "costL": 0,
+          "phase": "Movement Phase",
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "costS": 0,
+          "name": "Guardian Shield",
+          "linkedTo": "",
+          "description": "All Ranged Attacks targeting a Friendly Unit Within 4\" (Line of Sight is not required) are made with 1 fewer die in the Attack Pool."
+        },
+        "Solid-Field Projectors": {
+          "linkedTo": "",
+          "description": "Set a Force Field token Within 8\" in an unoccupied space. Units of Size 2 or lower cannot move across Force Fields. Models of Size 3 or more can move over it, and it's then removed.",
+          "name": "Solid-Field Projectors",
+          "costS": 20,
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "phase": "Movement Phase",
+          "costL": 20
+        },
+        "Disruption Beam": {
+          "linkedTo": "-",
+          "description": "RANGE: 8 | TARGET: All | RoA: 2 | HIT: 2+ | DMG: 1\nSURGE: -\n\nINSTANT",
+          "name": "Disruption Beam",
+          "costS": 0,
           "activation": "",
-          "phase": "Assault Phase",
-          "linkedTo": "-"
-        },
-        "Lunge": {
-          "description": "When another Friendly Unit Within 10\" is the target of a Ranged Attack, after the attack is fully resolved, this Unit, if Unengaged, may perform a Move action Directly Towards the attacking Unit.",
-          "name": "Lunge",
           "costL": 0,
-          "costS": 0,
-          "activation": "<Reaction>\n(1 Biomass)",
-          "phase": "Assault Phase",
-          "linkedTo": ""
+          "phase": "Assault Phase"
         },
-        "Grooved Spines": {
-          "description": "This Unit's Needle Spines ranged weapon gains LONG RANGE (16\").",
-          "costS": 20,
-          "name": "Grooved Spines",
-          "costL": 40,
+        "Hallucination": {
+          "activation": "<Reaction>\n(0 Psionic Energy)",
+          "costL": 30,
           "phase": "Assault Phase",
-          "activation": "<Passive>",
-          "linkedTo": ""
+          "costS": 30,
+          "name": "Hallucination",
+          "linkedTo": "",
+          "description": "When an Enemy Unit declares a Ranged Attack against a Friendly Unit Within 4\", the targeted Friendly Unit is eligible to make an Evade Roll against that attack."
         },
-        "Scythe": {
-          "name": "Scythe",
-          "costL": 0,
-          "costS": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
+        "Beam": {
+          "name": "Beam",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: -",
           "linkedTo": "-",
           "activation": "",
-          "phase": "Combat Phase"
+          "phase": "Combat Phase",
+          "costL": 0,
+          "costS": 0
         }
       },
-      "name": "Hydralisk",
-      "tags": "Biological, Light, Ground",
       "keywords": "",
-      "combatRange": "5",
-      "stats": {
-        "shield": "-",
-        "armor": "5+",
-        "evade": "5+",
-        "hp": "4",
-        "speed": "4/8",
-        "size": "2"
-      },
+      "combatRange": "4",
       "squadProfile": [
         {
-          "supply": 1,
           "tier": 1,
+          "supply": 0,
           "modelCount": "1 - 1"
         },
         {
           "modelCount": "2 - 2",
-          "tier": 2,
-          "supply": 2
+          "supply": 1,
+          "tier": 2
         },
-        {
-          "supply": 3,
-          "tier": 3,
-          "modelCount": "3 - 4"
-        }
-      ],
-      "id": "hydralisk",
-      "small": {
-        "cost": 140,
-        "models": 2,
-        "supply": 2
-      }
-    },
-    "Kerrigan": {
-      "squadProfile": [
         {
           "modelCount": "-",
           "supply": 0,
-          "tier": 1
+          "tier": 3
+        }
+      ],
+      "name": "Sentry",
+      "tags": "Light, Mechanical, Psionic, Ground",
+      "stats": {
+        "hp": "4",
+        "armor": "5+",
+        "size": "1",
+        "evade": "6+",
+        "shield": "2",
+        "speed": "4/7"
+      },
+      "faction": "Protoss",
+      "id": "sentry",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      }
+    },
+    "Stalker": {
+      "faction": "Protoss",
+      "stats": {
+        "armor": "4+",
+        "size": "3",
+        "evade": "6+",
+        "shield": "3",
+        "hp": "6",
+        "speed": "4/8"
+      },
+      "tags": "Armoured, Mechanical, Ground",
+      "id": "stalker",
+      "large": {
+        "models": 2,
+        "cost": 260,
+        "supply": 2
+      },
+      "upgrades": {
+        "Squadron": {
+          "name": "Squadron",
+          "description": "This Unit’s Horizontal Coherency is 4\".",
+          "linkedTo": "",
+          "phase": "Any Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "costS": 0
+        },
+        "Path of Shadows": {
+          "name": "Path of Shadows",
+          "description": "This Unit gains HIDDEN Status until it performs another action.",
+          "linkedTo": "",
+          "phase": "Any Phase",
+          "costL": 40,
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "costS": 20
+        },
+        "Blink": {
+          "costS": 0,
+          "phase": "Movement Phase",
+          "costL": 0,
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "description": "Resolve the PLACE (6) effect. Models set by this effect cannot be set up Within the Engagement Range of any Enemy Unit.",
+          "linkedTo": "",
+          "name": "Blink"
+        },
+        "Fury of the Nerazim": {
+          "phase": "Assault Phase",
+          "costL": 30,
+          "activation": "<Passive>",
+          "costS": 20,
+          "name": "Fury of the Nerazim",
+          "description": "When this Unit attacks an Enemy Unit that has already been Activated during this Phase, its Particle Disruptors gain INSTANT for that attack.",
+          "linkedTo": ""
+        },
+        "Particle Disruptors": {
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "",
+          "costS": 0,
+          "name": "Particle Disruptors",
+          "description": "RANGE: 12 | TARGET: All | RoA: 4 | HIT: 3+ | DMG: 2\nSURGE: Armoured (D3)",
+          "linkedTo": "-"
+        },
+        "Stomp": {
+          "costS": 0,
+          "costL": 0,
+          "phase": "Combat Phase",
+          "activation": "",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
+          "name": "Stomp"
+        }
+      },
+      "small": {
+        "models": 1,
+        "cost": 160,
+        "supply": 1
+      },
+      "unitType": "Elite",
+      "name": "Stalker",
+      "squadProfile": [
+        {
+          "tier": 1,
+          "modelCount": "-",
+          "supply": 0
         },
         {
+          "modelCount": "1 - 1",
           "supply": 1,
-          "tier": 2,
+          "tier": 2
+        },
+        {
+          "tier": 3,
+          "supply": 2,
+          "modelCount": "2 - 2"
+        }
+      ],
+      "combatRange": "5",
+      "keywords": ""
+    },
+    "Zealot": {
+      "name": "Zealot",
+      "squadProfile": [
+        {
+          "tier": 1,
+          "supply": 1,
           "modelCount": "1 - 1"
         },
         {
+          "tier": 2,
+          "supply": 2,
+          "modelCount": "2 - 3"
+        },
+        {
           "supply": 0,
-          "tier": 3,
-          "modelCount": "-"
+          "modelCount": "-",
+          "tier": 3
         }
       ],
-      "id": "kerrigan",
-      "stats": {
-        "armor": "5+",
-        "evade": "6+",
-        "hp": "9",
-        "speed": "7",
-        "size": "2",
-        "shield": "-"
-      },
-      "small": {
-        "cost": 250,
-        "supply": 1,
-        "models": 1
-      },
-      "combatRange": "2",
+      "combatRange": "1",
       "keywords": "",
-      "name": "Kerrigan",
-      "faction": "Zerg",
       "upgrades": {
-        "Commander": {
+        "My Life for Aiur": {
+          "name": "My Life for Aiur",
+          "linkedTo": "",
+          "description": "When this Unit resolves IMPACT, each eligible model generates 1 additional IMPACT die.",
+          "costL": 10,
           "phase": "Any Phase",
           "activation": "<Passive>",
-          "linkedTo": "",
-          "description": "Treat this Unit’s Supply characteristic as increased by 1 for Controlling and Contesting Mission Markers, completing objectives, and resolving Disengage checks.",
-          "costS": 0,
-          "name": "Commander",
-          "costL": 0
+          "costS": 10
         },
-        "Crushing Grip": {
-          "description": "Select one Enemy Unit Within 12\". That Unit counts as Activated in this Phase (set an Activation Marker next to it).",
-          "name": "Crushing Grip",
-          "costL": 0,
-          "costS": 0,
+        "Leg Enhancements": {
+          "costL": 20,
           "phase": "Movement Phase",
-          "activation": "<Active>\n(1 Biomass)",
-          "linkedTo": ""
-        },
-        "Mutating Carapace": {
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Movement Phase",
+          "activation": "<Active>\n(1 Psionic Energy)",
+          "costS": 20,
+          "name": "Leg Enhancements",
           "linkedTo": "",
-          "description": "Select one Enemy Unit Within 18\". This Unit is eligible to make an Evade Roll against all attacks made by the selected Enemy Unit, with a +2 Modifier applied to those Evade Rolls.",
-          "costL": 0,
-          "name": "Mutating Carapace",
-          "costS": 0
+          "description": "This Unit performs a 2\" Move action. This does not count towards its action limit."
         },
-        "Energy Blast": {
-          "phase": "Assault Phase",
-          "activation": "",
-          "linkedTo": "-",
-          "description": "RANGE: 8 | TARGET: All | RoA: 5 | HIT: 3+ | DMG: 1\nSURGE: Light, Armoured (D3)",
-          "costS": 0,
-          "name": "Energy Blast",
-          "costL": 0
-        },
-        "Leaping Strike": {
-          "phase": "Assault Phase",
-          "activation": "<Active>\n(1 Biomass)",
+        "Charge": {
+          "name": "Charge",
           "linkedTo": "",
-          "description": "If Unengaged, resolve the PLACE (6) effect.",
-          "name": "Leaping Strike",
+          "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
+          "phase": "Assault Phase",
           "costL": 0,
+          "activation": "<Active>\n(1 Psionic Energy)",
           "costS": 0
         },
         "Devastating Charge": {
           "costS": 0,
-          "name": "Devastating Charge",
+          "phase": "Assault Phase",
           "costL": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 4+ effect.",
+          "activation": "<Passive>",
+          "linkedTo": "",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (3) 4+ effect.",
+          "name": "Devastating Charge"
+        },
+        "Zealous Round": {
+          "linkedTo": "",
+          "description": "When this Unit is not Activated and receives Damage, the controlling player may count this Unit as Activated in this Phase (flip its Activation Marker) to reduce the Total Damage by 2.",
+          "name": "Zealous Round",
+          "costS": 10,
+          "phase": "Assault Phase",
+          "costL": 10,
+          "activation": "<Reaction>\n(0 Psionic Energy)"
+        },
+        "Psi Blades": {
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
+          "name": "Psi Blades",
+          "costS": 0,
+          "costL": 0,
+          "phase": "Combat Phase",
+          "activation": ""
+        },
+        "We Stand as One": {
+          "linkedTo": "",
+          "description": "When this Unit makes a Close Combat Attack, if the target is Engaged with at least 1 other Friendly Unit, this Unit's Close Combat Weapon gains PRECISION (2).",
+          "name": "We Stand as One",
+          "costS": 20,
+          "costL": 20,
+          "phase": "Combat Phase",
+          "activation": "<Passive>"
+        }
+      },
+      "unitType": "Core",
+      "small": {
+        "models": 3,
+        "cost": 160,
+        "supply": 2
+      },
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "zealot",
+      "faction": "Protoss",
+      "stats": {
+        "speed": "4/7",
+        "hp": "4",
+        "shield": "3",
+        "size": "2",
+        "armor": "5+",
+        "evade": "5+"
+      },
+      "tags": "Biological, Light, Ground"
+    }
+  },
+  "Zerg": {
+    "Corpser (Roach)": {
+      "upgrades": {
+        "Burrow": {
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Active>\n(2 Biomass)",
+          "costS": 0,
+          "name": "Burrow",
+          "linkedTo": "",
+          "description": "If this Unit is Unengaged, it gains or loses the Burrowed Status."
+        },
+        "Tunneling Claws": {
+          "costS": 10,
+          "activation": "<Passive>",
+          "phase": "Any Phase",
+          "costL": 10,
+          "description": "While this Unit has the Burrowed Status, it may perform the Move and Run actions without losing that Status. It may also move through other Units’ bases.",
+          "linkedTo": "",
+          "name": "Tunneling Claws"
+        },
+        "Roachling Infestation": {
+          "name": "Roachling Infestation",
+          "linkedTo": "",
+          "description": "Once per Game. Resolve the SUMMON (Roachling) effect.",
+          "phase": "Movement Phase",
+          "costL": 0,
+          "activation": "<Active>\n(2 Biomass)",
+          "costS": 0
+        },
+        "Burrow Ambush": {
+          "name": "Burrow Ambush",
+          "linkedTo": "",
+          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
+          "activation": "<Passive>",
+          "phase": "Movement Phase",
+          "costL": 20,
+          "costS": 20
+        },
+        "Glial Reconstitution": {
+          "costS": 20,
+          "activation": "<Active>\n(1 Biomass)",
+          "phase": "Movement Phase",
+          "costL": 20,
+          "linkedTo": "",
+          "description": "This Unit gains BUFF SPEED (1), or BUFF SPEED (2) if the Unit is ON CREEP.",
+          "name": "Glial Reconstitution"
+        },
+        "Acid Saliva": {
+          "name": "Acid Saliva",
+          "linkedTo": "-",
+          "description": "RANGE: 8 | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: -",
+          "activation": "",
+          "costL": 0,
+          "phase": "Assault Phase",
+          "costS": 0
+        },
+        "Regeneration": {
+          "activation": "<Passive>",
+          "phase": "Assault Phase",
+          "costL": 0,
+          "costS": 0,
+          "name": "Regeneration",
+          "description": "When this Unit becomes Activated, if it has the Burrowed Status, resolve the HEAL (2) effect.",
+          "linkedTo": ""
+        },
+        "Hydriodic Bile": {
+          "name": "Hydriodic Bile",
+          "description": "This Unit's Acid Saliva weapon gains Surge Type: Light, and S Dice: D3+1.",
           "linkedTo": "",
           "activation": "<Passive>",
-          "phase": "Assault Phase"
+          "phase": "Assault Phase",
+          "costL": 10,
+          "costS": 10
         },
-        "Blades": {
+        "Devastating Charge": {
+          "linkedTo": "",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (3) 4+ effect.",
+          "name": "Devastating Charge",
+          "costS": 0,
+          "activation": "<Passive>",
+          "phase": "Assault Phase",
+          "costL": 0
+        },
+        "Claws": {
+          "name": "Claws",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 3 | HIT: 4+ | DMG: 1\nSURGE: Light (D3+1)",
           "activation": "",
           "phase": "Combat Phase",
-          "linkedTo": "-",
-          "description": "RANGE: E | TARGET: Ground | RoA: 6 | HIT: 4+ | DMG: 2\nSURGE: -\n\nCRITICAL HIT (2)",
-          "name": "Blades",
           "costL": 0,
           "costS": 0
         }
       },
-      "tags": "Biological, Psionic, Ground, Unique",
-      "unitType": "Hero",
-      "large": {
-        "supply": 0,
-        "models": 0,
-        "cost": 0
-      }
-    },
-    "Kerrigan Swarm Raptor (Zergling)": {
+      "unitType": "Core",
       "small": {
-        "supply": 1,
-        "models": 6,
-        "cost": 250
-      },
-      "stats": {
-        "hp": "2",
-        "speed": "5/9",
-        "size": "1",
-        "armor": "5+",
-        "evade": "4+",
-        "shield": "-"
+        "models": 3,
+        "cost": 250,
+        "supply": 1
       },
       "squadProfile": [
         {
-          "supply": 0,
           "tier": 1,
-          "modelCount": "1 - 3"
+          "modelCount": "1 - 1",
+          "supply": 0
         },
         {
-          "modelCount": "4 - 6",
           "tier": 2,
+          "supply": 1,
+          "modelCount": "2 - 3"
+        },
+        {
+          "modelCount": "-",
+          "supply": 0,
+          "tier": 3
+        }
+      ],
+      "name": "Corpser (Roach)",
+      "keywords": "",
+      "combatRange": "1",
+      "faction": "Zerg",
+      "tags": "Armoured, Biological, Ground",
+      "stats": {
+        "hp": "4",
+        "shield": "-",
+        "evade": "5+",
+        "size": "2",
+        "armor": "3+",
+        "speed": "4/7"
+      },
+      "id": "corpser__roach_",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      }
+    },
+    "Hydralisk": {
+      "id": "hydralisk",
+      "large": {
+        "models": 4,
+        "cost": 260,
+        "supply": 3
+      },
+      "faction": "Zerg",
+      "stats": {
+        "speed": "4/8",
+        "shield": "-",
+        "size": "2",
+        "armor": "5+",
+        "evade": "5+",
+        "hp": "4"
+      },
+      "tags": "Biological, Light, Ground",
+      "name": "Hydralisk",
+      "squadProfile": [
+        {
+          "tier": 1,
+          "supply": 1,
+          "modelCount": "1 - 1"
+        },
+        {
+          "tier": 2,
+          "modelCount": "2 - 2",
+          "supply": 2
+        },
+        {
+          "tier": 3,
+          "supply": 3,
+          "modelCount": "3 - 4"
+        }
+      ],
+      "combatRange": "5",
+      "keywords": "",
+      "upgrades": {
+        "Squadron": {
+          "costS": 0,
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Passive>",
+          "linkedTo": "",
+          "description": "This Unit’s Horizontal Coherency is 4\".",
+          "name": "Squadron"
+        },
+        "Ancillary Carapace": {
+          "linkedTo": "",
+          "description": "This Unit gains TOUGH (1) on the first Armour Roll of each Activation.",
+          "name": "Ancillary Carapace",
+          "costS": 20,
+          "activation": "<Passive>",
+          "costL": 40,
+          "phase": "Any Phase"
+        },
+        "Lurking": {
+          "name": "Lurking",
+          "linkedTo": "",
+          "description": "If this Unit has Stationary Status, it is eligible to make an Evade Roll against the first Ranged Attack targeting it this Round. If this Unit is ON CREEP, it gains +1 Modifier to this Evade Roll.",
+          "phase": "Any Phase",
+          "costL": 20,
+          "activation": "<Passive>",
+          "costS": 10
+        },
+        "Burrow Ambush": {
+          "name": "Burrow Ambush",
+          "linkedTo": "",
+          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
+          "activation": "<Passive>",
+          "phase": "Movement Phase",
+          "costL": 40,
+          "costS": 20
+        },
+        "Needle Spines": {
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "",
+          "costS": 0,
+          "name": "Needle Spines",
+          "linkedTo": "-",
+          "description": "RANGE: 12 | TARGET: All | RoA: 3 | HIT: 3+ | DMG: 2\nSURGE: Light, Armoured (D3+1)"
+        },
+        "Lunge": {
+          "name": "Lunge",
+          "linkedTo": "",
+          "description": "When another Friendly Unit Within 10\" is the target of a Ranged Attack, after the attack is fully resolved, this Unit, if Unengaged, may perform a Move action Directly Towards the attacking Unit.",
+          "activation": "<Reaction>\n(1 Biomass)",
+          "costL": 0,
+          "phase": "Assault Phase",
+          "costS": 0
+        },
+        "Grooved Spines": {
+          "costS": 20,
+          "activation": "<Passive>",
+          "phase": "Assault Phase",
+          "costL": 40,
+          "description": "This Unit's Needle Spines ranged weapon gains LONG RANGE (16\").",
+          "linkedTo": "",
+          "name": "Grooved Spines"
+        },
+        "Scythe": {
+          "name": "Scythe",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
+          "costL": 0,
+          "phase": "Combat Phase",
+          "activation": "",
+          "costS": 0
+        }
+      },
+      "small": {
+        "models": 2,
+        "cost": 140,
+        "supply": 2
+      },
+      "unitType": "Elite"
+    },
+    "Kerrigan": {
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "kerrigan",
+      "tags": "Biological, Psionic, Ground, Unique",
+      "stats": {
+        "armor": "5+",
+        "size": "2",
+        "evade": "6+",
+        "shield": "-",
+        "hp": "9",
+        "speed": "7"
+      },
+      "faction": "Zerg",
+      "keywords": "",
+      "combatRange": "2",
+      "squadProfile": [
+        {
+          "supply": 0,
+          "modelCount": "-",
+          "tier": 1
+        },
+        {
+          "tier": 2,
+          "supply": 1,
+          "modelCount": "1 - 1"
+        },
+        {
+          "modelCount": "-",
+          "supply": 0,
+          "tier": 3
+        }
+      ],
+      "name": "Kerrigan",
+      "small": {
+        "models": 1,
+        "cost": 250,
+        "supply": 1
+      },
+      "unitType": "Hero",
+      "upgrades": {
+        "Commander": {
+          "name": "Commander",
+          "linkedTo": "",
+          "description": "Treat this Unit’s Supply characteristic as increased by 1 for Controlling and Contesting Mission Markers, completing objectives, and resolving Disengage checks.",
+          "activation": "<Passive>",
+          "costL": 0,
+          "phase": "Any Phase",
+          "costS": 0
+        },
+        "Crushing Grip": {
+          "costS": 0,
+          "activation": "<Active>\n(1 Biomass)",
+          "phase": "Movement Phase",
+          "costL": 0,
+          "description": "Select one Enemy Unit Within 12\". That Unit counts as Activated in this Phase (set an Activation Marker next to it).",
+          "linkedTo": "",
+          "name": "Crushing Grip"
+        },
+        "Mutating Carapace": {
+          "name": "Mutating Carapace",
+          "linkedTo": "",
+          "description": "Select one Enemy Unit Within 18\". This Unit is eligible to make an Evade Roll against all attacks made by the selected Enemy Unit, with a +2 Modifier applied to those Evade Rolls.",
+          "phase": "Movement Phase",
+          "costL": 0,
+          "activation": "<Active>\n(1 Biomass)",
+          "costS": 0
+        },
+        "Energy Blast": {
+          "activation": "",
+          "costL": 0,
+          "phase": "Assault Phase",
+          "costS": 0,
+          "name": "Energy Blast",
+          "linkedTo": "-",
+          "description": "RANGE: 8 | TARGET: All | RoA: 5 | HIT: 3+ | DMG: 1\nSURGE: Light, Armoured (D3)"
+        },
+        "Leaping Strike": {
+          "activation": "<Active>\n(1 Biomass)",
+          "phase": "Assault Phase",
+          "costL": 0,
+          "costS": 0,
+          "name": "Leaping Strike",
+          "description": "If Unengaged, resolve the PLACE (6) effect.",
+          "linkedTo": ""
+        },
+        "Devastating Charge": {
+          "linkedTo": "",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 4+ effect.",
+          "name": "Devastating Charge",
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>"
+        },
+        "Blades": {
+          "costS": 0,
+          "activation": "",
+          "costL": 0,
+          "phase": "Combat Phase",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 6 | HIT: 4+ | DMG: 2\nSURGE: -\n\nCRITICAL HIT (2)",
+          "name": "Blades"
+        }
+      }
+    },
+    "Kerrigan Swarm Raptor (Zergling)": {
+      "tags": "Biological, Light, Ground, Unique",
+      "stats": {
+        "shield": "-",
+        "evade": "4+",
+        "size": "1",
+        "armor": "5+",
+        "hp": "2",
+        "speed": "5/9"
+      },
+      "faction": "Zerg",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "kerrigan_swarm_raptor__zergling_",
+      "unitType": "Elite",
+      "small": {
+        "models": 6,
+        "cost": 250,
+        "supply": 1
+      },
+      "upgrades": {
+        "Squadron": {
+          "costS": 0,
+          "activation": "<Passive>",
+          "phase": "Any Phase",
+          "costL": 0,
+          "description": "This Unit’s Horizontal Coherency is 4\".",
+          "linkedTo": "",
+          "name": "Squadron"
+        },
+        "Raptor Strain": {
+          "name": "Raptor Strain",
+          "linkedTo": "",
+          "description": "This Unit can move through IMPASSABLE TERRAIN of Size 4 or less and change elevation without using ACCESS POINTS.",
+          "activation": "<Passive>",
+          "costL": 0,
+          "phase": "Any Phase",
+          "costS": 0
+        },
+        "Leap": {
+          "name": "Leap",
+          "linkedTo": "",
+          "description": "When determining Charge Distance for this Unit, add 2 to the Charge Distance.",
+          "activation": "<Active>\n(1 Biomass)",
+          "phase": "Assault Phase",
+          "costL": 0,
+          "costS": 0
+        },
+        "Adrenal Overload": {
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Active>\n(1 Biomass)",
+          "costS": 0,
+          "name": "Adrenal Overload",
+          "description": "This Unit gains a +1 Modifier to all IMPACT Hit Rolls.",
+          "linkedTo": ""
+        },
+        "Devastating Charge": {
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "linkedTo": "",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (2) 5+ effect.",
+          "name": "Devastating Charge"
+        },
+        "Claws": {
+          "costS": 0,
+          "phase": "Combat Phase",
+          "costL": 0,
+          "activation": "",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light, Armoured (D6)\n\nINSTANT",
+          "name": "Claws"
+        }
+      },
+      "keywords": "Kerrigan's Swarm",
+      "combatRange": "1",
+      "squadProfile": [
+        {
+          "supply": 0,
+          "modelCount": "1 - 3",
+          "tier": 1
+        },
+        {
+          "tier": 2,
+          "modelCount": "4 - 6",
           "supply": 1
         },
         {
           "modelCount": "-",
-          "tier": 3,
-          "supply": 0
+          "supply": 0,
+          "tier": 3
         }
       ],
-      "id": "kerrigan_swarm_raptor__zergling_",
-      "combatRange": "1",
-      "keywords": "Kerrigan's Swarm",
-      "tags": "Biological, Light, Ground, Unique",
-      "faction": "Zerg",
-      "upgrades": {
-        "Squadron": {
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": "",
-          "description": "This Unit’s Horizontal Coherency is 4\".",
-          "costS": 0,
-          "name": "Squadron",
-          "costL": 0
-        },
-        "Raptor Strain": {
-          "costL": 0,
-          "name": "Raptor Strain",
-          "costS": 0,
-          "description": "This Unit can move through IMPASSABLE TERRAIN of Size 4 or less and change elevation without using ACCESS POINTS.",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase"
-        },
-        "Leap": {
-          "costS": 0,
-          "name": "Leap",
-          "costL": 0,
-          "description": "When determining Charge Distance for this Unit, add 2 to the Charge Distance.",
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Assault Phase"
-        },
-        "Adrenal Overload": {
-          "name": "Adrenal Overload",
-          "costL": 0,
-          "costS": 0,
-          "description": "This Unit gains a +1 Modifier to all IMPACT Hit Rolls.",
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Assault Phase"
-        },
-        "Devastating Charge": {
-          "costL": 0,
-          "name": "Devastating Charge",
-          "costS": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (2) 5+ effect.",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase"
-        },
-        "Claws": {
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Combat Phase",
-          "costL": 0,
-          "name": "Claws",
-          "costS": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light, Armoured (D6)\n\nINSTANT"
-        }
-      },
-      "name": "Kerrigan Swarm Raptor (Zergling)",
-      "large": {
-        "models": 0,
-        "supply": 0,
-        "cost": 0
-      },
-      "unitType": "Elite"
+      "name": "Kerrigan Swarm Raptor (Zergling)"
     },
     "Omega Worm": {
       "name": "Omega Worm",
+      "squadProfile": [
+        {
+          "supply": 0,
+          "modelCount": "-",
+          "tier": 1
+        },
+        {
+          "tier": 2,
+          "supply": 0,
+          "modelCount": "1 - 1"
+        },
+        {
+          "supply": 0,
+          "modelCount": "-",
+          "tier": 3
+        }
+      ],
+      "combatRange": "-",
+      "keywords": "Kerrigan's Swarm",
       "upgrades": {
         "Detection": {
           "activation": "<Passive>",
           "phase": "Any Phase",
-          "linkedTo": "",
-          "description": "While Enemy Units are Within 6\" of this Unit, they lose HIDDEN Status.",
-          "costS": 0,
           "costL": 0,
-          "name": "Detection"
+          "costS": 0,
+          "name": "Detection",
+          "linkedTo": "",
+          "description": "While Enemy Units are Within 6\" of this Unit, they lose HIDDEN Status."
         },
         "Source of Creep": {
-          "activation": "<Passive>",
+          "costS": 0,
           "phase": "Any Phase",
+          "costL": 0,
+          "activation": "<Passive>",
           "linkedTo": "",
           "description": "A Friendly or Enemy Ground Zerg Unit Within 6\" of this Unit, counts as being ON CREEP.",
-          "costL": 0,
-          "name": "Source of Creep",
-          "costS": 0
+          "name": "Source of Creep"
         },
         "Structure": {
-          "description": "This Unit cannot be Activated in any Phase and cannot perform actions. Additionally, its Current Supply Value is treated as 0, and it can never Control or Contest Mission Markers, ignoring the standard Zero Supply Exception. This Unit cannot be a target of an ability, unless stated otherwise.",
-          "name": "Structure",
           "costL": 0,
-          "costS": 0,
-          "activation": "<Passive>",
           "phase": "Any Phase",
-          "linkedTo": ""
+          "activation": "<Passive>",
+          "costS": 0,
+          "name": "Structure",
+          "linkedTo": "",
+          "description": "This Unit cannot be Activated in any Phase and cannot perform actions. Additionally, its Current Supply Value is treated as 0, and it can never Control or Contest Mission Markers, ignoring the standard Zero Supply Exception. This Unit cannot be a target of an ability, unless stated otherwise."
         },
         "Omega Network": {
-          "activation": "<Passive>",
-          "phase": "Any Phase",
+          "name": "Omega Network",
           "linkedTo": "",
           "description": "The base of the Omega Worm counts as an Entry Edge. Each Round, Friendly Units with a combined Supply cost of 2 or less may be Deployed via this Entry Edge.\n\nIf a Friendly Leading model finishes a Move, Disengage, or Run action in base-to-base contact with the Omega Worm, the controlling player may remove that Unit from the battlefield and return it to Reserves.",
-          "costS": 0,
+          "activation": "<Passive>",
+          "phase": "Any Phase",
           "costL": 0,
-          "name": "Omega Network"
+          "costS": 0
         }
       },
-      "faction": "Zerg",
-      "tags": "Armoured, Biological, Ground",
       "unitType": "Other",
-      "large": {
+      "small": {
+        "models": 1,
         "cost": 0,
-        "supply": 0,
-        "models": 0
+        "supply": 0
+      },
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
       },
       "id": "omega_worm",
-      "squadProfile": [
-        {
-          "modelCount": "-",
-          "supply": 0,
-          "tier": 1
-        },
-        {
-          "tier": 2,
-          "supply": 0,
-          "modelCount": "1 - 1"
-        },
-        {
-          "modelCount": "-",
-          "supply": 0,
-          "tier": 3
-        }
-      ],
+      "faction": "Zerg",
       "stats": {
-        "armor": "5+",
-        "evade": "-",
-        "hp": "10",
         "speed": "-",
+        "hp": "10",
+        "shield": "-",
+        "evade": "-",
         "size": "3",
-        "shield": "-"
+        "armor": "5+"
       },
-      "small": {
-        "cost": 0,
-        "supply": 0,
-        "models": 1
-      },
-      "combatRange": "-",
-      "keywords": "Kerrigan's Swarm"
+      "tags": "Armoured, Biological, Ground"
     },
     "Queen": {
-      "tags": "Armoured, Biological, Psionic, Ground",
-      "upgrades": {
-        "Spawn Creep Tumor": {
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Any Phase",
-          "linkedTo": "",
-          "description": "Set a Creep Tumor token in base-to-base contact with this Unit.",
-          "costL": 0,
-          "name": "Spawn Creep Tumor",
-          "costS": 0
-        },
-        "Transfusion": {
-          "description": "Use when another Friendly Biological Unit (including a Structure) suffers Damage Within 4\". Reduce the Total Damage before allocation by 2.",
-          "name": "Transfusion",
-          "costL": 0,
-          "costS": 0,
-          "activation": "<Reaction>\n(1 Biomass)",
-          "phase": "Any Phase",
-          "linkedTo": ""
-        },
-        "Restoration": {
-          "costL": 0,
-          "name": "Restoration",
-          "costS": 0,
-          "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it.",
-          "linkedTo": "",
-          "activation": "<Reaction>\n(1 Biomass)",
-          "phase": "Any Phase"
-        },
-        "Psionic Link": {
-          "phase": "Any Phase",
-          "activation": "<Passive>",
-          "linkedTo": "",
-          "description": "Once per Round, if there are at least 7 Friendly models Within 6\" of this Unit, it may resolve its Special Ability with the BM cost reduced by 1.",
-          "name": "Psionic Link",
-          "costL": 0,
-          "costS": 0
-        },
-        "Creep Speed": {
-          "description": "While this Unit is ON CREEP, increase this Unit's Speed characteristic by 2.",
-          "costS": 10,
-          "name": "Creep Speed",
-          "costL": 10,
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": ""
-        },
-        "Domineering Presence": {
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Movement Phase",
-          "name": "Domineering Presence",
-          "costL": 10,
-          "costS": 10,
-          "description": "Select another Friendly Unit Within 6\" (Line of Sight is not required). That Unit’s Supply characteristic is increased by 1 for Controlling and Contesting Mission Markers and completing objectives."
-        },
-        "Talons": {
-          "linkedTo": "-",
-          "phase": "Combat Phase",
-          "activation": "",
-          "costS": 0,
-          "name": "Talons",
-          "costL": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 3 | HIT: 4+ | DMG: 1\nSURGE: -"
-        },
-        "Acid spines": {
-          "activation": "",
-          "phase": "Assault Phase",
-          "linkedTo": "-",
-          "description": "RANGE: 12 | TARGET: Flying | RoA: 4 | HIT: 4+ | DMG: 2\nSURGE: Light, Armoured (D3)",
-          "costS": 0,
-          "name": "Acid spines",
-          "costL": 0
-        },
-        "Devastating Charge": {
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
-          "name": "Devastating Charge",
-          "costL": 0,
-          "costS": 0,
-          "phase": "Assault Phase",
-          "activation": "<Passive>",
-          "linkedTo": ""
-        }
-      },
       "faction": "Zerg",
-      "name": "Queen",
-      "large": {
-        "supply": 0,
-        "models": 0,
-        "cost": 0
-      },
-      "unitType": "Support",
-      "small": {
-        "cost": 150,
-        "models": 1,
-        "supply": 1
-      },
+      "tags": "Armoured, Biological, Psionic, Ground",
       "stats": {
+        "shield": "-",
+        "size": "3",
         "armor": "4+",
         "evade": "-",
         "hp": "9",
-        "size": "3",
-        "speed": "4",
-        "shield": "-"
+        "speed": "4"
+      },
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
       },
       "id": "queen",
-      "squadProfile": [
-        {
-          "tier": 1,
-          "supply": 0,
-          "modelCount": "-"
+      "upgrades": {
+        "Spawn Creep Tumor": {
+          "costS": 0,
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Active>\n(1 Biomass)",
+          "linkedTo": "",
+          "description": "Set a Creep Tumor token in base-to-base contact with this Unit.",
+          "name": "Spawn Creep Tumor"
         },
-        {
-          "modelCount": "1 - 1",
-          "supply": 1,
-          "tier": 2
+        "Transfusion": {
+          "phase": "Any Phase",
+          "costL": 0,
+          "activation": "<Reaction>\n(1 Biomass)",
+          "costS": 0,
+          "name": "Transfusion",
+          "linkedTo": "",
+          "description": "Use when another Friendly Biological Unit (including a Structure) suffers Damage Within 4\". Reduce the Total Damage before allocation by 2."
         },
-        {
-          "tier": 3,
-          "supply": 0,
-          "modelCount": "-"
+        "Restoration": {
+          "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it.",
+          "linkedTo": "",
+          "name": "Restoration",
+          "costS": 0,
+          "activation": "<Reaction>\n(1 Biomass)",
+          "phase": "Any Phase",
+          "costL": 0
+        },
+        "Psionic Link": {
+          "linkedTo": "",
+          "description": "Once per Round, if there are at least 7 Friendly models Within 6\" of this Unit, it may resolve its Special Ability with the BM cost reduced by 1.",
+          "name": "Psionic Link",
+          "costS": 0,
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Passive>"
+        },
+        "Creep Speed": {
+          "costL": 10,
+          "phase": "Any Phase",
+          "activation": "<Passive>",
+          "costS": 10,
+          "name": "Creep Speed",
+          "linkedTo": "",
+          "description": "While this Unit is ON CREEP, increase this Unit's Speed characteristic by 2."
+        },
+        "Domineering Presence": {
+          "activation": "<Active>\n(1 Biomass)",
+          "phase": "Movement Phase",
+          "costL": 10,
+          "costS": 10,
+          "name": "Domineering Presence",
+          "description": "Select another Friendly Unit Within 6\" (Line of Sight is not required). That Unit’s Supply characteristic is increased by 1 for Controlling and Contesting Mission Markers and completing objectives.",
+          "linkedTo": ""
+        },
+        "Talons": {
+          "name": "Talons",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 3 | HIT: 4+ | DMG: 1\nSURGE: -",
+          "costL": 0,
+          "phase": "Combat Phase",
+          "activation": "",
+          "costS": 0
+        },
+        "Acid spines": {
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "",
+          "description": "RANGE: 12 | TARGET: Flying | RoA: 4 | HIT: 4+ | DMG: 2\nSURGE: Light, Armoured (D3)",
+          "linkedTo": "-",
+          "name": "Acid spines"
+        },
+        "Devastating Charge": {
+          "costS": 0,
+          "activation": "<Passive>",
+          "phase": "Assault Phase",
+          "costL": 0,
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
+          "linkedTo": "",
+          "name": "Devastating Charge"
         }
-      ],
-      "combatRange": "2",
-      "keywords": ""
-    },
-    "Raptor (Zergling)": {
-      "combatRange": "1",
-      "keywords": "",
-      "stats": {
-        "shield": "-",
-        "evade": "4+",
-        "armor": "6+",
-        "speed": "5/9",
-        "size": "1",
-        "hp": "1"
       },
-      "id": "raptor__zergling_",
+      "small": {
+        "models": 1,
+        "cost": 150,
+        "supply": 1
+      },
+      "unitType": "Support",
       "squadProfile": [
         {
-          "supply": 0,
           "tier": 1,
-          "modelCount": "1 - 6"
+          "supply": 0,
+          "modelCount": "-"
         },
         {
           "tier": 2,
           "supply": 1,
-          "modelCount": "7 - 12"
+          "modelCount": "1 - 1"
         },
         {
-          "supply": 2,
           "tier": 3,
-          "modelCount": "13 - 18"
+          "supply": 0,
+          "modelCount": "-"
         }
       ],
-      "small": {
-        "cost": 240,
-        "models": 12,
-        "supply": 1
-      },
-      "unitType": "Elite",
+      "name": "Queen",
+      "keywords": "",
+      "combatRange": "2"
+    },
+    "Raptor (Zergling)": {
       "large": {
-        "cost": 300,
         "models": 18,
+        "cost": 300,
         "supply": 2
       },
+      "id": "raptor__zergling_",
+      "faction": "Zerg",
+      "tags": "Biological, Light, Ground",
+      "stats": {
+        "speed": "5/9",
+        "shield": "-",
+        "size": "1",
+        "armor": "6+",
+        "evade": "4+",
+        "hp": "1"
+      },
+      "squadProfile": [
+        {
+          "supply": 0,
+          "modelCount": "1 - 6",
+          "tier": 1
+        },
+        {
+          "supply": 1,
+          "modelCount": "7 - 12",
+          "tier": 2
+        },
+        {
+          "modelCount": "13 - 18",
+          "supply": 2,
+          "tier": 3
+        }
+      ],
+      "name": "Raptor (Zergling)",
+      "keywords": "",
+      "combatRange": "1",
       "upgrades": {
         "Squadron": {
-          "phase": "Any Phase",
-          "activation": "<Passive>",
+          "name": "Squadron",
           "linkedTo": "",
           "description": "This Unit’s Horizontal Coherency is 4\".",
-          "name": "Squadron",
           "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Passive>",
           "costS": 0
         },
         "Raptor Strain": {
+          "linkedTo": "",
           "description": "This Unit can move through IMPASSABLE TERRAIN of Size 4 or less and change elevation without using ACCESS POINTS.",
-          "costS": 0,
-          "costL": 0,
           "name": "Raptor Strain",
-          "activation": "<Passive>",
+          "costS": 0,
           "phase": "Any Phase",
-          "linkedTo": ""
+          "costL": 0,
+          "activation": "<Passive>"
         },
         "Burrow Ambush": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Movement Phase",
-          "costS": 20,
-          "costL": 30,
           "name": "Burrow Ambush",
-          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends."
+          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
+          "linkedTo": "",
+          "phase": "Movement Phase",
+          "costL": 30,
+          "activation": "<Passive>",
+          "costS": 20
         },
         "Adrenal Overload": {
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Assault Phase",
           "name": "Adrenal Overload",
+          "description": "This Unit gains a +1 Modifier to all IMPACT Hit Rolls.",
+          "linkedTo": "",
+          "phase": "Assault Phase",
           "costL": 0,
-          "costS": 0,
-          "description": "This Unit gains a +1 Modifier to all IMPACT Hit Rolls."
+          "activation": "<Active>\n(1 Biomass)",
+          "costS": 0
         },
         "Metabolic Boost": {
-          "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
-          "costS": 0,
           "name": "Metabolic Boost",
+          "linkedTo": "",
+          "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
+          "activation": "<Active>\n(1 Biomass)",
           "costL": 0,
           "phase": "Assault Phase",
-          "activation": "<Active>\n(1 Biomass)",
-          "linkedTo": ""
+          "costS": 0
         },
         "Devastating Charge": {
-          "phase": "Assault Phase",
-          "activation": "<Passive>",
           "linkedTo": "",
           "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (1) 5+ effect.",
           "name": "Devastating Charge",
+          "costS": 0,
+          "activation": "<Passive>",
           "costL": 0,
-          "costS": 0
+          "phase": "Assault Phase"
         },
         "Claws": {
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)",
+          "name": "Claws",
           "costS": 0,
           "costL": 0,
-          "name": "Claws",
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)",
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Combat Phase"
+          "phase": "Combat Phase",
+          "activation": ""
         },
         "Shredding Claws": {
+          "linkedTo": "Claws",
           "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light, Armoured (D3)",
           "name": "Shredding Claws",
-          "costL": 20,
           "costS": 20,
-          "activation": "",
           "phase": "Combat Phase",
-          "linkedTo": "Claws"
+          "costL": 20,
+          "activation": ""
         },
         "Adrenal Glands": {
           "activation": "<Passive>",
           "phase": "Combat Phase",
-          "linkedTo": "",
-          "description": "This Unit’s Claws and Shredding Claws weapons gain PRECISION (2).",
-          "name": "Adrenal Glands",
           "costL": 30,
-          "costS": 30
+          "costS": 30,
+          "name": "Adrenal Glands",
+          "linkedTo": "",
+          "description": "This Unit’s Claws and Shredding Claws weapons gain PRECISION (2)."
         }
       },
-      "faction": "Zerg",
-      "name": "Raptor (Zergling)",
-      "tags": "Biological, Light, Ground"
+      "unitType": "Elite",
+      "small": {
+        "models": 12,
+        "cost": 240,
+        "supply": 1
+      }
     },
     "Roach": {
-      "unitType": "Core",
-      "large": {
-        "models": 0,
-        "supply": 0,
-        "cost": 0
-      },
-      "name": "Roach",
-      "faction": "Zerg",
-      "upgrades": {
-        "Burrow": {
-          "linkedTo": "",
-          "phase": "Any Phase",
-          "activation": "<Active>\n(2 Biomass)",
-          "name": "Burrow",
-          "costL": 0,
-          "costS": 0,
-          "description": "If this Unit is Unengaged, it gains or loses the Burrowed Status."
-        },
-        "Tunneling Claws": {
-          "costL": 10,
-          "name": "Tunneling Claws",
-          "costS": 10,
-          "description": "While this Unit has the Burrowed Status, it may perform the Move and Run actions without losing that Status. It may also move through other Units’ bases.",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase"
-        },
-        "Burrow Ambush": {
-          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
-          "costS": 20,
-          "costL": 20,
-          "name": "Burrow Ambush",
-          "activation": "<Passive>",
-          "phase": "Movement Phase",
-          "linkedTo": ""
-        },
-        "Glial Reconstitution": {
-          "linkedTo": "",
-          "phase": "Movement Phase",
-          "activation": "<Active>\n(1 Biomass)",
-          "name": "Glial Reconstitution",
-          "costL": 20,
-          "costS": 20,
-          "description": "This Unit gains BUFF SPEED (1), or BUFF SPEED (2) if the Unit is ON CREEP."
-        },
-        "Acid Saliva": {
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Assault Phase",
-          "costS": 0,
-          "name": "Acid Saliva",
-          "costL": 0,
-          "description": "RANGE: 8 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: -"
-        },
-        "Regeneration": {
-          "linkedTo": "",
-          "phase": "Assault Phase",
-          "activation": "<Passive>",
-          "name": "Regeneration",
-          "costL": 0,
-          "costS": 0,
-          "description": "When this Unit becomes Activated, if it has the Burrowed Status, resolve the HEAL (2) effect."
-        },
-        "Hydriodic Bile": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "costS": 10,
-          "name": "Hydriodic Bile",
-          "costL": 10,
-          "description": "This Unit's Acid Saliva weapon gains Surge Type: Light, and S Dice: D3+1."
-        },
-        "Devastating Charge": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "costL": 0,
-          "name": "Devastating Charge",
-          "costS": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (2) 4+ effect."
-        },
-        "Claws": {
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
-          "costS": 0,
-          "name": "Claws",
-          "costL": 0,
-          "activation": "",
-          "phase": "Combat Phase",
-          "linkedTo": "-"
-        }
-      },
-      "tags": "Armoured, Biological, Ground",
       "combatRange": "2",
       "keywords": "",
+      "name": "Roach",
       "squadProfile": [
         {
-          "tier": 1,
           "supply": 0,
-          "modelCount": "1 - 1"
+          "modelCount": "1 - 1",
+          "tier": 1
         },
         {
           "tier": 2,
@@ -1631,101 +1540,188 @@
           "tier": 3
         }
       ],
-      "id": "roach",
-      "stats": {
-        "shield": "-",
-        "evade": "5+",
-        "armor": "3+",
-        "speed": "4/7",
-        "size": "2",
-        "hp": "4"
-      },
+      "unitType": "Core",
       "small": {
-        "supply": 1,
         "models": 3,
-        "cost": 170
-      }
-    },
-    "Roachling": {
-      "small": {
-        "supply": 0,
-        "models": 3,
-        "cost": 0
+        "cost": 170,
+        "supply": 1
       },
-      "squadProfile": [
-        {
-          "modelCount": "-",
-          "tier": 1,
-          "supply": 0
-        },
-        {
-          "supply": 0,
-          "tier": 2,
-          "modelCount": "1 - 3"
-        },
-        {
-          "tier": 3,
-          "supply": 0,
-          "modelCount": "-"
-        }
-      ],
-      "id": "roachling",
-      "stats": {
-        "hp": "1",
-        "size": "1",
-        "speed": "4/7",
-        "armor": "6+",
-        "evade": "6+",
-        "shield": "-"
-      },
-      "keywords": "",
-      "combatRange": "1",
-      "tags": "Biological, Light, Ground",
-      "name": "Roachling",
-      "faction": "Zerg",
       "upgrades": {
-        "Underdeveloped Claws": {
+        "Burrow": {
+          "costS": 0,
+          "costL": 0,
           "phase": "Any Phase",
+          "activation": "<Active>\n(2 Biomass)",
+          "linkedTo": "",
+          "description": "If this Unit is Unengaged, it gains or loses the Burrowed Status.",
+          "name": "Burrow"
+        },
+        "Tunneling Claws": {
+          "description": "While this Unit has the Burrowed Status, it may perform the Move and Run actions without losing that Status. It may also move through other Units’ bases.",
+          "linkedTo": "",
+          "name": "Tunneling Claws",
+          "costS": 10,
+          "phase": "Any Phase",
+          "costL": 10,
+          "activation": "<Passive>"
+        },
+        "Burrow Ambush": {
+          "costS": 20,
+          "costL": 20,
+          "phase": "Movement Phase",
           "activation": "<Passive>",
           "linkedTo": "",
-          "description": "This Unit cannot gain Burrowed Status.",
+          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
+          "name": "Burrow Ambush"
+        },
+        "Glial Reconstitution": {
+          "activation": "<Active>\n(1 Biomass)",
+          "costL": 20,
+          "phase": "Movement Phase",
+          "costS": 20,
+          "name": "Glial Reconstitution",
+          "linkedTo": "",
+          "description": "This Unit gains BUFF SPEED (1), or BUFF SPEED (2) if the Unit is ON CREEP."
+        },
+        "Acid Saliva": {
           "costS": 0,
-          "name": "Underdeveloped Claws",
-          "costL": 0
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "",
+          "linkedTo": "-",
+          "description": "RANGE: 8 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: -",
+          "name": "Acid Saliva"
+        },
+        "Regeneration": {
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "description": "When this Unit becomes Activated, if it has the Burrowed Status, resolve the HEAL (2) effect.",
+          "linkedTo": "",
+          "name": "Regeneration"
+        },
+        "Hydriodic Bile": {
+          "costL": 10,
+          "phase": "Assault Phase",
+          "activation": "<Passive>",
+          "costS": 10,
+          "name": "Hydriodic Bile",
+          "linkedTo": "",
+          "description": "This Unit's Acid Saliva weapon gains Surge Type: Light, and S Dice: D3+1."
+        },
+        "Devastating Charge": {
+          "linkedTo": "",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (2) 4+ effect.",
+          "name": "Devastating Charge",
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>"
         },
         "Claws": {
-          "activation": "",
-          "phase": "Combat Phase",
           "linkedTo": "-",
           "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
-          "costS": 0,
           "name": "Claws",
-          "costL": 0
+          "costS": 0,
+          "activation": "",
+          "costL": 0,
+          "phase": "Combat Phase"
         }
       },
       "large": {
         "models": 0,
-        "supply": 0,
-        "cost": 0
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "roach",
+      "stats": {
+        "speed": "4/7",
+        "hp": "4",
+        "shield": "-",
+        "size": "2",
+        "armor": "3+",
+        "evade": "5+"
+      },
+      "tags": "Armoured, Biological, Ground",
+      "faction": "Zerg"
+    },
+    "Roachling": {
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "roachling",
+      "faction": "Zerg",
+      "tags": "Biological, Light, Ground",
+      "stats": {
+        "speed": "4/7",
+        "hp": "1",
+        "armor": "6+",
+        "size": "1",
+        "evade": "6+",
+        "shield": "-"
+      },
+      "squadProfile": [
+        {
+          "modelCount": "-",
+          "supply": 0,
+          "tier": 1
+        },
+        {
+          "modelCount": "1 - 3",
+          "supply": 0,
+          "tier": 2
+        },
+        {
+          "modelCount": "-",
+          "supply": 0,
+          "tier": 3
+        }
+      ],
+      "name": "Roachling",
+      "keywords": "",
+      "combatRange": "1",
+      "upgrades": {
+        "Underdeveloped Claws": {
+          "name": "Underdeveloped Claws",
+          "linkedTo": "",
+          "description": "This Unit cannot gain Burrowed Status.",
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Passive>",
+          "costS": 0
+        },
+        "Claws": {
+          "name": "Claws",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
+          "activation": "",
+          "phase": "Combat Phase",
+          "costL": 0,
+          "costS": 0
+        }
+      },
+      "small": {
+        "models": 3,
+        "cost": 0,
+        "supply": 0
       },
       "unitType": "Other"
     },
     "Swarmling (Zergling)": {
-      "small": {
-        "models": 18,
-        "supply": 1,
-        "cost": 270
-      },
+      "name": "Swarmling (Zergling)",
       "squadProfile": [
         {
-          "supply": 0,
           "tier": 1,
-          "modelCount": "1 - 6"
+          "modelCount": "1 - 6",
+          "supply": 0
         },
         {
-          "modelCount": "7 - 18",
+          "tier": 2,
           "supply": 1,
-          "tier": 2
+          "modelCount": "7 - 18"
         },
         {
           "tier": 3,
@@ -1733,946 +1729,450 @@
           "modelCount": "-"
         }
       ],
-      "id": "swarmling__zergling_",
-      "stats": {
-        "armor": "6+",
-        "evade": "5+",
-        "hp": "1",
-        "size": "1",
-        "speed": "4/8",
-        "shield": "-"
-      },
       "combatRange": "1",
       "keywords": "",
-      "tags": "Biological, Light, Ground",
-      "name": "Swarmling (Zergling)",
-      "faction": "Zerg",
       "upgrades": {
         "Squadron": {
-          "description": "This Unit’s Horizontal Coherency is 4\".",
-          "name": "Squadron",
-          "costL": 0,
-          "costS": 0,
-          "activation": "<Passive>",
           "phase": "Any Phase",
-          "linkedTo": ""
+          "costL": 0,
+          "activation": "<Passive>",
+          "costS": 0,
+          "name": "Squadron",
+          "linkedTo": "",
+          "description": "This Unit’s Horizontal Coherency is 4\"."
         },
         "Burrow Ambush": {
+          "costS": 20,
           "activation": "<Passive>",
           "phase": "Movement Phase",
+          "costL": 20,
           "linkedTo": "",
           "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
-          "costS": 20,
-          "name": "Burrow Ambush",
-          "costL": 20
+          "name": "Burrow Ambush"
         },
         "Zergling Reconstitution": {
-          "description": "Resolve the RESPAWN (2) effect, or RESPAWN (3) if the Unit is ON CREEP.",
+          "activation": "<Active>\n(1 Biomass)",
+          "phase": "Movement Phase",
+          "costL": 0,
           "costS": 0,
           "name": "Zergling Reconstitution",
-          "costL": 0,
-          "phase": "Movement Phase",
-          "activation": "<Active>\n(1 Biomass)",
+          "description": "Resolve the RESPAWN (2) effect, or RESPAWN (3) if the Unit is ON CREEP.",
           "linkedTo": ""
         },
         "Metabolic Boost": {
+          "linkedTo": "",
           "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
-          "costS": 0,
           "name": "Metabolic Boost",
-          "costL": 0,
+          "costS": 0,
           "phase": "Assault Phase",
-          "activation": "<Active>\n(1 Biomass)",
-          "linkedTo": ""
+          "costL": 0,
+          "activation": "<Active>\n(1 Biomass)"
         },
         "Devastating Charge": {
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (1) 5+ effect.",
           "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "costL": 0,
           "name": "Devastating Charge",
           "costS": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (1) 5+ effect."
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>"
         },
         "Claws": {
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
-          "name": "Claws",
-          "costL": 0,
-          "costS": 0,
-          "activation": "",
           "phase": "Combat Phase",
+          "costL": 0,
+          "activation": "",
+          "costS": 0,
+          "name": "Claws",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
           "linkedTo": "-"
         }
       },
+      "unitType": "Core",
+      "small": {
+        "models": 18,
+        "cost": 270,
+        "supply": 1
+      },
       "large": {
-        "cost": 0,
         "models": 0,
+        "cost": 0,
         "supply": 0
       },
-      "unitType": "Core"
+      "id": "swarmling__zergling_",
+      "faction": "Zerg",
+      "stats": {
+        "hp": "1",
+        "shield": "-",
+        "size": "1",
+        "armor": "6+",
+        "evade": "5+",
+        "speed": "4/8"
+      },
+      "tags": "Biological, Light, Ground"
     },
     "Vile (Roach)": {
-      "unitType": "Core",
-      "large": {
-        "supply": 0,
-        "models": 0,
-        "cost": 0
+      "faction": "Zerg",
+      "stats": {
+        "speed": "4/7",
+        "shield": "-",
+        "size": "2",
+        "armor": "3+",
+        "evade": "5+",
+        "hp": "4"
       },
+      "tags": "Armoured, Biological, Ground",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "vile__roach_",
       "upgrades": {
         "Debilitating Saliva": {
-          "name": "Debilitating Saliva",
           "costL": 0,
-          "costS": 0,
-          "description": "Use when an Enemy Unit Within 8\" of this Unit declares a Ranged Attack. Apply DEBUFF Hit (1) to each of that Unit's Ranged Weapons.",
-          "linkedTo": "",
           "phase": "Any Phase",
-          "activation": "<Reaction>\n(1 Biomass)"
+          "activation": "<Reaction>\n(1 Biomass)",
+          "costS": 0,
+          "name": "Debilitating Saliva",
+          "linkedTo": "",
+          "description": "Use when an Enemy Unit Within 8\" of this Unit declares a Ranged Attack. Apply DEBUFF Hit (1) to each of that Unit's Ranged Weapons."
         },
         "Burrow": {
-          "costL": 0,
+          "linkedTo": "",
+          "description": "If this Unit is Unengaged, it gains or loses the Burrowed Status.",
           "name": "Burrow",
           "costS": 0,
-          "description": "If this Unit is Unengaged, it gains or loses the Burrowed Status.",
-          "linkedTo": "",
           "activation": "<Active>\n(2 Biomass)",
-          "phase": "Any Phase"
+          "phase": "Any Phase",
+          "costL": 0
         },
         "Tunneling Claws": {
-          "costS": 10,
-          "costL": 10,
-          "name": "Tunneling Claws",
-          "description": "While this Unit has the Burrowed Status, it may perform the Move and Run actions without losing that Status. It may also move through other Units’ bases.",
           "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase"
+          "description": "While this Unit has the Burrowed Status, it may perform the Move and Run actions without losing that Status. It may also move through other Units’ bases.",
+          "name": "Tunneling Claws",
+          "costS": 10,
+          "phase": "Any Phase",
+          "costL": 10,
+          "activation": "<Passive>"
         },
         "Burrow Ambush": {
-          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
           "name": "Burrow Ambush",
-          "costL": 20,
-          "costS": 20,
+          "linkedTo": "",
+          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
           "activation": "<Passive>",
+          "costL": 20,
           "phase": "Movement Phase",
-          "linkedTo": ""
+          "costS": 20
         },
         "Glial Reconstitution": {
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Biomass)",
-          "phase": "Movement Phase",
-          "costS": 20,
-          "costL": 20,
           "name": "Glial Reconstitution",
-          "description": "This Unit gains BUFF SPEED (1), or BUFF SPEED (2) if the Unit is ON CREEP."
+          "linkedTo": "",
+          "description": "This Unit gains BUFF SPEED (1), or BUFF SPEED (2) if the Unit is ON CREEP.",
+          "activation": "<Active>\n(1 Biomass)",
+          "costL": 20,
+          "phase": "Movement Phase",
+          "costS": 20
         },
         "Acid Saliva": {
-          "name": "Acid Saliva",
-          "costL": 0,
-          "costS": 0,
-          "description": "RANGE: 8 | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: -",
           "linkedTo": "-",
+          "description": "RANGE: 8 | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: -",
+          "name": "Acid Saliva",
+          "costS": 0,
           "activation": "",
-          "phase": "Assault Phase"
+          "phase": "Assault Phase",
+          "costL": 0
         },
         "Regeneration": {
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": "",
-          "description": "When this Unit becomes Activated, if it has the Burrowed Status, resolve the HEAL (2) effect.",
-          "costS": 0,
           "costL": 0,
-          "name": "Regeneration"
+          "phase": "Assault Phase",
+          "activation": "<Passive>",
+          "costS": 0,
+          "name": "Regeneration",
+          "linkedTo": "",
+          "description": "When this Unit becomes Activated, if it has the Burrowed Status, resolve the HEAL (2) effect."
         },
         "Hydriodic Bile": {
-          "linkedTo": "",
           "phase": "Assault Phase",
-          "activation": "<Passive>",
-          "name": "Hydriodic Bile",
           "costL": 10,
+          "activation": "<Passive>",
           "costS": 10,
-          "description": "This Unit's Acid Saliva weapon gains Surge Type: Light, and S Dice: D3+1."
+          "name": "Hydriodic Bile",
+          "description": "This Unit's Acid Saliva weapon gains Surge Type: Light, and S Dice: D3+1.",
+          "linkedTo": ""
         },
         "Devastating Charge": {
           "linkedTo": "",
-          "phase": "Assault Phase",
-          "activation": "<Passive>",
-          "costS": 0,
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (1) 4+ effect.",
           "name": "Devastating Charge",
+          "costS": 0,
+          "phase": "Assault Phase",
           "costL": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (1) 4+ effect."
+          "activation": "<Passive>"
         },
         "Vile Claws": {
+          "name": "Vile Claws",
           "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
           "activation": "",
           "phase": "Combat Phase",
-          "name": "Vile Claws",
           "costL": 0,
-          "costS": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -"
+          "costS": 0
         }
       },
-      "faction": "Zerg",
-      "name": "Vile (Roach)",
-      "tags": "Armoured, Biological, Ground",
-      "keywords": "",
-      "combatRange": "3",
-      "stats": {
-        "shield": "-",
-        "armor": "3+",
-        "evade": "5+",
-        "hp": "4",
-        "speed": "4/7",
-        "size": "2"
+      "unitType": "Core",
+      "small": {
+        "models": 3,
+        "cost": 200,
+        "supply": 1
       },
-      "id": "vile__roach_",
+      "name": "Vile (Roach)",
       "squadProfile": [
         {
           "supply": 0,
-          "tier": 1,
-          "modelCount": "1 - 1"
+          "modelCount": "1 - 1",
+          "tier": 1
         },
         {
           "supply": 1,
-          "tier": 2,
-          "modelCount": "2 - 3"
+          "modelCount": "2 - 3",
+          "tier": 2
         },
         {
+          "tier": 3,
           "modelCount": "-",
-          "supply": 0,
-          "tier": 3
+          "supply": 0
         }
       ],
-      "small": {
-        "cost": 200,
-        "supply": 1,
-        "models": 3
-      }
+      "combatRange": "3",
+      "keywords": ""
     },
     "Zergling": {
-      "tags": "Biological, Light, Ground",
-      "faction": "Zerg",
+      "small": {
+        "models": 12,
+        "cost": 180,
+        "supply": 1
+      },
+      "unitType": "Core",
       "upgrades": {
         "Squadron": {
+          "costS": 0,
           "activation": "<Passive>",
           "phase": "Any Phase",
+          "costL": 0,
           "linkedTo": "",
           "description": "This Unit’s Horizontal Coherency is 4\".",
-          "name": "Squadron",
-          "costL": 0,
-          "costS": 0
+          "name": "Squadron"
         },
         "Burrow Ambush": {
-          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
-          "costL": 30,
           "name": "Burrow Ambush",
-          "costS": 20,
+          "linkedTo": "",
+          "description": "When this Unit is nominated to deploy from the Reserves, it may resolve the PLACE (18) effect from the controlling player's Entry Edge. No model may be set Within 10\" of any Enemy model. This Unit's Activation ends.",
           "activation": "<Passive>",
           "phase": "Movement Phase",
-          "linkedTo": ""
+          "costL": 30,
+          "costS": 20
         },
         "Metabolic Boost": {
+          "linkedTo": "",
           "description": "When determining Charge Distance for this Unit, roll 2D6 instead of D6 and use the higher result to add to the Unit’s Speed characteristic.",
           "name": "Metabolic Boost",
-          "costL": 0,
           "costS": 0,
-          "phase": "Assault Phase",
           "activation": "<Active>\n(1 Biomass)",
-          "linkedTo": ""
+          "phase": "Assault Phase",
+          "costL": 0
         },
         "Devastating Charge": {
           "linkedTo": "",
-          "phase": "Assault Phase",
-          "activation": "<Passive>",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (1) 5+ effect.",
           "name": "Devastating Charge",
-          "costL": 0,
           "costS": 0,
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (1) 5+ effect."
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>"
         },
         "Claws": {
-          "linkedTo": "-",
           "activation": "",
-          "phase": "Combat Phase",
-          "name": "Claws",
           "costL": 0,
+          "phase": "Combat Phase",
           "costS": 0,
+          "name": "Claws",
+          "linkedTo": "-",
           "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)"
         },
         "Shredding Claws": {
           "activation": "",
           "phase": "Combat Phase",
-          "linkedTo": "Claws",
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light, Armoured (D3)",
-          "costS": 20,
           "costL": 20,
-          "name": "Shredding Claws"
+          "costS": 20,
+          "name": "Shredding Claws",
+          "linkedTo": "Claws",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light, Armoured (D3)"
         },
         "Adrenal Glands": {
-          "description": "This Unit’s Claws and Shredding Claws weapons gain PRECISION (2).",
-          "costS": 30,
-          "name": "Adrenal Glands",
+          "activation": "<Passive>",
           "costL": 30,
           "phase": "Combat Phase",
-          "activation": "<Passive>",
-          "linkedTo": ""
+          "costS": 30,
+          "name": "Adrenal Glands",
+          "linkedTo": "",
+          "description": "This Unit’s Claws and Shredding Claws weapons gain PRECISION (2)."
         }
       },
+      "combatRange": "1",
+      "keywords": "",
       "name": "Zergling",
-      "large": {
-        "cost": 220,
-        "supply": 2,
-        "models": 18
-      },
-      "unitType": "Core",
-      "small": {
-        "models": 12,
-        "supply": 1,
-        "cost": 180
-      },
-      "stats": {
-        "shield": "-",
-        "size": "1",
-        "speed": "4/8",
-        "hp": "1",
-        "evade": "4+",
-        "armor": "6+"
-      },
       "squadProfile": [
         {
+          "supply": 0,
           "modelCount": "1 - 6",
-          "tier": 1,
-          "supply": 0
+          "tier": 1
         },
         {
           "supply": 1,
-          "tier": 2,
-          "modelCount": "7 - 12"
+          "modelCount": "7 - 12",
+          "tier": 2
         },
         {
-          "tier": 3,
           "supply": 2,
-          "modelCount": "13 - 18"
+          "modelCount": "13 - 18",
+          "tier": 3
         }
       ],
+      "stats": {
+        "armor": "6+",
+        "size": "1",
+        "evade": "4+",
+        "shield": "-",
+        "hp": "1",
+        "speed": "4/8"
+      },
+      "tags": "Biological, Light, Ground",
+      "faction": "Zerg",
       "id": "zergling",
-      "combatRange": "1",
-      "keywords": ""
+      "large": {
+        "models": 18,
+        "cost": 220,
+        "supply": 2
+      }
     }
   },
   "Terran": {
     "Goliath": {
-      "unitType": "Elite",
+      "faction": "Terran",
+      "stats": {
+        "shield": "-",
+        "evade": "-",
+        "size": "3",
+        "armor": "4+",
+        "hp": "10",
+        "speed": "7"
+      },
+      "tags": "Armoured, Mechanical, Ground",
+      "id": "goliath",
       "large": {
         "models": 0,
-        "supply": 0,
-        "cost": 0
+        "cost": 0,
+        "supply": 0
       },
-      "name": "Goliath",
       "upgrades": {
         "Ares-Class Targeting System": {
-          "description": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1).",
-          "costL": 20,
           "name": "Ares-Class Targeting System",
-          "costS": 20,
-          "activation": "<Passive>",
+          "linkedTo": "",
+          "description": "This Unit’s Autocannon and Underbelly Machine Gun weapons gain PRECISION (1).",
           "phase": "Any Phase",
-          "linkedTo": ""
+          "costL": 20,
+          "activation": "<Passive>",
+          "costS": 20
         },
         "Target Lock": {
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Command Point)",
-          "phase": "Movement Phase",
-          "costL": 0,
           "name": "Target Lock",
-          "costS": 0,
-          "description": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1."
+          "linkedTo": "",
+          "description": "Select one Enemy Unit Within 12\". Whenever a Friendly Goliath Unit targets that enemy with an Autocannon, that weapon gains Surge Type: Light, Armoured, and S Dice: D3+1.",
+          "costL": 0,
+          "phase": "Movement Phase",
+          "activation": "<Active>\n(1 Command Point)",
+          "costS": 0
         },
         "Indomitable": {
+          "linkedTo": "",
           "description": "While Engaged, this Unit may target and be targeted by Unengaged Enemy Units. In both cases, the defending Unit gains an Evade Roll against those attacks.",
-          "costL": 0,
           "name": "Indomitable",
           "costS": 0,
           "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": ""
-        },
-        "Autocannon": {
-          "name": "Autocannon",
           "costL": 0,
-          "costS": 0,
-          "description": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")",
-          "linkedTo": "-",
-          "activation": "",
           "phase": "Assault Phase"
         },
+        "Autocannon": {
+          "costS": 0,
+          "costL": 0,
+          "phase": "Assault Phase",
+          "activation": "",
+          "linkedTo": "-",
+          "description": "RANGE: 12 | TARGET: Ground | RoA: 9 | HIT: 4+ | DMG: 1\nSURGE: -\n\nLONG RANGE (18\")",
+          "name": "Autocannon"
+        },
         "Underbelly Machine Gun": {
-          "description": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM",
+          "activation": "",
+          "costL": 0,
+          "phase": "Assault Phase",
           "costS": 0,
           "name": "Underbelly Machine Gun",
-          "costL": 0,
-          "activation": "",
-          "phase": "Assault Phase",
-          "linkedTo": "-"
+          "linkedTo": "-",
+          "description": "RANGE: 8 | TARGET: Ground | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nPINPOINT, SIDEARM"
         },
         "Hellfire Missiles": {
-          "linkedTo": "-",
           "activation": "",
           "phase": "Assault Phase",
           "costL": 0,
-          "name": "Hellfire Missiles",
           "costS": 0,
+          "name": "Hellfire Missiles",
+          "linkedTo": "-",
           "description": "RANGE: 16 | TARGET: Flying | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)\n\nANTI-EVADE (1), SIDEARM"
         },
         "Scatter Missiles": {
-          "description": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM",
-          "costS": 30,
           "name": "Scatter Missiles",
-          "costL": 30,
-          "phase": "Assault Phase",
+          "linkedTo": "Hellfire Missiles",
+          "description": "RANGE: 18 | TARGET: Ground | RoA: 6 | HIT: 5+ | DMG: 1\nSURGE: Light (D3)\n\nINDIRECT FIRE, LOCKED IN (6), LONG RANGE (24\"), SIDEARM",
           "activation": "",
-          "linkedTo": "Hellfire Missiles"
+          "phase": "Assault Phase",
+          "costL": 30,
+          "costS": 30
         },
         "Haywire Missiles": {
-          "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM",
-          "costS": 40,
-          "costL": 40,
           "name": "Haywire Missiles",
-          "activation": "",
-          "phase": "Assault Phase",
-          "linkedTo": "Hellfire Missiles"
-        },
-        "Devastating Charge": {
-          "phase": "Assault Phase",
-          "activation": "<Passive>",
-          "linkedTo": "",
-          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
-          "costS": 0,
-          "name": "Devastating Charge",
-          "costL": 0
-        },
-        "Stomp": {
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Combat Phase",
-          "costS": 0,
-          "costL": 0,
-          "name": "Stomp",
-          "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -"
-        }
-      },
-      "faction": "Terran",
-      "tags": "Armoured, Mechanical, Ground",
-      "combatRange": "5",
-      "keywords": "",
-      "id": "goliath",
-      "squadProfile": [
-        {
-          "tier": 1,
-          "supply": 0,
-          "modelCount": "-"
-        },
-        {
-          "modelCount": "1 - 1",
-          "tier": 2,
-          "supply": 2
-        },
-        {
-          "supply": 0,
-          "tier": 3,
-          "modelCount": "-"
-        }
-      ],
-      "stats": {
-        "shield": "-",
-        "hp": "10",
-        "size": "3",
-        "speed": "7",
-        "armor": "4+",
-        "evade": "-"
-      },
-      "small": {
-        "cost": 190,
-        "models": 1,
-        "supply": 2
-      }
-    },
-    "Jim Raynor": {
-      "combatRange": "4",
-      "keywords": "",
-      "squadProfile": [
-        {
-          "supply": 0,
-          "tier": 1,
-          "modelCount": "-"
-        },
-        {
-          "modelCount": "1 - 1",
-          "supply": 1,
-          "tier": 2
-        },
-        {
-          "supply": 0,
-          "tier": 3,
-          "modelCount": "-"
-        }
-      ],
-      "id": "jim_raynor",
-      "stats": {
-        "evade": "5+",
-        "armor": "4+",
-        "speed": "7",
-        "size": "2",
-        "hp": "8",
-        "shield": "-"
-      },
-      "small": {
-        "supply": 1,
-        "models": 1,
-        "cost": 230
-      },
-      "unitType": "Hero",
-      "large": {
-        "models": 0,
-        "supply": 0,
-        "cost": 0
-      },
-      "name": "Jim Raynor",
-      "faction": "Terran",
-      "upgrades": {
-        "Commander": {
-          "phase": "Any Phase",
-          "activation": "<Passive>",
-          "linkedTo": "",
-          "description": "Treat this Unit’s Supply characteristic as increased by 1 for Controlling and Contesting Mission Markers, completing objectives, and resolving Disengage checks.",
-          "name": "Commander",
-          "costL": 0,
-          "costS": 0
-        },
-        "Freedom Fighters": {
-          "costS": 0,
-          "name": "Freedom Fighters",
-          "costL": 0,
-          "description": "The Supply Value of all Friendly Units Within 8\" of this Unit cannot be reduced below 1 for Contesting Mission Markers and completing objectives.",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase"
-        },
-        "Orders": {
-          "description": "REPEATABLE. Select another Friendly Biological Unit Within 8\", spend CP and apply one of the following effects:\n\n1 CP: That Unit’s first used weapon gains the CRITICAL HIT (2).\n\n1 CP: That Unit ignores the Disengage penalty for the remainder of the Round.\n\n2 CP: Remove the Activation Marker from that Unit.",
-          "costS": 0,
-          "name": "Orders",
-          "costL": 0,
-          "phase": "Movement Phase",
-          "activation": "<Active>\n(X Command Point)",
-          "linkedTo": ""
-        },
-        "Commando Rifle": {
-          "costS": 0,
-          "name": "Commando Rifle",
-          "costL": 0,
-          "description": "RANGE: 18 | TARGET: All | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nBULKY, PIERCE Armoured (3)",
-          "linkedTo": "-",
-          "phase": "Assault Phase",
-          "activation": ""
-        },
-        "C-14 rifle": {
-          "linkedTo": "Commando Rifle",
-          "activation": "",
-          "phase": "Assault Phase",
-          "costS": 0,
-          "name": "C-14 rifle",
-          "costL": 0,
-          "description": "RANGE: 12 | TARGET: All | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3+1)\n\nBURST FIRE 8\" (3)"
-        },
-        "“Justice” Revolver": {
-          "costS": 0,
-          "name": "“Justice” Revolver",
-          "costL": 0,
-          "description": "RANGE: 6 | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 2\nSURGE: -\n\nANTI-EVADE (2), SIDEARM, PINPOINT",
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Assault Phase"
-        },
-        "Bayonet": {
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Combat Phase",
-          "name": "Bayonet",
-          "costL": 0,
-          "costS": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)"
-        }
-      },
-      "tags": "Biological, Ground, Unique"
-    },
-    "Marauder": {
-      "combatRange": "5",
-      "keywords": "",
-      "small": {
-        "supply": 1,
-        "models": 2,
-        "cost": 150
-      },
-      "id": "marauder",
-      "squadProfile": [
-        {
-          "supply": 0,
-          "tier": 1,
-          "modelCount": "1 - 1"
-        },
-        {
-          "supply": 1,
-          "tier": 2,
-          "modelCount": "2 - 2"
-        },
-        {
-          "supply": 2,
-          "tier": 3,
-          "modelCount": "3 - 4"
-        }
-      ],
-      "stats": {
-        "size": "2",
-        "speed": "4/7",
-        "hp": "5",
-        "evade": "6+",
-        "armor": "4+",
-        "shield": "-"
-      },
-      "large": {
-        "cost": 280,
-        "models": 4,
-        "supply": 2
-      },
-      "unitType": "Core",
-      "tags": "Armoured, Biological, Ground",
-      "name": "Marauder",
-      "faction": "Terran",
-      "upgrades": {
-        "Veteran of Tarsonis": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "costS": 20,
+          "linkedTo": "Hellfire Missiles",
+          "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (3), SIDEARM",
           "costL": 40,
-          "name": "Veteran of Tarsonis",
-          "description": "While this Unit is Within 3\" of a Mission Marker, its Armour characteristic is increased by 1."
-        },
-        "Kinetic Foam": {
-          "phase": "Any Phase",
-          "activation": "<Passive>",
-          "linkedTo": "",
-          "description": "Increase this Unit's Hit Points characteristic by 1.",
-          "name": "Kinetic Foam",
-          "costL": 40,
-          "costS": 20
-        },
-        "Stimpack": {
-          "phase": "Movement Phase",
-          "activation": "<Active>\n(1 Command Point)",
-          "linkedTo": "",
-          "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its Quad K12 and all Close Combat Weapons gain PRECISION (2).",
-          "costS": 0,
-          "name": "Stimpack",
-          "costL": 0
-        },
-        "Quad K12": {
-          "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (2)",
-          "costL": 0,
-          "name": "Quad K12",
-          "costS": 0,
-          "activation": "",
-          "phase": "Assault Phase",
-          "linkedTo": "-"
-        },
-        "Concusive Shells": {
-          "activation": "<Reaction>\n(1 Command Point)",
-          "phase": "Assault Phase",
-          "linkedTo": "",
-          "description": "When an Enemy declares a Charge against a Friendly Unit Within 8\", that Enemy gains DEBUFF Speed (2).",
-          "costL": 0,
-          "name": "Concusive Shells",
-          "costS": 0
-        },
-        "Laser Targeting Systems": {
-          "description": "This Unit’s Quad K12 weapon gains LONG RANGE (16\").",
-          "costL": 40,
-          "name": "Laser Targeting Systems",
-          "costS": 20,
-          "activation": "<Passive>",
-          "phase": "Assault Phase",
-          "linkedTo": ""
-        },
-        "Strike": {
-          "activation": "",
-          "phase": "Combat Phase",
-          "linkedTo": "-",
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
-          "costS": 0,
-          "name": "Strike",
-          "costL": 0
-        }
-      }
-    },
-    "Marine": {
-      "frontUrl": "https://firebasestorage.googleapis.com/v0/b/starcrafttmgbeta.firebasestorage.app/o/faction_art%2F1773696430217_marines_13.jpg?alt=media&token=f6069279-0284-4525-98c7-3b05589c3484",
-      "unitType": "Core",
-      "upgrades": {
-        "Stimpack": {
-          "costS": 0,
-          "costL": 0,
-          "name": "Stimpack",
-          "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its C-14 Rifle and all Close Combat Weapons gain PRECISION (3).",
-          "linkedTo": "",
-          "activation": "<Active>\n(1 Command Point)",
-          "phase": "Movement Phase"
-        },
-        "Combat Shield": {
-          "activation": "<Active> (1 Command Point)",
-          "phase": "Movement Phase",
-          "linkedTo": "",
-          "description": "This Unit is always eligible to make an Evade Roll against any Close Combat Attack targeting it and any Damage from an Enemy Special Ability.",
-          "costS": 20,
-          "costL": 30,
-          "name": "Combat Shield"
-        },
-        "C-14 rifle": {
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Assault Phase",
-          "costS": 0,
-          "costL": 0,
-          "name": "C-14 rifle",
-          "description": "RANGE: 12 | TARGET: All | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)"
-        },
-        "AGG-12": {
-          "costL": 10,
-          "name": "AGG-12",
-          "costS": 10,
-          "description": "RANGE: 12 | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nLONG RANGE (18\"), SPECIALIST",
-          "linkedTo": "C-14 Rifle",
-          "activation": "",
-          "phase": "Assault Phase"
-        },
-        "Rocket Launcher": {
           "phase": "Assault Phase",
           "activation": "",
-          "linkedTo": "-",
-          "description": "RANGE: 12 | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: -\n\nINDIRECT FIRE, LONG RANGE (18\"), SIDEARM, SPECIALIST",
-          "name": "Rocket Launcher",
-          "costL": 40,
           "costS": 40
         },
-        "Slugthrower": {
-          "name": "Slugthrower",
-          "costL": 20,
-          "costS": 10,
-          "description": "When this Unit makes a Ranged Attack with a C-14 Rifle and the target is Within 8\", that weapon gains ANTI-EVADE (1).",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Assault Phase"
-        },
-        "Grenades - Frag": {
-          "description": "When this Unit makes a Ranged Attack with a C-14 Rifle and the target is Within 8\", that weapon’s S Dice is replaced by D6.",
-          "costL": 10,
-          "name": "Grenades - Frag",
-          "costS": 10,
+        "Devastating Charge": {
+          "costS": 0,
           "activation": "<Passive>",
           "phase": "Assault Phase",
-          "linkedTo": ""
+          "costL": 0,
+          "linkedTo": "",
+          "description": "Immediately after this Unit completes a successful Charge, resolve the IMPACT (4) 3+ effect.",
+          "name": "Devastating Charge"
         },
-        "Strike": {
+        "Stomp": {
+          "costS": 0,
+          "activation": "",
+          "costL": 0,
+          "phase": "Combat Phase",
           "linkedTo": "-",
-          "activation": "",
-          "phase": "Combat Phase",
-          "name": "Strike",
-          "costL": 0,
-          "costS": 0,
-          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -"
-        },
-        "Bayonet": {
-          "phase": "Combat Phase",
-          "activation": "",
-          "linkedTo": "Strike",
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
-          "costS": 20,
-          "name": "Bayonet",
-          "costL": 30
+          "description": "RANGE: E | TARGET: Ground | RoA: 4 | HIT: 5+ | DMG: 1\nSURGE: -",
+          "name": "Stomp"
         }
       },
-      "faction": "Terran",
-      "combatRange": "4",
-      "large": {
-        "supply": 2,
-        "models": 9,
-        "cost": 210
-      },
-      "name": "Marine",
-      "tags": "Biological, Light, Ground",
-      "keywords": "",
-      "stats": {
-        "shield": "-",
-        "size": "2",
-        "speed": "4/7",
-        "hp": "2",
-        "evade": "5+",
-        "armor": "5+"
-      },
-      "squadProfile": [
-        {
-          "supply": 0,
-          "tier": 1,
-          "modelCount": "1 - 3"
-        },
-        {
-          "tier": 2,
-          "supply": 1,
-          "modelCount": "4 - 6"
-        },
-        {
-          "tier": 3,
-          "supply": 2,
-          "modelCount": "7 - 9"
-        }
-      ],
-      "id": "marine",
       "small": {
-        "models": 6,
-        "supply": 1,
-        "cost": 160
-      }
-    },
-    "Medic": {
-      "keywords": "",
-      "combatRange": "-",
-      "small": {
-        "supply": 1,
-        "models": 3,
-        "cost": 110
-      },
-      "stats": {
-        "shield": "-",
-        "evade": "5+",
-        "armor": "5+",
-        "size": "2",
-        "speed": "4/7",
-        "hp": "2"
-      },
-      "id": "medic",
-      "squadProfile": [
-        {
-          "modelCount": "1 - 1",
-          "tier": 1,
-          "supply": 0
-        },
-        {
-          "modelCount": "2 - 3",
-          "supply": 1,
-          "tier": 2
-        },
-        {
-          "modelCount": "-",
-          "supply": 0,
-          "tier": 3
-        }
-      ],
-      "large": {
-        "supply": 0,
-        "models": 0,
-        "cost": 0
-      },
-      "unitType": "Support",
-      "tags": "Biological, Light, Ground",
-      "upgrades": {
-        "Life Support": {
-          "description": "Use when another Friendly Biological Unit suffers Damage Within 4\". Reduce the Total Damage before allocation by 1 for each model in this Unit that is Within 4\" of the damaged Unit.",
-          "name": "Life Support",
-          "costL": 0,
-          "costS": 0,
-          "phase": "Any Phase",
-          "activation": "<Reaction>\n(1 Command Point)",
-          "linkedTo": ""
-        },
-        "Advanced Medic Facilities": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "costL": 60,
-          "name": "Advanced Medic Facilities",
-          "costS": 60,
-          "description": "This Unit’s Supply Value counts as 0 when calculating the Supply Pool."
-        },
-        "Restoration": {
-          "linkedTo": "",
-          "phase": "Any Phase",
-          "activation": "<Reaction>\n(1 Command Point)",
-          "name": "Restoration",
-          "costL": 0,
-          "costS": 0,
-          "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it."
-        },
-        "A-13 Flash Grenade Launcher": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "costL": 20,
-          "name": "A-13 Flash Grenade Launcher",
-          "costS": 20,
-          "description": "Increase the Optical Flare special ability's Range to 16\"."
-        },
-        "Stabilizer Medpacks": {
-          "description": "When this Unit resolves a Life Support or Medpack ability, treat it as having 1 additional model Within Range for calculating that ability's effects.",
-          "costS": 30,
-          "costL": 30,
-          "name": "Stabilizer Medpacks",
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": ""
-        },
-        "Medpack": {
-          "activation": "<Active>\n(1 Command Point)",
-          "phase": "Movement Phase",
-          "linkedTo": "",
-          "description": "Select another Friendly Biological Unit Within 4\". Resolve the HEAL (X) effect for the targeted Unit, where X is the number of models in this Unit that are Within 4\" of the target Unit.",
-          "costL": 0,
-          "name": "Medpack",
-          "costS": 0
-        },
-        "Optical Flare": {
-          "linkedTo": "",
-          "phase": "Movement Phase",
-          "activation": "<Active>\n(2 Command Point)",
-          "costS": 0,
-          "name": "Optical Flare",
-          "costL": 0,
-          "description": "Select one Enemy Unit Within 12\". Until the End of the Round, apply DEBUFF Range (4) to that Unit’s Ranged Weapons. That Unit cannot benefit from LONG RANGE."
-        },
-        "Strike": {
-          "linkedTo": "-",
-          "activation": "",
-          "phase": "Combat Phase",
-          "costS": 0,
-          "costL": 0,
-          "name": "Strike",
-          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -"
-        }
-      },
-      "faction": "Terran",
-      "name": "Medic"
-    },
-    "Point Defense Drone": {
-      "combatRange": "-",
-      "keywords": "Raynor's Raiders",
-      "small": {
-        "cost": 0,
         "models": 1,
-        "supply": 0
+        "cost": 190,
+        "supply": 2
       },
-      "stats": {
-        "shield": "-",
-        "hp": "3",
-        "size": "-",
-        "speed": "-",
-        "armor": "6+",
-        "evade": "6+"
-      },
+      "unitType": "Elite",
+      "name": "Goliath",
       "squadProfile": [
         {
           "modelCount": "-",
@@ -2680,9 +2180,31 @@
           "tier": 1
         },
         {
+          "supply": 2,
           "modelCount": "1 - 1",
-          "supply": 0,
           "tier": 2
+        },
+        {
+          "supply": 0,
+          "modelCount": "-",
+          "tier": 3
+        }
+      ],
+      "combatRange": "5",
+      "keywords": ""
+    },
+    "Jim Raynor": {
+      "name": "Jim Raynor",
+      "squadProfile": [
+        {
+          "supply": 0,
+          "modelCount": "-",
+          "tier": 1
+        },
+        {
+          "tier": 2,
+          "modelCount": "1 - 1",
+          "supply": 1
         },
         {
           "tier": 3,
@@ -2690,154 +2212,632 @@
           "modelCount": "-"
         }
       ],
-      "id": "point_defense_drone",
-      "large": {
-        "models": 0,
-        "supply": 0,
-        "cost": 0
-      },
-      "unitType": "Other",
-      "tags": "Armoured, Flying, Mechanical",
-      "faction": "Terran",
+      "combatRange": "4",
+      "keywords": "",
       "upgrades": {
-        "Point Defense Laser": {
+        "Commander": {
+          "description": "Treat this Unit’s Supply characteristic as increased by 1 for Controlling and Contesting Mission Markers, completing objectives, and resolving Disengage checks.",
+          "linkedTo": "",
+          "name": "Commander",
+          "costS": 0,
+          "activation": "<Passive>",
+          "phase": "Any Phase",
+          "costL": 0
+        },
+        "Freedom Fighters": {
+          "costS": 0,
+          "costL": 0,
           "phase": "Any Phase",
           "activation": "<Passive>",
           "linkedTo": "",
-          "description": "When another Friendly Unit Within 4\" is targeted by a Ranged Attack without the INSTANT keyword, remove up to 2 dice from the Attack Pool. Then remove this Unit from the battlefield.",
-          "name": "Point Defense Laser",
-          "costL": 0,
-          "costS": 0
+          "description": "The Supply Value of all Friendly Units Within 8\" of this Unit cannot be reduced below 1 for Contesting Mission Markers and completing objectives.",
+          "name": "Freedom Fighters"
         },
-        "Gliding": {
-          "description": "This model has DISPLACEMENT.",
-          "costS": 0,
-          "name": "Gliding",
-          "costL": 0,
-          "phase": "Any Phase",
-          "activation": "<Passive>",
-          "linkedTo": ""
-        },
-        "Structure": {
-          "activation": "<Passive>",
-          "phase": "Any Phase",
-          "linkedTo": "",
-          "description": "This Unit cannot be Activated in any Phase and cannot perform actions. Additionally, its Current Supply Value is treated as 0, and it can never Control or Contest Mission Markers, ignoring the standard Zero Supply Exception. This Unit cannot be a target of an ability, unless stated otherwise.",
-          "costS": 0,
-          "costL": 0,
-          "name": "Structure"
-        }
-      },
-      "name": "Point Defense Drone"
-    },
-    "Raynor's Raider (Marine)": {
-      "large": {
-        "cost": 0,
-        "models": 0,
-        "supply": 0
-      },
-      "unitType": "Core",
-      "tags": "Biological, Light, Ground",
-      "upgrades": {
-        "Stimpack": {
-          "activation": "<Active>\n(1 Command Point)",
+        "Orders": {
           "phase": "Movement Phase",
-          "linkedTo": "",
-          "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its C-14 Rifle and all Close Combat Weapons gain PRECISION (3).",
-          "costS": 0,
           "costL": 0,
-          "name": "Stimpack"
+          "activation": "<Active>\n(X Command Point)",
+          "costS": 0,
+          "name": "Orders",
+          "linkedTo": "",
+          "description": "REPEATABLE. Select another Friendly Biological Unit Within 8\", spend CP and apply one of the following effects:\n\n1 CP: That Unit’s first used weapon gains the CRITICAL HIT (2).\n\n1 CP: That Unit ignores the Disengage penalty for the remainder of the Round.\n\n2 CP: Remove the Activation Marker from that Unit."
         },
-        "Raiders Roll!": {
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Movement Phase",
+        "Commando Rifle": {
+          "description": "RANGE: 18 | TARGET: All | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nBULKY, PIERCE Armoured (3)",
+          "linkedTo": "-",
+          "name": "Commando Rifle",
           "costS": 0,
-          "name": "Raiders Roll!",
+          "phase": "Assault Phase",
           "costL": 0,
-          "description": "When this Unit is nominated to deploy from Reserves, it may resolve its Stimpack ability with the CP cost reduced by 1 (to a minimum of 0)."
-        },
-        "Rapid Reinforcements": {
-          "costS": 0,
-          "costL": 0,
-          "name": "Rapid Reinforcements",
-          "description": "When this Unit is nominated to deploy from Reserves, it may resolve the PLACE (10) effect from another Friendly Unit. No model may be set Within 8\" of any Enemy model. This Unit's Activation ends.",
-          "linkedTo": "",
-          "activation": "<Passive>",
-          "phase": "Movement Phase"
+          "activation": ""
         },
         "C-14 rifle": {
-          "linkedTo": "-",
-          "activation": "",
           "phase": "Assault Phase",
-          "name": "C-14 rifle",
           "costL": 0,
+          "activation": "",
           "costS": 0,
-          "description": "RANGE: 12 | TARGET: All | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)"
+          "name": "C-14 rifle",
+          "linkedTo": "Commando Rifle",
+          "description": "RANGE: 12 | TARGET: All | RoA: 6 | HIT: 3+ | DMG: 1\nSURGE: Light (D3+1)\n\nBURST FIRE 8\" (3)"
+        },
+        "“Justice” Revolver": {
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "",
+          "description": "RANGE: 6 | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 2\nSURGE: -\n\nANTI-EVADE (2), SIDEARM, PINPOINT",
+          "linkedTo": "-",
+          "name": "“Justice” Revolver"
+        },
+        "Bayonet": {
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: Light (D3)",
+          "name": "Bayonet",
+          "costS": 0,
+          "activation": "",
+          "costL": 0,
+          "phase": "Combat Phase"
+        }
+      },
+      "unitType": "Hero",
+      "small": {
+        "models": 1,
+        "cost": 230,
+        "supply": 1
+      },
+      "id": "jim_raynor",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "faction": "Terran",
+      "stats": {
+        "shield": "-",
+        "evade": "5+",
+        "size": "2",
+        "armor": "4+",
+        "hp": "8",
+        "speed": "7"
+      },
+      "tags": "Biological, Ground, Unique"
+    },
+    "Marauder": {
+      "upgrades": {
+        "Veteran of Tarsonis": {
+          "linkedTo": "",
+          "description": "While this Unit is Within 3\" of a Mission Marker, its Armour characteristic is increased by 1.",
+          "name": "Veteran of Tarsonis",
+          "costS": 20,
+          "phase": "Any Phase",
+          "costL": 40,
+          "activation": "<Passive>"
+        },
+        "Kinetic Foam": {
+          "costL": 40,
+          "phase": "Any Phase",
+          "activation": "<Passive>",
+          "costS": 20,
+          "name": "Kinetic Foam",
+          "linkedTo": "",
+          "description": "Increase this Unit's Hit Points characteristic by 1."
+        },
+        "Stimpack": {
+          "costS": 0,
+          "activation": "<Active>\n(1 Command Point)",
+          "phase": "Movement Phase",
+          "costL": 0,
+          "linkedTo": "",
+          "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its Quad K12 and all Close Combat Weapons gain PRECISION (2).",
+          "name": "Stimpack"
+        },
+        "Quad K12": {
+          "name": "Quad K12",
+          "linkedTo": "-",
+          "description": "RANGE: 12 | TARGET: Ground | RoA: 3 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nPIERCE Armoured (2)",
+          "activation": "",
+          "costL": 0,
+          "phase": "Assault Phase",
+          "costS": 0
+        },
+        "Concusive Shells": {
+          "costS": 0,
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Reaction>\n(1 Command Point)",
+          "linkedTo": "",
+          "description": "When an Enemy declares a Charge against a Friendly Unit Within 8\", that Enemy gains DEBUFF Speed (2).",
+          "name": "Concusive Shells"
+        },
+        "Laser Targeting Systems": {
+          "costS": 20,
+          "activation": "<Passive>",
+          "costL": 40,
+          "phase": "Assault Phase",
+          "linkedTo": "",
+          "description": "This Unit’s Quad K12 weapon gains LONG RANGE (16\").",
+          "name": "Laser Targeting Systems"
+        },
+        "Strike": {
+          "costS": 0,
+          "activation": "",
+          "costL": 0,
+          "phase": "Combat Phase",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 4+ | DMG: 1\nSURGE: -",
+          "name": "Strike"
+        }
+      },
+      "small": {
+        "models": 2,
+        "cost": 150,
+        "supply": 1
+      },
+      "unitType": "Core",
+      "squadProfile": [
+        {
+          "modelCount": "1 - 1",
+          "supply": 0,
+          "tier": 1
+        },
+        {
+          "tier": 2,
+          "modelCount": "2 - 2",
+          "supply": 1
+        },
+        {
+          "tier": 3,
+          "modelCount": "3 - 4",
+          "supply": 2
+        }
+      ],
+      "name": "Marauder",
+      "keywords": "",
+      "combatRange": "5",
+      "faction": "Terran",
+      "tags": "Armoured, Biological, Ground",
+      "stats": {
+        "speed": "4/7",
+        "shield": "-",
+        "size": "2",
+        "armor": "4+",
+        "evade": "6+",
+        "hp": "5"
+      },
+      "id": "marauder",
+      "large": {
+        "models": 4,
+        "cost": 280,
+        "supply": 2
+      }
+    },
+    "Marine": {
+      "combatRange": "4",
+      "keywords": "",
+      "name": "Marine",
+      "frontUrl": "https://firebasestorage.googleapis.com/v0/b/starcrafttmgbeta.firebasestorage.app/o/faction_art%2F1773696430217_marines_13.jpg?alt=media&token=f6069279-0284-4525-98c7-3b05589c3484",
+      "unitType": "Core",
+      "small": {
+        "models": 6,
+        "cost": 160,
+        "supply": 1
+      },
+      "upgrades": {
+        "Stimpack": {
+          "linkedTo": "",
+          "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its C-14 Rifle and all Close Combat Weapons gain PRECISION (3).",
+          "name": "Stimpack",
+          "costS": 0,
+          "activation": "<Active>\n(1 Command Point)",
+          "phase": "Movement Phase",
+          "costL": 0
+        },
+        "Combat Shield": {
+          "costL": 30,
+          "phase": "Movement Phase",
+          "activation": "<Active> (1 Command Point)",
+          "costS": 20,
+          "name": "Combat Shield",
+          "linkedTo": "",
+          "description": "This Unit is always eligible to make an Evade Roll against any Close Combat Attack targeting it and any Damage from an Enemy Special Ability."
+        },
+        "C-14 rifle": {
+          "name": "C-14 rifle",
+          "linkedTo": "-",
+          "description": "RANGE: 12 | TARGET: All | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "",
+          "costS": 0
+        },
+        "AGG-12": {
+          "linkedTo": "C-14 Rifle",
+          "description": "RANGE: 12 | TARGET: Ground | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Armoured (D3)\n\nLONG RANGE (18\"), SPECIALIST",
+          "name": "AGG-12",
+          "costS": 10,
+          "costL": 10,
+          "phase": "Assault Phase",
+          "activation": ""
+        },
+        "Rocket Launcher": {
+          "description": "RANGE: 12 | TARGET: Ground | RoA: 4 | HIT: 3+ | DMG: 1\nSURGE: -\n\nINDIRECT FIRE, LONG RANGE (18\"), SIDEARM, SPECIALIST",
+          "linkedTo": "-",
+          "name": "Rocket Launcher",
+          "costS": 40,
+          "phase": "Assault Phase",
+          "costL": 40,
+          "activation": ""
         },
         "Slugthrower": {
           "description": "When this Unit makes a Ranged Attack with a C-14 Rifle and the target is Within 8\", that weapon gains ANTI-EVADE (1).",
-          "costS": 0,
+          "linkedTo": "",
           "name": "Slugthrower",
-          "costL": 0,
+          "costS": 10,
           "phase": "Assault Phase",
-          "activation": "<Passive>",
-          "linkedTo": ""
+          "costL": 20,
+          "activation": "<Passive>"
         },
         "Grenades - Frag": {
+          "costS": 10,
+          "costL": 10,
           "phase": "Assault Phase",
           "activation": "<Passive>",
           "linkedTo": "",
           "description": "When this Unit makes a Ranged Attack with a C-14 Rifle and the target is Within 8\", that weapon’s S Dice is replaced by D6.",
-          "costS": 0,
-          "name": "Grenades - Frag",
-          "costL": 0
+          "name": "Grenades - Frag"
         },
-        "Bayonet": {
-          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
-          "costL": 0,
-          "name": "Bayonet",
+        "Strike": {
           "costS": 0,
           "activation": "",
           "phase": "Combat Phase",
-          "linkedTo": "-"
+          "costL": 0,
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -",
+          "name": "Strike"
+        },
+        "Bayonet": {
+          "costS": 20,
+          "activation": "",
+          "costL": 30,
+          "phase": "Combat Phase",
+          "linkedTo": "Strike",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -",
+          "name": "Bayonet"
         }
       },
-      "faction": "Terran",
-      "name": "Raynor's Raider (Marine)",
-      "combatRange": "4",
-      "keywords": "Raynor's Raiders",
-      "small": {
-        "cost": 230,
-        "models": 6,
-        "supply": 1
+      "large": {
+        "models": 9,
+        "cost": 210,
+        "supply": 2
       },
-      "stats": {
-        "hp": "2",
-        "speed": "4/7",
-        "size": "2",
-        "armor": "5+",
-        "evade": "5+",
-        "shield": "-"
-      },
-      "id": "raynor_s_raider__marine_",
       "squadProfile": [
         {
-          "modelCount": "-",
-          "tier": 1,
-          "supply": 0
+          "supply": 0,
+          "modelCount": "1 - 3",
+          "tier": 1
         },
         {
-          "modelCount": "1 - 6",
-          "supply": 1,
-          "tier": 2
+          "tier": 2,
+          "modelCount": "4 - 6",
+          "supply": 1
+        },
+        {
+          "supply": 2,
+          "modelCount": "7 - 9",
+          "tier": 3
+        }
+      ],
+      "id": "marine",
+      "stats": {
+        "speed": "4/7",
+        "hp": "2",
+        "shield": "-",
+        "size": "2",
+        "armor": "5+",
+        "evade": "5+"
+      },
+      "tags": "Biological, Light, Ground",
+      "faction": "Terran"
+    },
+    "Medic": {
+      "tags": "Biological, Light, Ground",
+      "stats": {
+        "shield": "-",
+        "evade": "5+",
+        "size": "2",
+        "armor": "5+",
+        "hp": "2",
+        "speed": "4/7"
+      },
+      "faction": "Terran",
+      "id": "medic",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "small": {
+        "models": 3,
+        "cost": 110,
+        "supply": 1
+      },
+      "unitType": "Support",
+      "upgrades": {
+        "Life Support": {
+          "description": "Use when another Friendly Biological Unit suffers Damage Within 4\". Reduce the Total Damage before allocation by 1 for each model in this Unit that is Within 4\" of the damaged Unit.",
+          "linkedTo": "",
+          "name": "Life Support",
+          "costS": 0,
+          "phase": "Any Phase",
+          "costL": 0,
+          "activation": "<Reaction>\n(1 Command Point)"
+        },
+        "Advanced Medic Facilities": {
+          "costS": 60,
+          "activation": "<Passive>",
+          "phase": "Any Phase",
+          "costL": 60,
+          "linkedTo": "",
+          "description": "This Unit’s Supply Value counts as 0 when calculating the Supply Pool.",
+          "name": "Advanced Medic Facilities"
+        },
+        "Restoration": {
+          "costS": 0,
+          "activation": "<Reaction>\n(1 Command Point)",
+          "phase": "Any Phase",
+          "costL": 0,
+          "linkedTo": "",
+          "description": "Use when a Friendly Unit Within 4\" receives a DEBUFF. Remove all DEBUFFS from it.",
+          "name": "Restoration"
+        },
+        "A-13 Flash Grenade Launcher": {
+          "activation": "<Passive>",
+          "phase": "Any Phase",
+          "costL": 20,
+          "costS": 20,
+          "name": "A-13 Flash Grenade Launcher",
+          "description": "Increase the Optical Flare special ability's Range to 16\".",
+          "linkedTo": ""
+        },
+        "Stabilizer Medpacks": {
+          "name": "Stabilizer Medpacks",
+          "linkedTo": "",
+          "description": "When this Unit resolves a Life Support or Medpack ability, treat it as having 1 additional model Within Range for calculating that ability's effects.",
+          "activation": "<Passive>",
+          "costL": 30,
+          "phase": "Any Phase",
+          "costS": 30
+        },
+        "Medpack": {
+          "name": "Medpack",
+          "linkedTo": "",
+          "description": "Select another Friendly Biological Unit Within 4\". Resolve the HEAL (X) effect for the targeted Unit, where X is the number of models in this Unit that are Within 4\" of the target Unit.",
+          "phase": "Movement Phase",
+          "costL": 0,
+          "activation": "<Active>\n(1 Command Point)",
+          "costS": 0
+        },
+        "Optical Flare": {
+          "costL": 0,
+          "phase": "Movement Phase",
+          "activation": "<Active>\n(2 Command Point)",
+          "costS": 0,
+          "name": "Optical Flare",
+          "linkedTo": "",
+          "description": "Select one Enemy Unit Within 12\". Until the End of the Round, apply DEBUFF Range (4) to that Unit’s Ranged Weapons. That Unit cannot benefit from LONG RANGE."
+        },
+        "Strike": {
+          "name": "Strike",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 1 | HIT: 5+ | DMG: 1\nSURGE: -",
+          "activation": "",
+          "phase": "Combat Phase",
+          "costL": 0,
+          "costS": 0
+        }
+      },
+      "keywords": "",
+      "combatRange": "-",
+      "squadProfile": [
+        {
+          "tier": 1,
+          "supply": 0,
+          "modelCount": "1 - 1"
+        },
+        {
+          "tier": 2,
+          "modelCount": "2 - 3",
+          "supply": 1
         },
         {
           "supply": 0,
-          "tier": 3,
-          "modelCount": "-"
+          "modelCount": "-",
+          "tier": 3
         }
-      ]
+      ],
+      "name": "Medic"
+    },
+    "Point Defense Drone": {
+      "faction": "Terran",
+      "stats": {
+        "speed": "-",
+        "hp": "3",
+        "shield": "-",
+        "size": "-",
+        "armor": "6+",
+        "evade": "6+"
+      },
+      "tags": "Armoured, Flying, Mechanical",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "point_defense_drone",
+      "upgrades": {
+        "Point Defense Laser": {
+          "linkedTo": "",
+          "description": "When another Friendly Unit Within 4\" is targeted by a Ranged Attack without the INSTANT keyword, remove up to 2 dice from the Attack Pool. Then remove this Unit from the battlefield.",
+          "name": "Point Defense Laser",
+          "costS": 0,
+          "costL": 0,
+          "phase": "Any Phase",
+          "activation": "<Passive>"
+        },
+        "Gliding": {
+          "costS": 0,
+          "activation": "<Passive>",
+          "phase": "Any Phase",
+          "costL": 0,
+          "linkedTo": "",
+          "description": "This model has DISPLACEMENT.",
+          "name": "Gliding"
+        },
+        "Structure": {
+          "name": "Structure",
+          "linkedTo": "",
+          "description": "This Unit cannot be Activated in any Phase and cannot perform actions. Additionally, its Current Supply Value is treated as 0, and it can never Control or Contest Mission Markers, ignoring the standard Zero Supply Exception. This Unit cannot be a target of an ability, unless stated otherwise.",
+          "phase": "Any Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "costS": 0
+        }
+      },
+      "small": {
+        "models": 1,
+        "cost": 0,
+        "supply": 0
+      },
+      "unitType": "Other",
+      "name": "Point Defense Drone",
+      "squadProfile": [
+        {
+          "tier": 1,
+          "modelCount": "-",
+          "supply": 0
+        },
+        {
+          "tier": 2,
+          "supply": 0,
+          "modelCount": "1 - 1"
+        },
+        {
+          "tier": 3,
+          "modelCount": "-",
+          "supply": 0
+        }
+      ],
+      "combatRange": "-",
+      "keywords": "Raynor's Raiders"
+    },
+    "Raynor's Raider (Marine)": {
+      "tags": "Biological, Light, Ground",
+      "stats": {
+        "speed": "4/7",
+        "shield": "-",
+        "evade": "5+",
+        "size": "2",
+        "armor": "5+",
+        "hp": "2"
+      },
+      "faction": "Terran",
+      "large": {
+        "models": 0,
+        "cost": 0,
+        "supply": 0
+      },
+      "id": "raynor_s_raider__marine_",
+      "unitType": "Core",
+      "small": {
+        "models": 6,
+        "cost": 230,
+        "supply": 1
+      },
+      "upgrades": {
+        "Stimpack": {
+          "linkedTo": "",
+          "description": "This Unit suffers NON-LETHAL DAMAGE (2). This Unit gains BUFF Speed (3). Additionally, its C-14 Rifle and all Close Combat Weapons gain PRECISION (3).",
+          "name": "Stimpack",
+          "costS": 0,
+          "costL": 0,
+          "phase": "Movement Phase",
+          "activation": "<Active>\n(1 Command Point)"
+        },
+        "Raiders Roll!": {
+          "costS": 0,
+          "costL": 0,
+          "phase": "Movement Phase",
+          "activation": "<Passive>",
+          "linkedTo": "",
+          "description": "When this Unit is nominated to deploy from Reserves, it may resolve its Stimpack ability with the CP cost reduced by 1 (to a minimum of 0).",
+          "name": "Raiders Roll!"
+        },
+        "Rapid Reinforcements": {
+          "costS": 0,
+          "phase": "Movement Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "linkedTo": "",
+          "description": "When this Unit is nominated to deploy from Reserves, it may resolve the PLACE (10) effect from another Friendly Unit. No model may be set Within 8\" of any Enemy model. This Unit's Activation ends.",
+          "name": "Rapid Reinforcements"
+        },
+        "C-14 rifle": {
+          "linkedTo": "-",
+          "description": "RANGE: 12 | TARGET: All | RoA: 2 | HIT: 3+ | DMG: 1\nSURGE: Light (D3)",
+          "name": "C-14 rifle",
+          "costS": 0,
+          "costL": 0,
+          "phase": "Assault Phase",
+          "activation": ""
+        },
+        "Slugthrower": {
+          "name": "Slugthrower",
+          "linkedTo": "",
+          "description": "When this Unit makes a Ranged Attack with a C-14 Rifle and the target is Within 8\", that weapon gains ANTI-EVADE (1).",
+          "phase": "Assault Phase",
+          "costL": 0,
+          "activation": "<Passive>",
+          "costS": 0
+        },
+        "Grenades - Frag": {
+          "activation": "<Passive>",
+          "phase": "Assault Phase",
+          "costL": 0,
+          "costS": 0,
+          "name": "Grenades - Frag",
+          "linkedTo": "",
+          "description": "When this Unit makes a Ranged Attack with a C-14 Rifle and the target is Within 8\", that weapon’s S Dice is replaced by D6."
+        },
+        "Bayonet": {
+          "activation": "",
+          "costL": 0,
+          "phase": "Combat Phase",
+          "costS": 0,
+          "name": "Bayonet",
+          "linkedTo": "-",
+          "description": "RANGE: E | TARGET: Ground | RoA: 2 | HIT: 5+ | DMG: 1\nSURGE: -"
+        }
+      },
+      "keywords": "Raynor's Raiders",
+      "combatRange": "4",
+      "squadProfile": [
+        {
+          "supply": 0,
+          "modelCount": "-",
+          "tier": 1
+        },
+        {
+          "tier": 2,
+          "supply": 1,
+          "modelCount": "1 - 6"
+        },
+        {
+          "supply": 0,
+          "modelCount": "-",
+          "tier": 3
+        }
+      ],
+      "name": "Raynor's Raider (Marine)"
     }
   }
 }
