@@ -1,34 +1,46 @@
 {
   "Terran": {
     "Academy": {
+      "id": "academy",
+      "isUnique": true,
+      "isFactionCard": false,
+      "name": "Academy",
+      "resource": 1,
       "slots": {
-        "Core": 0,
         "Support": 2,
         "Air": 0,
-        "Hero": 0,
-        "Elite": 0
+        "Elite": 0,
+        "Core": 0,
+        "Hero": 0
       },
-      "tags": "",
-      "name": "Academy",
-      "id": "academy",
+      "factionTags": [],
       "boosts": [
         {
           "name": "Advanced Training",
           "description": "Advanced Training <Reaction> <Any Phase>: Once per Round, when a Friendly Support Unit activates a Special Ability that costs CP, resolve that ability with its CP cost reduced by 1 (to a minimum of 0). Do not Exhaust this card."
         }
       ],
-      "isFactionCard": false,
+      "tags": "",
+      "cost": 35,
       "faction": "Terran",
-      "factionTags": [],
-      "resource": 1,
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "isUnique": true,
-      "cost": 35
+      "timestamp": "2026-05-15T14:00:36.924Z"
     },
     "Armory": {
-      "faction": "Terran",
-      "id": "armory",
+      "resource": 1,
+      "name": "Armory",
       "isFactionCard": false,
+      "isUnique": false,
+      "id": "armory",
+      "slots": {
+        "Hero": 0,
+        "Air": 0,
+        "Elite": 1,
+        "Core": 0,
+        "Support": 0
+      },
+      "factionTags": [],
+      "cost": 30,
+      "tags": "",
       "boosts": [
         {
           "name": "Vehicle Weapons",
@@ -39,50 +51,49 @@
           "description": "Vehicle Plating <Reaction> <Any Phase>: Use before a Friendly Mechanical Unit makes an Armour Roll. That Unit gains TOUGH (1) for this roll."
         }
       ],
-      "name": "Armory",
-      "tags": "",
-      "slots": {
-        "Core": 0,
-        "Air": 0,
-        "Hero": 0,
-        "Elite": 1,
-        "Support": 0
-      },
-      "cost": 30,
-      "isUnique": false,
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "factionTags": [],
-      "resource": 1
+      "faction": "Terran",
+      "timestamp": "2026-05-15T14:00:36.924Z"
     },
     "Barracks": {
-      "tags": "",
+      "id": "barracks",
+      "name": "Barracks",
+      "resource": 1,
+      "isFactionCard": false,
+      "isUnique": false,
       "slots": {
+        "Core": 1,
         "Air": 0,
-        "Hero": 0,
         "Elite": 0,
         "Support": 0,
-        "Core": 1
+        "Hero": 0
       },
-      "id": "barracks",
-      "isFactionCard": false,
+      "factionTags": [],
+      "tags": "",
       "boosts": [
         {
           "name": "Go! Go! Go!",
           "description": "Go! Go! Go! <Active> <Movement Phase>: The active Biological Unit performs a 2\" Move action. This does not count towards its action limit."
         }
       ],
-      "faction": "Terran",
-      "name": "Barracks",
-      "resource": 1,
-      "factionTags": [],
-      "timestamp": "2026-05-15T14:00:36.924Z",
       "cost": 25,
-      "isUnique": false
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Terran"
     },
     "Barracks (Proxy)": {
-      "faction": "Terran",
       "id": "barracks__proxy_",
+      "resource": 2,
+      "name": "Barracks (Proxy)",
       "isFactionCard": false,
+      "isUnique": true,
+      "slots": {
+        "Hero": 0,
+        "Support": 0,
+        "Core": 2,
+        "Elite": 0,
+        "Air": 0
+      },
+      "factionTags": [],
+      "tags": "",
       "boosts": [
         {
           "name": "Go! Go! Go!",
@@ -93,25 +104,13 @@
           "description": "Armed and Ready <Active> <Movement Phase>: The active Biological Unit Deploys from any table edge that is not a player's Entry Edge. No model may be set up Within 10\" of any Enemy model. This ability cannot be used if another Friendly Biological Unit has already been Deployed this Round."
         }
       ],
-      "name": "Barracks (Proxy)",
-      "tags": "",
-      "slots": {
-        "Support": 0,
-        "Hero": 0,
-        "Air": 0,
-        "Elite": 0,
-        "Core": 2
-      },
       "cost": 40,
-      "isUnique": true,
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "factionTags": [],
-      "resource": 2
+      "faction": "Terran",
+      "timestamp": "2026-05-15T14:00:36.924Z"
     },
     "Barracks (Tech Lab)": {
+      "timestamp": "2026-05-15T14:00:36.924Z",
       "faction": "Terran",
-      "id": "barracks__tech_lab_",
-      "isFactionCard": false,
       "boosts": [
         {
           "name": "Go! Go! Go!",
@@ -122,31 +121,37 @@
           "description": "Let's Have a Blast! <Active> <Assault Phase>: The active Biological Unit’s first Ranged Weapon used gain ANTI-EVADE (1)."
         }
       ],
-      "name": "Barracks (Tech Lab)",
       "tags": "",
-      "slots": {
-        "Support": 0,
-        "Air": 0,
-        "Hero": 0,
-        "Elite": 1,
-        "Core": 1
-      },
       "cost": 45,
-      "isUnique": true,
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "resource": 2,
-      "factionTags": []
-    },
-    "Dropship": {
-      "tags": "",
       "slots": {
         "Core": 1,
-        "Hero": 0,
+        "Elite": 1,
         "Air": 0,
-        "Elite": 0,
-        "Support": 1
+        "Support": 0,
+        "Hero": 0
       },
+      "factionTags": [],
+      "id": "barracks__tech_lab_",
       "isFactionCard": false,
+      "isUnique": true,
+      "name": "Barracks (Tech Lab)",
+      "resource": 2
+    },
+    "Dropship": {
+      "isFactionCard": false,
+      "isUnique": true,
+      "resource": 1,
+      "name": "Dropship",
+      "id": "dropship",
+      "factionTags": [],
+      "slots": {
+        "Hero": 0,
+        "Support": 1,
+        "Elite": 0,
+        "Air": 0,
+        "Core": 1
+      },
+      "cost": 40,
       "boosts": [
         {
           "name": "Strap in!",
@@ -157,26 +162,27 @@
           "description": "Ready For Dust-off <Active> <Movement Phase>: Set a Faction Indicator anywhere on the battlefield more than 10\" away from any Enemy model. At the End of the Round, the controlling player may Deploy one Ground Unit from Reserves in base-to-base contact with this Faction Indicator."
         }
       ],
-      "id": "dropship",
-      "faction": "Terran",
-      "name": "Dropship",
-      "factionTags": [],
-      "resource": 1,
+      "tags": "",
       "timestamp": "2026-05-15T14:00:36.924Z",
-      "cost": 40,
-      "isUnique": true
+      "faction": "Terran"
     },
     "Engineering Bay": {
-      "tags": "",
       "slots": {
-        "Air": 0,
-        "Hero": 0,
+        "Core": 1,
         "Elite": 0,
+        "Air": 0,
         "Support": 0,
-        "Core": 1
+        "Hero": 0
       },
-      "faction": "Terran",
+      "factionTags": [],
       "id": "engineering_bay",
+      "name": "Engineering Bay",
+      "resource": 1,
+      "isFactionCard": false,
+      "isUnique": false,
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Terran",
+      "tags": "",
       "boosts": [
         {
           "name": "Infantry Weapons",
@@ -187,40 +193,48 @@
           "description": "Infantry Armor <Reaction> <Any Phase>: Use before a Friendly Biological Unit makes an Armour Roll. That Unit gains TOUGH (1) for this roll."
         }
       ],
-      "isFactionCard": false,
-      "name": "Engineering Bay",
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "factionTags": [],
-      "resource": 1,
-      "cost": 30,
-      "isUnique": false
+      "cost": 30
     },
     "Factory": {
-      "factionTags": [],
-      "resource": 1,
       "timestamp": "2026-05-15T14:00:36.924Z",
-      "isUnique": false,
+      "faction": "Terran",
       "cost": 35,
-      "slots": {
-        "Core": 0,
-        "Support": 0,
-        "Elite": 2,
-        "Hero": 0,
-        "Air": 0
-      },
-      "tags": "",
-      "name": "Factory",
-      "id": "factory",
       "boosts": [
         {
           "name": "Field Repair",
           "description": "Field Repair <Active> <Movement Phase>: The active Mechanical Unit resolves the HEAL (2) effect."
         }
       ],
+      "tags": "",
+      "factionTags": [],
+      "slots": {
+        "Core": 0,
+        "Air": 0,
+        "Elite": 2,
+        "Support": 0,
+        "Hero": 0
+      },
       "isFactionCard": false,
-      "faction": "Terran"
+      "isUnique": false,
+      "resource": 1,
+      "name": "Factory",
+      "id": "factory"
     },
     "Orbital Command": {
+      "id": "orbital_command",
+      "name": "Orbital Command",
+      "resource": 1,
+      "isUnique": true,
+      "isFactionCard": false,
+      "slots": {
+        "Core": 1,
+        "Air": 0,
+        "Elite": 0,
+        "Support": 0,
+        "Hero": 0
+      },
+      "factionTags": [],
+      "tags": "",
       "boosts": [
         {
           "name": "ComSat Station",
@@ -231,62 +245,42 @@
           "description": "Scanner Sweep <Active> <Movement Phase>: Set a Faction Indicator anywhere on the battlefield. While Enemy Units are Within 6\" of this Faction Indicator, they lose HIDDEN Status."
         }
       ],
-      "isFactionCard": false,
-      "id": "orbital_command",
-      "faction": "Terran",
-      "name": "Orbital Command",
-      "tags": "",
-      "slots": {
-        "Elite": 0,
-        "Hero": 0,
-        "Air": 0,
-        "Support": 0,
-        "Core": 1
-      },
       "cost": 25,
-      "isUnique": true,
-      "factionTags": [],
-      "resource": 1,
+      "faction": "Terran",
       "timestamp": "2026-05-15T14:00:36.924Z"
     },
     "Supply Depot": {
-      "slots": {
-        "Core": 1,
-        "Hero": 1,
-        "Air": 0,
-        "Elite": 1,
-        "Support": 0
-      },
-      "tags": "",
-      "name": "Supply Depot",
+      "timestamp": "2026-05-15T14:00:36.924Z",
       "faction": "Terran",
-      "id": "supply_depot",
-      "isFactionCard": false,
+      "cost": 40,
+      "tags": "",
       "boosts": [
         {
           "name": "Additional Supply Depots",
           "description": "Additional Supply Depots <Active> <Movement Phase>: The active Unit’s Supply Value is improved by 1 for Controlling and Contesting Mission Markers and completing objectives."
         }
       ],
-      "timestamp": "2026-05-15T14:00:36.924Z",
+      "slots": {
+        "Hero": 1,
+        "Core": 1,
+        "Air": 0,
+        "Elite": 1,
+        "Support": 0
+      },
       "factionTags": [],
+      "name": "Supply Depot",
       "resource": 1,
+      "isFactionCard": false,
       "isUnique": true,
-      "cost": 40
+      "id": "supply_depot"
     }
   },
   "Zerg": {
     "Accelerating Creep": {
-      "slots": {
-        "Elite": 0,
-        "Hero": 0,
-        "Air": 0,
-        "Support": 0,
-        "Core": 0
-      },
-      "tags": "",
-      "name": "Accelerating Creep",
       "faction": "Zerg",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "cost": 0,
+      "tags": "",
       "boosts": [
         {
           "name": "Speed on Creep",
@@ -301,25 +295,22 @@
           "description": "Creep Removal <Passive> <Any Phase>: If an Enemy Unit ends a Move, Deploy, Run, Charge or Disengage action Within 1\" of a Friendly Creep Tumor token, remove that token from the battlefield."
         }
       ],
-      "isFactionCard": false,
-      "id": "accelerating_creep",
-      "timestamp": "2026-05-15T14:00:36.924Z",
+      "slots": {
+        "Hero": 0,
+        "Support": 0,
+        "Core": 0,
+        "Air": 0,
+        "Elite": 0
+      },
       "factionTags": [],
       "resource": 0,
+      "name": "Accelerating Creep",
+      "isFactionCard": false,
       "isUnique": true,
-      "cost": 0
+      "id": "accelerating_creep"
     },
     "Evolution Chamber": {
-      "tags": "",
-      "slots": {
-        "Core": 1,
-        "Support": 0,
-        "Elite": 0,
-        "Hero": 0,
-        "Air": 0
-      },
-      "id": "evolution_chamber",
-      "isFactionCard": false,
+      "cost": 30,
       "boosts": [
         {
           "name": "Extended Claws",
@@ -330,18 +321,38 @@
           "description": "Carapace <Reaction> <Any Phase>: Use before a Friendly Unit makes an Armour Roll. That Unit gains TOUGH (1) for this roll."
         }
       ],
+      "tags": "",
       "faction": "Zerg",
-      "name": "Evolution Chamber",
-      "factionTags": [],
-      "resource": 1,
       "timestamp": "2026-05-15T14:00:36.924Z",
-      "cost": 30,
-      "isUnique": false
+      "isUnique": false,
+      "isFactionCard": false,
+      "name": "Evolution Chamber",
+      "resource": 1,
+      "id": "evolution_chamber",
+      "slots": {
+        "Hero": 0,
+        "Air": 0,
+        "Elite": 0,
+        "Core": 1,
+        "Support": 0
+      },
+      "factionTags": []
     },
     "Hatchery": {
-      "faction": "Zerg",
-      "id": "hatchery",
+      "isUnique": false,
       "isFactionCard": false,
+      "resource": 1,
+      "name": "Hatchery",
+      "id": "hatchery",
+      "slots": {
+        "Hero": 0,
+        "Core": 0,
+        "Air": 0,
+        "Elite": 0,
+        "Support": 1
+      },
+      "factionTags": [],
+      "cost": 30,
       "boosts": [
         {
           "name": "Lie in Wait",
@@ -352,48 +363,50 @@
           "description": "Creep Spread <Active> <Movement Phase>: Set a Creep Tumor token on the battlefield Within 6\" (Line of Sight is not required) of either a Friendly Entry Edge or an existing Friendly Creep Tumor token."
         }
       ],
-      "name": "Hatchery",
       "tags": "",
-      "slots": {
-        "Core": 0,
-        "Support": 1,
-        "Air": 0,
-        "Hero": 0,
-        "Elite": 0
-      },
-      "cost": 30,
-      "isUnique": false,
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "resource": 1,
-      "factionTags": []
+      "faction": "Zerg",
+      "timestamp": "2026-05-15T14:00:36.924Z"
     },
     "Hydralisk Den": {
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "factionTags": [],
-      "resource": 1,
-      "isUnique": false,
-      "cost": 35,
-      "slots": {
-        "Support": 0,
-        "Hero": 0,
-        "Air": 0,
-        "Elite": 2,
-        "Core": 0
-      },
-      "tags": "",
-      "name": "Hydralisk Den",
-      "faction": "Zerg",
-      "id": "hydralisk_den",
-      "isFactionCard": false,
       "boosts": [
         {
           "name": "Missile Attacks",
           "description": "Missile Attacks <Active> <Assault Phase>: The active Unit’s first Ranged Weapon used gains PRECISION (1)."
         }
-      ]
+      ],
+      "tags": "",
+      "cost": 35,
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Zerg",
+      "id": "hydralisk_den",
+      "isFactionCard": false,
+      "isUnique": false,
+      "name": "Hydralisk Den",
+      "resource": 1,
+      "slots": {
+        "Hero": 0,
+        "Support": 0,
+        "Elite": 2,
+        "Air": 0,
+        "Core": 0
+      },
+      "factionTags": []
     },
     "Lair": {
       "id": "lair",
+      "name": "Lair",
+      "resource": 1,
+      "isUnique": true,
+      "isFactionCard": false,
+      "factionTags": [],
+      "slots": {
+        "Hero": 0,
+        "Air": 0,
+        "Elite": 1,
+        "Core": 1,
+        "Support": 0
+      },
+      "tags": "",
       "boosts": [
         {
           "name": "Predation",
@@ -404,25 +417,15 @@
           "description": "Creep Spread <Active> <Movement Phase>: Set a Creep Tumor token on the battlefield Within 6\" (Line of Sight is not required) of either a Friendly Entry Edge or an existing Friendly Creep Tumor token."
         }
       ],
-      "isFactionCard": false,
-      "faction": "Zerg",
-      "name": "Lair",
-      "tags": "",
-      "slots": {
-        "Support": 0,
-        "Hero": 0,
-        "Air": 0,
-        "Elite": 1,
-        "Core": 1
-      },
       "cost": 35,
-      "isUnique": true,
-      "resource": 1,
-      "factionTags": [],
-      "timestamp": "2026-05-15T14:00:36.924Z"
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Zerg"
     },
     "Malignant Creep": {
-      "name": "Malignant Creep",
+      "faction": "Kerrigan's Swarm",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "cost": 10,
+      "tags": "",
       "boosts": [
         {
           "name": "Malevolent Matriarch",
@@ -437,39 +440,25 @@
           "description": "Creep Removal <Passive> <Any Phase>: If an Enemy Unit ends a Move, Deploy, Run, Charge or Disengage action Within 1\" of a Friendly Creep Tumor token, remove that token from the battlefield."
         }
       ],
-      "isFactionCard": false,
-      "id": "malignant_creep",
-      "faction": "Kerrigan's Swarm",
       "slots": {
         "Core": 0,
-        "Support": 0,
+        "Air": 0,
         "Elite": 0,
-        "Hero": 0,
-        "Air": 0
+        "Support": 0,
+        "Hero": 0
       },
-      "tags": "",
-      "isUnique": true,
-      "cost": 10,
       "factionTags": [],
       "resource": 0,
-      "timestamp": "2026-05-15T14:00:36.924Z"
+      "name": "Malignant Creep",
+      "isFactionCard": false,
+      "isUnique": true,
+      "id": "malignant_creep"
     },
     "Overlord": {
-      "factionTags": [],
-      "resource": 1,
+      "faction": "Zerg",
       "timestamp": "2026-05-15T14:00:36.924Z",
       "cost": 35,
-      "isUnique": true,
       "tags": "",
-      "slots": {
-        "Support": 0,
-        "Hero": 1,
-        "Air": 0,
-        "Elite": 1,
-        "Core": 1
-      },
-      "id": "overlord",
-      "isFactionCard": false,
       "boosts": [
         {
           "name": "Excrete Creep",
@@ -480,19 +469,37 @@
           "description": "Ventral Sacs <Active> <Movement Phase>: Set a Faction Indicator anywhere on the battlefield more than 10\" away from any Enemy model. At the End of the Round, the controlling player may Deploy one Ground Unit from Reserves in base-to-base contact with this Faction Indicator."
         }
       ],
-      "faction": "Zerg",
-      "name": "Overlord"
+      "slots": {
+        "Support": 0,
+        "Core": 1,
+        "Air": 0,
+        "Elite": 1,
+        "Hero": 1
+      },
+      "factionTags": [],
+      "name": "Overlord",
+      "resource": 1,
+      "isUnique": true,
+      "isFactionCard": false,
+      "id": "overlord"
     },
     "Overseer": {
-      "isUnique": true,
-      "cost": 25,
-      "timestamp": "2026-05-15T14:00:36.924Z",
+      "slots": {
+        "Hero": 0,
+        "Air": 0,
+        "Elite": 0,
+        "Core": 0,
+        "Support": 1
+      },
       "factionTags": [],
+      "isFactionCard": false,
+      "isUnique": true,
       "resource": 1,
       "name": "Overseer",
-      "faction": "Zerg",
       "id": "overseer",
-      "isFactionCard": false,
+      "faction": "Zerg",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "cost": 25,
       "boosts": [
         {
           "name": "Pneumatized Carapace",
@@ -503,68 +510,60 @@
           "description": "Oversight Mode <Active> <Movement Phase>: Set a Faction Indicator anywhere on the battlefield. While Enemy Units are Within 6\" of this Faction Indicator, they lose HIDDEN Status."
         }
       ],
-      "slots": {
-        "Air": 0,
-        "Hero": 0,
-        "Elite": 0,
-        "Support": 1,
-        "Core": 0
-      },
       "tags": ""
     },
     "Roach Warren": {
-      "cost": 25,
-      "isUnique": false,
-      "factionTags": [],
-      "resource": 1,
+      "faction": "Zerg",
       "timestamp": "2026-05-15T14:00:36.924Z",
-      "id": "roach_warren",
-      "isFactionCard": false,
       "boosts": [
         {
           "name": "Nasty Surprise",
           "description": "Nasty Surprise <Active> <Assault Phase>: The active Ground Unit loses the Burrowed Status."
         }
       ],
-      "faction": "Zerg",
-      "name": "Roach Warren",
       "tags": "",
+      "cost": 25,
       "slots": {
-        "Core": 1,
-        "Support": 0,
-        "Air": 0,
         "Hero": 0,
-        "Elite": 0
-      }
+        "Support": 0,
+        "Core": 1,
+        "Elite": 0,
+        "Air": 0
+      },
+      "factionTags": [],
+      "id": "roach_warren",
+      "isUnique": false,
+      "isFactionCard": false,
+      "resource": 1,
+      "name": "Roach Warren"
     },
     "Spawning Pool": {
-      "faction": "Zerg",
-      "id": "spawning_pool",
-      "isFactionCard": false,
+      "cost": 25,
+      "tags": "",
       "boosts": [
         {
           "name": "Feral Rage",
           "description": "Feral Rage <Active> <Combat Phase>: The active Unit’s first Close Combat Weapon used gains PRECISION (2)."
         }
       ],
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Zerg",
       "name": "Spawning Pool",
-      "tags": "",
+      "resource": 1,
+      "isFactionCard": false,
+      "isUnique": false,
+      "id": "spawning_pool",
       "slots": {
-        "Hero": 0,
+        "Support": 0,
         "Air": 0,
         "Elite": 0,
-        "Support": 0,
-        "Core": 1
+        "Core": 1,
+        "Hero": 0
       },
-      "cost": 25,
-      "isUnique": false,
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "resource": 1,
       "factionTags": []
     },
     "Spawning Pool (Six Pool)": {
-      "id": "spawning_pool__six_pool_",
-      "isFactionCard": false,
+      "tags": "",
       "boosts": [
         {
           "name": "Feral Rage",
@@ -575,30 +574,40 @@
           "description": "Timing Push <Active> <Movement Phase>: The active Zergling Unit Deploys from any table edge that is not a Player’s Entry Edge. This action must end more than 10\" away from any Enemy model."
         }
       ],
-      "faction": "Zerg",
-      "name": "Spawning Pool (Six Pool)",
-      "tags": "",
-      "slots": {
-        "Air": 0,
-        "Hero": 0,
-        "Elite": 0,
-        "Support": 0,
-        "Core": 2
-      },
       "cost": 40,
-      "isUnique": true,
+      "faction": "Zerg",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "id": "spawning_pool__six_pool_",
       "resource": 2,
-      "factionTags": [],
-      "timestamp": "2026-05-15T14:00:36.924Z"
+      "name": "Spawning Pool (Six Pool)",
+      "isFactionCard": false,
+      "isUnique": true,
+      "slots": {
+        "Core": 2,
+        "Elite": 0,
+        "Air": 0,
+        "Support": 0,
+        "Hero": 0
+      },
+      "factionTags": []
     }
   },
   "Protoss": {
     "Forge": {
-      "cost": 30,
-      "isUnique": false,
-      "factionTags": [],
+      "id": "forge",
+      "name": "Forge",
       "resource": 1,
-      "timestamp": "2026-05-15T14:00:36.924Z",
+      "isFactionCard": false,
+      "isUnique": false,
+      "slots": {
+        "Hero": 0,
+        "Support": 0,
+        "Core": 0,
+        "Air": 0,
+        "Elite": 1
+      },
+      "factionTags": [],
+      "tags": "",
       "boosts": [
         {
           "name": "Ground Weapons",
@@ -609,35 +618,27 @@
           "description": "Ground Armor <Reaction> <Any Phase>: Use before a Friendly Ground Unit makes an Armour Roll. That Unit gains TOUGH (1) for this roll."
         }
       ],
-      "isFactionCard": false,
-      "id": "forge",
-      "faction": "Protoss",
-      "name": "Forge",
-      "tags": "",
-      "slots": {
-        "Support": 0,
-        "Elite": 1,
-        "Hero": 0,
-        "Air": 0,
-        "Core": 0
-      }
+      "cost": 30,
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Protoss"
     },
     "Gate Chronoboosted": {
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "factionTags": [],
-      "resource": 1,
-      "cost": 35,
-      "isUnique": true,
-      "tags": "",
       "slots": {
-        "Support": 0,
-        "Air": 0,
         "Hero": 0,
-        "Elite": 1,
-        "Core": 1
+        "Support": 0,
+        "Core": 1,
+        "Air": 0,
+        "Elite": 1
       },
-      "faction": "Protoss",
+      "factionTags": [],
       "id": "gate_chronoboosted",
+      "name": "Gate Chronoboosted",
+      "resource": 1,
+      "isFactionCard": false,
+      "isUnique": true,
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Protoss",
+      "tags": "",
       "boosts": [
         {
           "name": "Quick Strikes",
@@ -648,50 +649,36 @@
           "description": "Zealous Charge <Active> <Movement Phase>: The active Unit gains BUFF Speed (2)."
         }
       ],
-      "isFactionCard": false,
-      "name": "Gate Chronoboosted"
+      "cost": 35
     },
     "Gateway": {
+      "id": "gateway",
       "name": "Gateway",
-      "faction": "Protoss",
+      "resource": 1,
       "isFactionCard": false,
+      "isUnique": false,
+      "slots": {
+        "Air": 0,
+        "Elite": 0,
+        "Core": 1,
+        "Support": 0,
+        "Hero": 0
+      },
+      "factionTags": [],
+      "tags": "",
       "boosts": [
         {
           "name": "Quick Strikes",
           "description": "Quick Strikes <Active> <Combat Phase>: The active Unit’s first Close Combat Weapon used gains PRECISION (2)."
         }
       ],
-      "id": "gateway",
-      "slots": {
-        "Hero": 0,
-        "Air": 0,
-        "Elite": 0,
-        "Support": 0,
-        "Core": 1
-      },
-      "tags": "",
-      "isUnique": false,
       "cost": 25,
       "timestamp": "2026-05-15T14:00:36.924Z",
-      "factionTags": [],
-      "resource": 1
+      "faction": "Protoss"
     },
     "Nexus": {
-      "resource": 1,
-      "factionTags": [],
+      "faction": "Protoss",
       "timestamp": "2026-05-15T14:00:36.924Z",
-      "isUnique": true,
-      "cost": 35,
-      "slots": {
-        "Core": 2,
-        "Support": 0,
-        "Hero": 0,
-        "Air": 0,
-        "Elite": 0
-      },
-      "tags": "",
-      "name": "Nexus",
-      "id": "nexus",
       "boosts": [
         {
           "name": "Ancient Pride",
@@ -702,13 +689,39 @@
           "description": "Strategic Recall <Active> <Movement Phase>: The active, Unengaged Ground Unit is returned to Reserves instead of performing an action."
         }
       ],
+      "tags": "",
+      "cost": 35,
+      "slots": {
+        "Hero": 0,
+        "Support": 0,
+        "Core": 2,
+        "Elite": 0,
+        "Air": 0
+      },
+      "factionTags": [],
+      "id": "nexus",
       "isFactionCard": false,
-      "faction": "Protoss"
+      "isUnique": true,
+      "resource": 1,
+      "name": "Nexus"
     },
     "Observer": {
+      "slots": {
+        "Hero": 0,
+        "Support": 1,
+        "Elite": 0,
+        "Air": 0,
+        "Core": 0
+      },
+      "factionTags": [],
+      "isFactionCard": false,
+      "isUnique": true,
+      "resource": 1,
       "name": "Observer",
       "id": "observer",
-      "isFactionCard": false,
+      "faction": "Protoss",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "cost": 25,
       "boosts": [
         {
           "name": "Surveillance",
@@ -719,37 +732,22 @@
           "description": "Gravitic Boosters <Reaction> <Assault Phase>: Use after a Friendly Unit rolls a D6 for Charge Distance. Add 1 to the Charge Distance for this Unit."
         }
       ],
-      "faction": "Protoss",
-      "slots": {
-        "Support": 1,
-        "Hero": 0,
-        "Air": 0,
-        "Elite": 0,
-        "Core": 0
-      },
-      "tags": "",
-      "isUnique": true,
-      "cost": 25,
-      "factionTags": [],
-      "resource": 1,
-      "timestamp": "2026-05-15T14:00:36.924Z"
+      "tags": ""
     },
     "Overcharged Nexus": {
-      "resource": 1,
-      "factionTags": [],
-      "timestamp": "2026-05-15T14:00:36.924Z",
+      "id": "overcharged_nexus",
+      "isFactionCard": false,
       "isUnique": true,
-      "cost": 35,
+      "name": "Overcharged Nexus",
+      "resource": 1,
       "slots": {
         "Support": 0,
-        "Elite": 1,
-        "Hero": 0,
+        "Core": 1,
         "Air": 0,
-        "Core": 1
+        "Elite": 1,
+        "Hero": 0
       },
-      "tags": "",
-      "name": "Overcharged Nexus",
-      "id": "overcharged_nexus",
+      "factionTags": [],
       "boosts": [
         {
           "name": "Photon Overcharge",
@@ -760,27 +758,29 @@
           "description": "Strategic Recall <Active> <Movement Phase>: The active, Unengaged Ground Unit is returned to Reserves instead of performing an action."
         }
       ],
-      "isFactionCard": false,
+      "tags": "",
+      "cost": 35,
+      "timestamp": "2026-05-15T14:00:36.924Z",
       "faction": "Protoss"
     },
     "Power Field": {
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "resource": 1,
-      "factionTags": [],
-      "isUnique": true,
-      "cost": 40,
       "slots": {
         "Hero": 1,
+        "Core": 1,
         "Air": 0,
         "Elite": 1,
-        "Support": 0,
-        "Core": 1
+        "Support": 0
       },
-      "tags": "",
+      "factionTags": [],
       "name": "Power Field",
-      "faction": "Protoss",
-      "id": "power_field",
+      "resource": 1,
       "isFactionCard": false,
+      "isUnique": true,
+      "id": "power_field",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Protoss",
+      "cost": 40,
+      "tags": "",
       "boosts": [
         {
           "name": "Guardian Shell",
@@ -789,23 +789,23 @@
       ]
     },
     "Twilight Council": {
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "resource": 1,
-      "factionTags": [],
-      "isUnique": true,
-      "cost": 45,
       "slots": {
         "Hero": 0,
-        "Air": 0,
         "Elite": 1,
-        "Support": 1,
-        "Core": 0
+        "Air": 0,
+        "Core": 0,
+        "Support": 1
       },
-      "tags": "",
+      "factionTags": [],
       "name": "Twilight Council",
-      "faction": "Protoss",
-      "id": "twilight_council",
+      "resource": 1,
+      "isUnique": true,
       "isFactionCard": false,
+      "id": "twilight_council",
+      "faction": "Protoss",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "cost": 45,
+      "tags": "",
       "boosts": [
         {
           "name": "Weapons of the Firstborn",
@@ -818,10 +818,22 @@
       ]
     },
     "Warp Gate": {
-      "name": "Warp Gate",
-      "faction": "Protoss",
-      "id": "warp_gate",
+      "slots": {
+        "Support": 0,
+        "Core": 2,
+        "Air": 0,
+        "Elite": 0,
+        "Hero": 0
+      },
+      "factionTags": [],
       "isFactionCard": false,
+      "isUnique": true,
+      "name": "Warp Gate",
+      "resource": 1,
+      "id": "warp_gate",
+      "timestamp": "2026-05-15T14:00:36.924Z",
+      "faction": "Protoss",
+      "cost": 40,
       "boosts": [
         {
           "name": "Quick Strikes",
@@ -832,23 +844,9 @@
           "description": "Warp In <Active> <Movement Phase>: The active Ground Unit Deploys from any table edge that is not a player’s Entry Edge. This deployment must end more than 10\" away from any Enemy model. The controlling player cannot use this ability if another Friendly Ground Unit has already Deployed this Round."
         }
       ],
-      "slots": {
-        "Core": 2,
-        "Support": 0,
-        "Elite": 0,
-        "Hero": 0,
-        "Air": 0
-      },
-      "tags": "",
-      "isUnique": true,
-      "cost": 40,
-      "timestamp": "2026-05-15T14:00:36.924Z",
-      "resource": 1,
-      "factionTags": []
+      "tags": ""
     },
     "Warp Prism": {
-      "name": "Warp Prism",
-      "faction": "Protoss",
       "boosts": [
         {
           "name": "Phase",
@@ -859,42 +857,31 @@
           "description": "Warp Conduit <Active> <Movement Phase>: Set a Faction Indicator anywhere on the battlefield more than 10\" away from any Enemy model. At the End of the Round, the controlling player may Deploy one Ground Unit from Reserves in base-to-base contact with this Faction Indicator."
         }
       ],
-      "isFactionCard": false,
-      "id": "warp_prism",
-      "slots": {
-        "Core": 2,
-        "Hero": 0,
-        "Air": 0,
-        "Elite": 0,
-        "Support": 0
-      },
       "tags": "",
-      "isUnique": true,
       "cost": 35,
+      "faction": "Protoss",
       "timestamp": "2026-05-15T14:00:36.924Z",
-      "factionTags": [],
-      "resource": 1
+      "id": "warp_prism",
+      "isUnique": true,
+      "isFactionCard": false,
+      "name": "Warp Prism",
+      "resource": 1,
+      "slots": {
+        "Hero": 0,
+        "Support": 0,
+        "Core": 2,
+        "Air": 0,
+        "Elite": 0
+      },
+      "factionTags": []
     }
   },
   "Faction Cards": {
     "Protoss": {
       "Daelaam": {
-        "timestamp": "2026-05-15T14:00:36.924Z",
-        "factionTags": [],
-        "resource": 1,
-        "isUnique": true,
-        "cost": 0,
-        "slots": {
-          "Core": 3,
-          "Air": 0,
-          "Hero": 0,
-          "Elite": 1,
-          "Support": 1
-        },
-        "tags": "",
-        "name": "Daelaam",
         "faction": "Protoss",
-        "id": "daelaam",
+        "timestamp": "2026-05-15T14:00:36.924Z",
+        "cost": 0,
         "boosts": [
           {
             "name": "Mass Recall",
@@ -905,27 +892,40 @@
             "description": "Dae’Uhl <Reaction> <Any Phase>: When a Friendly Unit receives Damage, reduce the Total Damage by 2 (to a minimum of 1)."
           }
         ],
-        "isFactionCard": true
+        "tags": "",
+        "slots": {
+          "Support": 1,
+          "Elite": 1,
+          "Air": 0,
+          "Core": 3,
+          "Hero": 0
+        },
+        "factionTags": [],
+        "isFactionCard": true,
+        "isUnique": true,
+        "resource": 1,
+        "name": "Daelaam",
+        "id": "daelaam"
       },
       "Khalai": {
+        "slots": {
+          "Hero": 1,
+          "Support": 0,
+          "Air": 0,
+          "Elite": 2,
+          "Core": 3
+        },
         "factionTags": [
           "Khalai"
         ],
-        "resource": 1,
-        "timestamp": "2026-05-15T14:00:36.924Z",
-        "isUnique": true,
-        "cost": 0,
-        "slots": {
-          "Hero": 1,
-          "Air": 0,
-          "Elite": 2,
-          "Support": 0,
-          "Core": 3
-        },
-        "tags": "Khalai",
-        "name": "Khalai",
         "id": "khalai",
+        "name": "Khalai",
+        "resource": 1,
         "isFactionCard": true,
+        "isUnique": true,
+        "timestamp": "2026-05-15T14:00:36.924Z",
+        "faction": "Protoss",
+        "tags": "Khalai",
         "boosts": [
           {
             "name": "Pylon Warp-In",
@@ -936,13 +936,30 @@
             "description": "Bound by the Khala <Active> <Movement Phase>: At the end of the active Unit’s Activation, select one other Friendly Unit eligible to Activate in the current Phase. Immediately Activate that Unit."
           }
         ],
-        "faction": "Protoss"
+        "cost": 0
       }
     },
     "Zerg": {
       "Kerrigan's Swarm": {
+        "slots": {
+          "Support": 0,
+          "Core": 3,
+          "Air": 0,
+          "Elite": 2,
+          "Hero": 1
+        },
+        "factionTags": [
+          "Kerrigan's Swarm"
+        ],
         "name": "Kerrigan's Swarm",
+        "resource": 1,
+        "isFactionCard": true,
+        "isUnique": true,
+        "id": "kerrigan_s_swarm",
+        "timestamp": "2026-05-15T14:00:36.924Z",
         "faction": "Zerg",
+        "cost": 0,
+        "tags": "Kerrigan's Swarm",
         "boosts": [
           {
             "name": "Omega Network",
@@ -956,34 +973,13 @@
             "name": "Zerg Creep",
             "description": "Zerg Creep <Passive> <Any Phase>: During Army Building, select exactly one Creep Card and add it to their Army List, paying its listed cost (if any)."
           }
-        ],
-        "isFactionCard": true,
-        "id": "kerrigan_s_swarm",
-        "slots": {
-          "Support": 0,
-          "Hero": 1,
-          "Air": 0,
-          "Elite": 2,
-          "Core": 3
-        },
-        "tags": "Kerrigan's Swarm",
-        "isUnique": true,
-        "cost": 0,
-        "timestamp": "2026-05-15T14:00:36.924Z",
-        "factionTags": [
-          "Kerrigan's Swarm"
-        ],
-        "resource": 1
+        ]
       },
       "Zerg Swarm": {
-        "cost": 0,
-        "isUnique": true,
-        "timestamp": "2026-05-15T14:00:36.924Z",
-        "resource": 1,
-        "factionTags": [],
         "faction": "Zerg",
-        "id": "zerg_swarm",
-        "isFactionCard": true,
+        "timestamp": "2026-05-15T14:00:36.924Z",
+        "cost": 0,
+        "tags": "",
         "boosts": [
           {
             "name": "Rapid Burrowing",
@@ -998,20 +994,41 @@
             "description": "Zerg Creep <Passive> <Any Phase>: During Army Building, select exactly one Creep Card and add it to their Army List, paying its listed cost (if any)."
           }
         ],
-        "name": "Zerg Swarm",
-        "tags": "",
         "slots": {
+          "Support": 1,
           "Core": 3,
-          "Hero": 0,
           "Air": 0,
           "Elite": 1,
-          "Support": 1
-        }
+          "Hero": 0
+        },
+        "factionTags": [],
+        "resource": 1,
+        "name": "Zerg Swarm",
+        "isUnique": true,
+        "isFactionCard": true,
+        "id": "zerg_swarm"
       }
     },
     "Terran": {
       "Raynor's Raiders": {
+        "factionTags": [
+          "Raynor's Raiders"
+        ],
+        "slots": {
+          "Core": 3,
+          "Air": 0,
+          "Elite": 0,
+          "Support": 1,
+          "Hero": 1
+        },
+        "id": "raynor_s_raiders",
+        "name": "Raynor's Raiders",
+        "resource": 1,
+        "isUnique": true,
         "isFactionCard": true,
+        "timestamp": "2026-05-15T14:00:36.924Z",
+        "faction": "Terran",
+        "tags": "Raynor's Raiders",
         "boosts": [
           {
             "name": "Rapid Ingress",
@@ -1022,33 +1039,11 @@
             "description": "Ready for Pickup? <Active> <Movement Phase>: Once per Game. The active Unit resolves the PLACE (12) effect. Models set by this effect cannot be set up Within the Engagement Range of any Enemy Unit. This resolves instead of performing a standard action."
           }
         ],
-        "id": "raynor_s_raiders",
-        "faction": "Terran",
-        "name": "Raynor's Raiders",
-        "tags": "Raynor's Raiders",
-        "slots": {
-          "Core": 3,
-          "Support": 1,
-          "Elite": 0,
-          "Hero": 1,
-          "Air": 0
-        },
-        "cost": 0,
-        "isUnique": true,
-        "factionTags": [
-          "Raynor's Raiders"
-        ],
-        "resource": 1,
-        "timestamp": "2026-05-15T14:00:36.924Z"
+        "cost": 0
       },
       "Terran Armed Forces": {
         "cost": 0,
-        "isUnique": true,
-        "factionTags": [],
-        "resource": 1,
-        "timestamp": "2026-05-15T14:00:36.924Z",
-        "id": "terran_armed_forces",
-        "isFactionCard": true,
+        "tags": "",
         "boosts": [
           {
             "name": "Tactical Retreat",
@@ -1059,15 +1054,20 @@
             "description": "Terran Tenacity <Active> <Movement Phase>: Once per Game. Immediately claim the First Player Marker. No other player may claim the First Player Marker for the remainder of this Phase."
           }
         ],
+        "timestamp": "2026-05-15T14:00:36.924Z",
         "faction": "Terran",
+        "resource": 1,
         "name": "Terran Armed Forces",
-        "tags": "",
+        "isFactionCard": true,
+        "isUnique": true,
+        "id": "terran_armed_forces",
+        "factionTags": [],
         "slots": {
-          "Support": 1,
           "Hero": 0,
+          "Support": 1,
+          "Core": 3,
           "Air": 0,
-          "Elite": 1,
-          "Core": 3
+          "Elite": 1
         }
       }
     }
